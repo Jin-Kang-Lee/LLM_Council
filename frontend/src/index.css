@@ -1,0 +1,215 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  line-height: 1.6;
+  font-weight: 400;
+  color-scheme: dark;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#root {
+  min-height: 100vh;
+  background-color: #0a0a0b;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #18181b;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #27272a;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3f3f46;
+}
+
+/* Prose styling for markdown */
+.prose-custom {
+  color: #a1a1aa;
+}
+
+.prose-custom h1,
+.prose-custom h2,
+.prose-custom h3,
+.prose-custom h4 {
+  color: #fafafa;
+  font-weight: 600;
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+}
+
+.prose-custom h1 {
+  font-size: 1.75rem;
+}
+
+.prose-custom h2 {
+  font-size: 1.5rem;
+}
+
+.prose-custom h3 {
+  font-size: 1.25rem;
+}
+
+.prose-custom h4 {
+  font-size: 1.1rem;
+}
+
+.prose-custom p {
+  margin-bottom: 1em;
+}
+
+.prose-custom ul,
+.prose-custom ol {
+  margin-left: 1.5em;
+  margin-bottom: 1em;
+}
+
+.prose-custom li {
+  margin-bottom: 0.25em;
+}
+
+.prose-custom code {
+  background: #1f1f23;
+  padding: 0.2em 0.4em;
+  border-radius: 4px;
+  font-size: 0.9em;
+  color: #a78bfa;
+}
+
+.prose-custom pre {
+  background: #0f0f12;
+  padding: 1em;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin-bottom: 1em;
+  border: 1px solid #27272a;
+}
+
+.prose-custom pre code {
+  background: none;
+  padding: 0;
+}
+
+.prose-custom table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1em;
+}
+
+.prose-custom th,
+.prose-custom td {
+  border: 1px solid #27272a;
+  padding: 0.5em 1em;
+  text-align: left;
+}
+
+.prose-custom th {
+  background: #18181b;
+  font-weight: 600;
+  color: #fafafa;
+}
+
+.prose-custom strong {
+  color: #fafafa;
+  font-weight: 600;
+}
+
+.prose-custom a {
+  color: #818cf8;
+  text-decoration: underline;
+}
+
+.prose-custom blockquote {
+  border-left: 3px solid #6366f1;
+  padding-left: 1em;
+  margin-left: 0;
+  color: #71717a;
+  font-style: italic;
+}
+
+.prose-custom hr {
+  border: none;
+  border-top: 1px solid #27272a;
+  margin: 2em 0;
+}
+
+/* Shimmer animation for loading states */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.shimmer {
+  background: linear-gradient(90deg,
+      #18181b 0%,
+      #27272a 50%,
+      #18181b 100%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* Typing indicator */
+.typing-indicator {
+  display: flex;
+  gap: 4px;
+  padding: 8px 12px;
+}
+
+.typing-indicator span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #6366f1;
+  animation: typing 1.4s infinite;
+}
+
+.typing-indicator span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-indicator span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes typing {
+
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+
+  30% {
+    transform: translateY(-6px);
+    opacity: 1;
+  }
+}
