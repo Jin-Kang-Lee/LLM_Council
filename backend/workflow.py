@@ -7,7 +7,7 @@ from typing import TypedDict, Annotated, Sequence, Literal
 from langgraph.graph import StateGraph, END
 import operator
 
-from agents import RiskAgent, SentimentAgent, MasterAgent
+from agents import RiskAgent, SentimentAgent, MasterAgent, GovernanceAgent, DeepResearchAgent
 from config import MAX_DISCUSSION_ROUNDS
 
 
@@ -27,6 +27,8 @@ class AnalysisState(TypedDict):
     # Phase 2: Individual Analyses
     risk_analysis: str
     sentiment_analysis: str
+    governance_analysis: str
+    research_analysis: str
     
     # Phase 3: Discussion
     discussion_messages: Annotated[Sequence[AgentMessage], operator.add]
@@ -44,6 +46,8 @@ class AnalysisState(TypedDict):
 # Initialize agents
 risk_agent = RiskAgent()
 sentiment_agent = SentimentAgent()
+governance_agent = GovernanceAgent()
+deep_research_agent = DeepResearchAgent()
 master_agent = MasterAgent()
 
 
@@ -87,6 +91,38 @@ async def sentiment_analysis_node(state: AnalysisState) -> dict:
         }
 
 
+async def governance_analysis_node(state: AnalysisState) -> dict:
+    """Phase 2c: Run Governance Agent analysis."""
+    try:
+        analysis = await governance_agent.analyze(state["parsed_content"])
+        return {
+            "governance_analysis": analysis,
+            "current_phase": 2,
+            "status": "governance_analysis_complete"
+        }
+    except Exception as e:
+        return {
+            "governance_analysis": f"Error in governance analysis: {str(e)}",
+            "error": str(e)
+        }
+
+
+async def research_node(state: AnalysisState) -> dict:
+    """Phase 2.5: Deep Research into gaps identified in analyses."""
+    try:
+        analysis = await deep_research_agent.analyze(state["parsed_content"])
+        return {
+            "research_analysis": analysis,
+            "current_phase": 2,
+            "status": "research_complete"
+        }
+    except Exception as e:
+        return {
+            "research_analysis": f"Error in research: {str(e)}",
+            "error": str(e)
+        }
+
+
 async def discussion_node(state: AnalysisState) -> dict:
     """Phase 3: Agents discuss their findings."""
     current_round = state.get("discussion_round", 0) + 1
@@ -100,7 +136,7 @@ async def discussion_node(state: AnalysisState) -> dict:
                 state["sentiment_analysis"],
                 state["parsed_content"]
             )
-            risk_response = await risk_agent.generate(
+            risk_response = await risk_agent.generate_discussion(
                 state["parsed_content"],
                 discussion_prompt
             )
@@ -110,39 +146,49 @@ async def discussion_node(state: AnalysisState) -> dict:
                 "round": current_round
             })
             
-            # Sentiment agent responds
+            # Sentiment agent responds to Risk
             discussion_prompt = sentiment_agent.respond_to(
                 "Risk Analyst",
                 risk_response,
                 state["parsed_content"]
             )
-            sentiment_response = await sentiment_agent.generate(
+            sentiment_response = await sentiment_agent.generate_discussion(
                 state["parsed_content"],
                 discussion_prompt
             )
             messages.append({
                 "agent": "Sentiment Analyst",
                 "content": sentiment_response,
+                "round": current_round
+            })
+
+            # Governance agent responds to both
+            discussion_prompt = governance_agent.respond_to(
+                "Risk and Sentiment Analysts",
+                f"Risk says: {risk_response}\n\nSentiment says: {sentiment_response}",
+                state["parsed_content"]
+            )
+            gov_response = await governance_agent.generate_discussion(
+                state["parsed_content"],
+                discussion_prompt
+            )
+            messages.append({
+                "agent": "Governance Analyst",
+                "content": gov_response,
                 "round": current_round
             })
         else:
-            # Subsequent rounds - agents respond to each other's last message
-            last_sentiment = next(
-                (m["content"] for m in reversed(messages) if m["agent"] == "Sentiment Analyst"),
-                ""
-            )
-            last_risk = next(
-                (m["content"] for m in reversed(messages) if m["agent"] == "Risk Analyst"),
-                ""
-            )
+            # Subsequent rounds - agents respond to the previous chain
+            last_msg = messages[-1]["content"]
+            last_agent = messages[-1]["agent"]
             
-            # Risk responds to sentiment
+            # 1. Risk responds to whoever went last (Governance)
             discussion_prompt = risk_agent.respond_to(
-                "Sentiment Analyst",
-                last_sentiment,
+                last_agent,
+                last_msg,
                 state["parsed_content"]
             )
-            risk_response = await risk_agent.generate(
+            risk_response = await risk_agent.generate_discussion(
                 state["parsed_content"],
                 discussion_prompt
             )
@@ -152,19 +198,35 @@ async def discussion_node(state: AnalysisState) -> dict:
                 "round": current_round
             })
             
-            # Sentiment responds to risk
+            # 2. Sentiment responds to Risk
             discussion_prompt = sentiment_agent.respond_to(
                 "Risk Analyst",
                 risk_response,
                 state["parsed_content"]
             )
-            sentiment_response = await sentiment_agent.generate(
+            sentiment_response = await sentiment_agent.generate_discussion(
                 state["parsed_content"],
                 discussion_prompt
             )
             messages.append({
                 "agent": "Sentiment Analyst",
                 "content": sentiment_response,
+                "round": current_round
+            })
+
+            # 3. Governance responds to Sentiment
+            discussion_prompt = governance_agent.respond_to(
+                "Sentiment Analyst",
+                sentiment_response,
+                state["parsed_content"]
+            )
+            gov_response = await governance_agent.generate_discussion(
+                state["parsed_content"],
+                discussion_prompt
+            )
+            messages.append({
+                "agent": "Governance Analyst",
+                "content": gov_response,
                 "round": current_round
             })
         
@@ -202,6 +264,7 @@ async def consolidation_node(state: AnalysisState) -> dict:
             state["parsed_content"],
             state["risk_analysis"],
             state["sentiment_analysis"],
+            state["governance_analysis"],
             discussion_transcript
         )
         
@@ -225,19 +288,26 @@ def create_workflow() -> StateGraph:
     workflow.add_node("parse", parse_node)
     workflow.add_node("run_risk", risk_analysis_node)
     workflow.add_node("run_sentiment", sentiment_analysis_node)
+    workflow.add_node("run_governance", governance_analysis_node)
+    workflow.add_node("run_research", research_node)
     workflow.add_node("run_discussion", discussion_node)
     workflow.add_node("run_consolidation", consolidation_node)
     
     # Define edges
     workflow.set_entry_point("parse")
     
-    # After parsing, run both analyses in parallel
+    # After parsing, run all analyses in parallel
     workflow.add_edge("parse", "run_risk")
     workflow.add_edge("parse", "run_sentiment")
+    workflow.add_edge("parse", "run_governance")
     
-    # Both analyses lead to discussion
-    workflow.add_edge("run_risk", "run_discussion")
-    workflow.add_edge("run_sentiment", "run_discussion")
+    # All analyses lead to research
+    workflow.add_edge("run_risk", "run_research")
+    workflow.add_edge("run_sentiment", "run_research")
+    workflow.add_edge("run_governance", "run_research")
+    
+    # Research leads to discussion
+    workflow.add_edge("run_research", "run_discussion")
     
     # Discussion can loop or proceed to consolidation
     workflow.add_conditional_edges(

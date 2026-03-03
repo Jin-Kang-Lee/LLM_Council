@@ -18,7 +18,7 @@ try:
 except ImportError:
     pass
 
-from llama_cloud import AsyncLlamaCloud
+from llama_cloud.client import AsyncLlamaCloud
 import md_postprocess
 
 # Load environment variables
@@ -60,7 +60,7 @@ async def pdf_to_markdown(
         if not api_key:
             raise ValueError("LLAMA_CLOUD_API_KEY environment variable is not set.")
 
-        client = AsyncLlamaCloud(api_key=api_key)
+        client = AsyncLlamaCloud(token=api_key)
         
         # Step A: Upload the file
         print(f"Uploading file: {target_path}...")

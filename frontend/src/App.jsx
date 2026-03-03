@@ -4,7 +4,8 @@ import {
     Brain,
     FileText,
     MessageSquare,
-    CheckCircle2
+    CheckCircle2,
+    Search
 } from 'lucide-react';
 import UploadZone from './components/UploadZone';
 import AgentCards from './components/AgentCards';
@@ -12,6 +13,7 @@ import DiscussionLog from './components/DiscussionLog';
 import FinalReport from './components/FinalReport';
 import Header from './components/Header';
 import PhaseIndicator from './components/PhaseIndicator';
+import DeepResearchSpace from './components/DeepResearchSpace';
 
 const API_BASE = 'http://localhost:8000';
 
@@ -23,6 +25,8 @@ function App() {
     const [parsedContent, setParsedContent] = useState(null);
     const [riskAnalysis, setRiskAnalysis] = useState(null);
     const [sentimentAnalysis, setSentimentAnalysis] = useState(null);
+    const [governanceAnalysis, setGovernanceAnalysis] = useState(null);
+    const [researchAnalysis, setResearchAnalysis] = useState(null);
     const [discussionMessages, setDiscussionMessages] = useState([]);
     const [finalReport, setFinalReport] = useState(null);
 
@@ -30,6 +34,8 @@ function App() {
         parser: 'idle',
         risk: 'idle',
         sentiment: 'idle',
+        governance: 'idle',
+        research: 'idle',
         master: 'idle'
     });
 
@@ -40,12 +46,15 @@ function App() {
         setParsedContent(null);
         setRiskAnalysis(null);
         setSentimentAnalysis(null);
+        setGovernanceAnalysis(null);
         setDiscussionMessages([]);
         setFinalReport(null);
         setAgentStates({
             parser: 'idle',
             risk: 'idle',
             sentiment: 'idle',
+            governance: 'idle',
+            research: 'idle',
             master: 'idle'
         });
     }, []);
@@ -112,6 +121,22 @@ function App() {
                     if (agentData.content) {
                         setSentimentAnalysis(agentData.content);
                     }
+                } else if (agentData.agent === 'governance') {
+                    setAgentStates(prev => ({
+                        ...prev,
+                        governance: agentData.status === 'complete' ? 'complete' : 'thinking'
+                    }));
+                    if (agentData.content) {
+                        setGovernanceAnalysis(agentData.content);
+                    }
+                } else if (agentData.agent === 'research') {
+                    setAgentStates(prev => ({
+                        ...prev,
+                        research: agentData.status === 'complete' ? 'complete' : 'thinking'
+                    }));
+                    if (agentData.content) {
+                        setResearchAnalysis(agentData.content);
+                    }
                 }
             });
 
@@ -153,6 +178,7 @@ function App() {
     const phases = [
         { id: 1, label: 'Parse', icon: FileText },
         { id: 2, label: 'Analyze', icon: Brain },
+        { id: 2.5, label: 'Research', icon: Search },
         { id: 3, label: 'Discuss', icon: MessageSquare },
         { id: 4, label: 'Report', icon: BarChart3 }
     ];
@@ -193,12 +219,21 @@ function App() {
                         <AgentCards
                             riskAnalysis={riskAnalysis}
                             sentimentAnalysis={sentimentAnalysis}
+                            governanceAnalysis={governanceAnalysis}
                             riskState={agentStates.risk}
                             sentimentState={agentStates.sentiment}
+                            governanceState={agentStates.governance}
                             parserState={agentStates.parser}
                             parsedContent={parsedContent}
                         />
                     </section>
+                )}
+
+                {currentPhase >= 2 && (agentStates.research !== 'idle') && (
+                    <DeepResearchSpace
+                        researchAnalysis={researchAnalysis}
+                        state={agentStates.research}
+                    />
                 )}
 
                 {currentPhase >= 3 && (

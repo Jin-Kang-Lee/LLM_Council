@@ -59,6 +59,12 @@ Generate a professional earnings analysis report with the following structure:
 [Synthesized summary of sentiment findings]
 - **Management Confidence**: [Assessment]
 - **Market Outlook**: [Bearish/Neutral/Bullish]
+    
+## Governance & Compliance Assessment
+[Synthesized summary of governance, legal, and compliance findings]
+- **Governance Risk**: [Low/Medium/High]
+- **Compliance Status**: [Assessment of MAS alignment]
+- **Confidence Score**: [0.0-1.0]
 
 ## Points of Agreement
 [Where both analysts aligned in their findings]
@@ -95,19 +101,12 @@ Maintain a professional, balanced tone. Prioritize clarity and actionability. Al
         original_content: str,
         risk_analysis: str, 
         sentiment_analysis: str, 
+        governance_analysis: str,
+        research_analysis: str,
         discussion_transcript: str
     ) -> str:
         """
         Generate the final consolidated report.
-        
-        Args:
-            original_content: The original parsed earnings content
-            risk_analysis: Risk Agent's analysis
-            sentiment_analysis: Sentiment Agent's analysis
-            discussion_transcript: Phase 3 discussion between agents
-        
-        Returns:
-            Final consolidated earnings report
         """
         context = f"""
 ## ORIGINAL EARNINGS CONTENT
@@ -122,6 +121,16 @@ Maintain a professional, balanced tone. Prioritize clarity and actionability. Al
 
 ## SENTIMENT ANALYST'S ASSESSMENT
 {sentiment_analysis}
+
+---
+
+## GOVERNANCE & COMPLIANCE ASSESSMENT
+{governance_analysis}
+
+---
+
+## EXTERNAL RESEARCH FINDINGS
+{research_analysis}
 
 ---
 

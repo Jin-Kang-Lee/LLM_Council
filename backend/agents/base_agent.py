@@ -30,116 +30,78 @@ class BaseAgent(ABC):
     @property
     @abstractmethod
     def system_prompt(self) -> str:
-        """Return the agent's system prompt."""
+        """Return the agent's core identity/persona (Who are you?)."""
         pass
-    
-    def _build_prompt(self, context: str, additional_instructions: Optional[str] = None) -> str:
-        """Build the full prompt with system instructions."""
-        prompt = f"{self.system_prompt}\n\n---\n\n{context}"
+
+    @property
+    def analysis_rules(self) -> str:
+        """Return rules for individual analysis (e.g., JSON formatting)."""
+        return ""
+
+    def _build_prompt(self, context: str, additional_instructions: Optional[str] = None, mode: str = "analysis") -> str:
+        """Build the full prompt with system instructions based on mode."""
+        if mode == "analysis":
+            prompt = f"{self.system_prompt}\n\nSTRICT ANALYSIS RULES:\n{self.analysis_rules}\n\n---\n\nREPORT CONTENT:\n{context}"
+        else:
+            prompt = f"{self.system_prompt}\n\nDISCUSSION MODE:\nYou are in the 'War Room'. Engage in a professional, punchy debate with other analysts.\n\n---\n\nREPORT CONTENT:\n{context}"
+            
         if additional_instructions:
             prompt += f"\n\n{additional_instructions}"
         return prompt
     
     async def generate(self, context: str, additional_instructions: Optional[str] = None) -> str:
-        """
-        Generate a response using Ollama.
-        
-        Args:
-            context: The main context/content to analyze
-            additional_instructions: Optional additional instructions
-        
-        Returns:
-            Generated response string
-        """
-        prompt = self._build_prompt(context, additional_instructions)
-        
+        """Generate a response (defaults to analysis mode)."""
+        prompt = self._build_prompt(context, additional_instructions, mode="analysis")
+        return await self._call_ollama(prompt)
+
+    async def generate_discussion(self, context: str, discussion_prompt: str) -> str:
+        """Generate a discussion-specific response (avoids JSON rules)."""
+        prompt = self._build_prompt(context, discussion_prompt, mode="discussion")
+        return await self._call_ollama(prompt, temperature=0.8) # Slightly higher temp for debate
+
+    async def _call_ollama(self, prompt: str, temperature: float = 0.7) -> str:
+        """Internal helper to call Ollama API."""
         payload = {
             "model": self.model,
             "prompt": prompt,
             "stream": False,
             "options": {
-                "temperature": 0.7,
+                "temperature": temperature,
                 "top_p": 0.9,
             }
         }
         
         try:
             print(f"[{self.name}] Sending request to Ollama...")
-            async with httpx.AsyncClient(timeout=300.0) as client:  # 5 min timeout
+            async with httpx.AsyncClient(timeout=300.0) as client:
                 response = await client.post(self.ollama_url, json=payload)
                 response.raise_for_status()
                 result = response.json()
                 print(f"[{self.name}] Response received successfully")
                 return result.get("response", "")
-        except httpx.TimeoutException:
-            print(f"[{self.name}] ERROR: Ollama request timed out")
-            raise Exception(f"Ollama request timed out for {self.name}")
-        except httpx.ConnectError:
-            print(f"[{self.name}] ERROR: Cannot connect to Ollama at {self.ollama_url}")
-            raise Exception(f"Cannot connect to Ollama. Is it running at {OLLAMA_BASE_URL}?")
         except Exception as e:
             print(f"[{self.name}] ERROR: {str(e)}")
             raise
-    
-    async def generate_stream(self, context: str, additional_instructions: Optional[str] = None) -> Generator[str, None, None]:
-        """
-        Generate a streaming response using Ollama.
-        
-        Args:
-            context: The main context/content to analyze
-            additional_instructions: Optional additional instructions
-        
-        Yields:
-            Response chunks as they arrive
-        """
-        prompt = self._build_prompt(context, additional_instructions)
-        
-        payload = {
-            "model": self.model,
-            "prompt": prompt,
-            "stream": True,
-            "options": {
-                "temperature": 0.7,
-                "top_p": 0.9,
-            }
-        }
-        
-        async with httpx.AsyncClient(timeout=120.0) as client:
-            async with client.stream("POST", self.ollama_url, json=payload) as response:
-                async for line in response.aiter_lines():
-                    if line:
-                        try:
-                            data = json.loads(line)
-                            if "response" in data:
-                                yield data["response"]
-                        except json.JSONDecodeError:
-                            continue
-    
+
     def respond_to(self, other_agent_name: str, other_response: str, context: str) -> str:
         """
-        Generate a response to another agent's analysis.
-        
-        Args:
-            other_agent_name: Name of the other agent
-            other_response: The other agent's analysis
-            context: Original context/content
-        
-        Returns:
-            Response addressing the other agent's points
+        Generate a debate-style response to another agent.
         """
         discussion_prompt = f"""
-You are in a discussion with {other_agent_name}. They have provided the following analysis:
-
+WAR ROOM DEBATE:
+{other_agent_name} has just shared their perspective:
 ---
 {other_response}
 ---
 
-Based on your expertise and the original content, provide your response. You may:
-- Support their findings with additional evidence
-- Challenge points you disagree with
-- Add perspectives they may have missed
-- Synthesize both viewpoints where appropriate
+MISSION: Respond to {other_agent_name}. 
+The user finds the chat is too "spammy". 
+RULES FOR YOUR RESPONSE:
+1. BE CONCISE. Do not repeat your entire analysis. 
+2. BE DIRECT. Counter-argue if they are too optimistic/pessimistic.
+3. BE CONVERSATIONAL. Use phrases like "I see your point on X, but...", or "Adding to your point on Y...".
+4. STAY GROUNDED. Use 1 specific quote or metric from the report to back up your challenge or support.
+5. NO JSON. Output plain, professional markdown text.
 
-Keep your response focused and professional. Reference specific data points when possible.
-"""
+Respond now:"""
         return discussion_prompt
