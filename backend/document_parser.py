@@ -1,45 +1,121 @@
 """
-Parser Module - Phase 1
-Handles processing of raw text and PDF inputs into structured format.
+Parser Module - Phase 1 (LlamaCloud Integrated)
+Handles processing of raw text and PDF inputs into structured format using LlamaCloud.
 """
 
 import io
+import os
 import re
-from typing import Optional
-from PyPDF2 import PdfReader
+import tempfile
+import asyncio
+import requests
+from typing import Optional, List
+from dotenv import load_dotenv
 
+# Workaround for Pydantic error in llama-cloud: MetadataFilters must be in namespace
+try:
+    from llama_index.core.vector_stores import MetadataFilters
+except ImportError:
+    pass
 
-def extract_text_from_pdf(pdf_bytes: bytes) -> str:
-    """Extract text content from PDF bytes."""
+from llama_cloud import AsyncLlamaCloud
+import md_postprocess
+
+# Load environment variables
+load_dotenv()
+
+async def pdf_to_markdown(
+    *,
+    pdf_path: Optional[str] = None,
+    pdf_bytes: Optional[bytes] = None,
+    pdf_url: Optional[str] = None,
+) -> str:
+    """Convert a PDF financial report to a single raw Markdown string using LlamaCloud."""
+    # 1. Validate inputs
+    inputs = [pdf_path, pdf_bytes, pdf_url]
+    if sum(x is not None for x in inputs) != 1:
+        raise ValueError("Exactly one of pdf_path, pdf_bytes, or pdf_url must be provided.")
+
+    temp_file = None
+    target_path = pdf_path
+
     try:
-        pdf_file = io.BytesIO(pdf_bytes)
-        reader = PdfReader(pdf_file)
-        
-        text_content = []
-        for page in reader.pages:
-            page_text = page.extract_text()
-            if page_text:
-                text_content.append(page_text)
-        
-        return "\n\n".join(text_content)
-    except Exception as e:
-        raise ValueError(f"Failed to parse PDF: {str(e)}")
+        # 2. Resolve input to a local path
+        if pdf_url:
+            try:
+                response = requests.get(pdf_url, timeout=30)
+                response.raise_for_status()
+                pdf_bytes = response.content
+            except Exception as e:
+                raise ValueError(f"Failed to download PDF from URL: {e}")
 
+        if pdf_bytes:
+            temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
+            temp_file.write(pdf_bytes)
+            temp_file.close()
+            target_path = temp_file.name
+
+        # 3. Parse with AsyncLlamaCloud
+        api_key = os.getenv("LLAMA_CLOUD_API_KEY")
+        if not api_key:
+            raise ValueError("LLAMA_CLOUD_API_KEY environment variable is not set.")
+
+        client = AsyncLlamaCloud(api_key=api_key)
+        
+        # Step A: Upload the file
+        print(f"Uploading file: {target_path}...")
+        with open(target_path, "rb") as f:
+            file_obj = await client.files.create(file=f, purpose="parse")
+        
+        # Step B: Parse the file with expansion to get content
+        print(f"Parsing file (ID: {file_obj.id})...")
+        result = await client.parsing.parse(
+            file_id=file_obj.id,
+            tier="agentic",
+            version="latest",
+            expand=["markdown"]
+        )
+        
+        # Extract markdown content from expanded result
+        md = ""
+        pages_list = []
+        if hasattr(result, "markdown") and result.markdown and hasattr(result.markdown, "pages"):
+            pages_list = [p.markdown for p in result.markdown.pages if p.markdown]
+            md = "\n\n".join(pages_list)
+        
+        if not md:
+            print("[WARNING] No markdown content found in expanded results.")
+            return ""
+
+        # 4. Post-processing
+        # Remove repeated headers/footers
+        cleaned_pages = md_postprocess.remove_repeated_headers_footers(pages_list)
+        md = "\n\n".join(cleaned_pages)
+        
+        # Global cleaning
+        md = md_postprocess.dehyphenate(md)
+        md = md_postprocess.fix_hard_wraps(md)
+        md = md_postprocess.wrap_uncertain_tables(md)
+        
+        return md
+
+    finally:
+        if temp_file and os.path.exists(temp_file.name):
+            try:
+                os.remove(temp_file.name)
+            except:
+                pass
 
 def clean_text(raw_text: str) -> str:
-    """Clean and normalize raw text content."""
-    # Remove excessive whitespace
-    text = re.sub(r'\s+', ' ', raw_text)
-    # Remove special characters that might interfere with parsing
-    text = re.sub(r'[^\w\s\.\,\;\:\!\?\-\$\%\(\)\[\]\"\']', '', text)
-    # Normalize line breaks
-    text = text.replace('. ', '.\n')
+    """Clean and normalize raw text content (for non-PDF inputs)."""
+    # Use post-processing logic for consistency even for raw text
+    text = md_postprocess.dehyphenate(raw_text)
+    text = md_postprocess.fix_hard_wraps(text)
     return text.strip()
 
-
-def parse_earnings_content(content: str, is_pdf: bool = False, pdf_bytes: Optional[bytes] = None) -> dict:
+async def parse_earnings_content(content: str, is_pdf: bool = False, pdf_bytes: Optional[bytes] = None) -> dict:
     """
-    Parse earnings report content into structured format.
+    Parse earnings report content into structured format (Async version).
     
     Args:
         content: Raw text content (if not PDF)
@@ -50,7 +126,7 @@ def parse_earnings_content(content: str, is_pdf: bool = False, pdf_bytes: Option
         Dictionary containing parsed and structured content
     """
     if is_pdf and pdf_bytes:
-        raw_text = extract_text_from_pdf(pdf_bytes)
+        raw_text = await pdf_to_markdown(pdf_bytes=pdf_bytes)
     else:
         raw_text = content
     
@@ -83,7 +159,6 @@ def parse_earnings_content(content: str, is_pdf: bool = False, pdf_bytes: Option
     
     return sections
 
-
 def format_for_agents(parsed_content: dict) -> str:
     """
     Format parsed content into a structured prompt for agents.
@@ -102,8 +177,8 @@ def format_for_agents(parsed_content: dict) -> str:
         output.append("**Identified Topics:** " + ", ".join(parsed_content['sections_identified']) + "\n")
     
     output.append("\n## Full Content\n")
-    output.append("```")
+    output.append("```markdown\n")
     output.append(parsed_content['cleaned_content'])
-    output.append("```")
+    output.append("\n```")
     
     return "\n".join(output)
