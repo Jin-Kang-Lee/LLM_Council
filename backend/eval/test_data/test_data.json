@@ -1,0 +1,536 @@
+[
+    {
+        "test_id": "TC-001",
+        "description": "Healthy tech company with strong growth and clean governance",
+        "earnings_report": "NOVATECH SOLUTIONS INC.\nQuarterly Earnings Report — Q3 FY2025\nPeriod Ending: September 30, 2025\n\nFINANCIAL HIGHLIGHTS\n\nRevenue for Q3 FY2025 reached $2.4 billion, representing a 22% year-over-year increase, driven primarily by growth in our Cloud Infrastructure and AI Services segments. Gross margin improved to 68.2%, up from 64.8% in the prior-year quarter, reflecting our continued shift toward higher-margin recurring revenue streams.\n\nNet income attributable to shareholders was $412 million, or $3.18 per diluted share, compared to $298 million, or $2.31 per diluted share, in Q3 FY2024. This represents a 38% increase in earnings per share.\n\nOperating cash flow was $580 million, and free cash flow was $420 million. We ended the quarter with $3.1 billion in cash and short-term investments and total debt of $1.2 billion, resulting in a net cash position of $1.9 billion.\n\nSEGMENT PERFORMANCE\n\nCloud Infrastructure: Revenue of $1.1 billion (+31% YoY). Annual Recurring Revenue (ARR) grew to $4.2 billion, with a net retention rate of 128%. We added 340 new enterprise customers during the quarter.\n\nAI Services: Revenue of $680 million (+45% YoY). This segment continues to experience accelerating demand as enterprises adopt our generative AI platform. Bookings grew 52% year-over-year.\n\nEnterprise Software: Revenue of $620 million (+8% YoY). While growth was more modest, this segment maintained a 74% gross margin and strong renewal rates of 93%.\n\nEXECUTIVE COMMENTARY\n\nCEO Maria Chen stated: 'This quarter demonstrates the power of our multi-cloud strategy. Our AI Services segment is experiencing unprecedented demand, and we are well-positioned to capture the next wave of enterprise digital transformation. We are investing aggressively in R&D to maintain our competitive edge.'\n\nCFO David Park noted: 'Our balance sheet remains exceptionally strong. We generated over $400 million in free cash flow this quarter, and our debt-to-equity ratio stands at 0.18. We are confident in our ability to fund both organic growth and strategic acquisitions while returning capital to shareholders through our $1.5 billion share buyback program.'\n\nRISK FACTORS\n\nWhile the company's financial position is strong, we note the following risk factors:\n- Increasing competition in the AI services market from hyperscalers\n- Customer concentration: our top 10 customers represent 18% of total revenue\n- Foreign exchange headwinds, with 35% of revenue generated outside the United States\n- Regulatory uncertainty around AI governance in the European Union\n\nGUIDANCE\n\nFor Q4 FY2025, we expect:\n- Revenue of $2.5 billion to $2.6 billion (20-25% YoY growth)\n- Non-GAAP operating margin of 28-30%\n- Free cash flow of $430 million to $460 million\n\nFor full-year FY2025, we are raising our revenue guidance to $9.2 billion to $9.4 billion, up from our previous range of $8.8 billion to $9.0 billion.\n\nCORPORATE GOVERNANCE\n\nThe Board of Directors consists of 11 members, 9 of whom are independent. The Audit Committee met 6 times during the quarter. The company maintains compliance with all SEC reporting requirements and Sarbanes-Oxley provisions. Our external auditor, Deloitte & Touche LLP, issued an unqualified opinion on our most recent annual financial statements.\n\nThe company adopted a new ESG framework during the quarter, including Scope 1 and Scope 2 carbon emissions reporting. Executive compensation is tied to both financial performance metrics and ESG targets.\n\nAll related-party transactions were disclosed in accordance with applicable regulations. There are no pending legal proceedings that management believes would have a material adverse effect on the company's financial condition.",
+        "ground_truth": {
+            "risk": {
+                "overall_risk_rating": "Low",
+                "liquidity_score_range": [
+                    0.7,
+                    1.0
+                ],
+                "key_risk_factors": [
+                    {
+                        "factor": "AI market competition from hyperscalers",
+                        "severity": "Medium",
+                        "keywords": [
+                            "competition",
+                            "hyperscaler",
+                            "AI"
+                        ]
+                    },
+                    {
+                        "factor": "Customer concentration",
+                        "severity": "Low",
+                        "keywords": [
+                            "customer concentration",
+                            "top 10",
+                            "18%"
+                        ]
+                    },
+                    {
+                        "factor": "Foreign exchange risk",
+                        "severity": "Low",
+                        "keywords": [
+                            "foreign exchange",
+                            "currency",
+                            "35%"
+                        ]
+                    },
+                    {
+                        "factor": "EU AI regulatory uncertainty",
+                        "severity": "Low",
+                        "keywords": [
+                            "regulatory",
+                            "EU",
+                            "AI governance"
+                        ]
+                    }
+                ],
+                "confidence_score_range": [
+                    0.6,
+                    1.0
+                ]
+            },
+            "sentiment": {
+                "overall_sentiment_score": "Positive",
+                "executive_confidence": "High",
+                "forward_outlook": "Bullish",
+                "key_signals": [
+                    {
+                        "signal": "Raised full-year revenue guidance",
+                        "sentiment": "Positive",
+                        "keywords": [
+                            "raising",
+                            "guidance",
+                            "$9.2 billion"
+                        ]
+                    },
+                    {
+                        "signal": "Unprecedented AI demand",
+                        "sentiment": "Positive",
+                        "keywords": [
+                            "unprecedented demand",
+                            "AI Services",
+                            "accelerating"
+                        ]
+                    },
+                    {
+                        "signal": "Strong share buyback program",
+                        "sentiment": "Positive",
+                        "keywords": [
+                            "$1.5 billion",
+                            "buyback",
+                            "returning capital"
+                        ]
+                    },
+                    {
+                        "signal": "Aggressive R&D investment",
+                        "sentiment": "Positive",
+                        "keywords": [
+                            "investing aggressively",
+                            "R&D",
+                            "competitive edge"
+                        ]
+                    }
+                ]
+            },
+            "governance": {
+                "governance_risk_level": "Low",
+                "compliance_risk_level": "Low",
+                "key_findings": [],
+                "non_disclosures": [],
+                "confidence_score_range": [
+                    0.6,
+                    1.0
+                ]
+            },
+            "research": {
+                "min_query_count": 3,
+                "expected_topics": [
+                    "AI competition",
+                    "regulatory",
+                    "market share"
+                ]
+            },
+            "master": {
+                "expected_sections": [
+                    "Executive Summary",
+                    "Risk Assessment",
+                    "Sentiment",
+                    "Governance",
+                    "Recommendation"
+                ],
+                "expected_risk_level": "Low",
+                "expected_outlook": "Bullish"
+            }
+        }
+    },
+    {
+        "test_id": "TC-002",
+        "description": "Struggling retail chain with declining margins, high debt, and legal issues",
+        "earnings_report": "GLOBALMART HOLDINGS PLC\nQuarterly Earnings Report — Q2 FY2025\nPeriod Ending: June 30, 2025\n\nFINANCIAL HIGHLIGHTS\n\nRevenue for Q2 FY2025 was $4.8 billion, a decline of 12% year-over-year, marking the fourth consecutive quarter of revenue contraction. Same-store sales fell 8.3%, with the sharpest declines in our North American and European markets.\n\nGross margin contracted to 22.1%, down from 27.4% in the prior-year quarter, due to aggressive promotional activity to clear excess inventory and rising logistics costs. We recorded $180 million in inventory write-downs during the quarter.\n\nNet loss attributable to shareholders was $(340) million, or $(2.15) per diluted share, compared to net income of $45 million, or $0.28 per diluted share, in Q2 FY2024. This includes restructuring charges of $95 million related to the closure of 120 underperforming stores.\n\nOperating cash flow was negative at $(210) million. Total debt stands at $6.8 billion against total equity of $2.1 billion, resulting in a debt-to-equity ratio of 3.24. The company drew down $500 million from its revolving credit facility during the quarter. Our credit rating was downgraded by Moody's from Ba1 to Ba3 during the quarter.\n\nSEGMENT PERFORMANCE\n\nNorth America Retail: Revenue of $2.8 billion (-14% YoY). Store traffic declined 11%, and average transaction value fell 4%. E-commerce revenue grew 6% but represents only 12% of total segment revenue.\n\nEurope Retail: Revenue of $1.2 billion (-15% YoY). Operations were significantly impacted by consumer spending weakness, particularly in the UK and Germany. We are evaluating strategic alternatives for this segment, including a potential sale.\n\nAsia-Pacific: Revenue of $800 million (+2% YoY). This segment showed relative resilience but faces increasing competition from local discount retailers and e-commerce platforms.\n\nEXECUTIVE COMMENTARY\n\nCEO Robert Wallace stated: 'We are navigating through a challenging period of transformation. The retail landscape is evolving rapidly, and we are taking difficult but necessary actions to right-size our store footprint and accelerate our digital capabilities. While near-term results are painful, we believe these investments will position us for long-term recovery.'\n\nCFO Angela Morrison noted: 'Our liquidity position remains adequate for current operations. We are actively engaged with our lending syndicate to renegotiate covenant terms on our $3.2 billion term loan. We have identified $400 million in annual cost savings through our restructuring program, with full run-rate savings expected by Q2 FY2026.'\n\nRISK FACTORS\n\n- Significant debt load with a 3.24x debt-to-equity ratio and recent credit downgrade\n- Continued same-store sales decline with no clear inflection point\n- Potential covenant breach on term loan if EBITDA falls below $1.1 billion\n- Consumer discretionary spending remains weak across key markets due to persistent inflation\n- Restructuring execution risk: the 120-store closure program involves $95 million in charges and workforce reduction of approximately 8,000 employees\n- Increasing competitive pressure from e-commerce pure-play retailers and discounters\n- Foreign currency translation losses, particularly from GBP and EUR weakness\n\nLEGAL PROCEEDINGS\n\nThe company is currently a defendant in a class-action lawsuit (Case No. 2025-CV-04821) filed in the Southern District of New York alleging violations of federal securities laws related to the timing and adequacy of disclosures regarding inventory management practices. The company denies all allegations and intends to vigorously defend itself.\n\nAdditionally, the UK Financial Conduct Authority (FCA) has opened a preliminary investigation into the company's European subsidiary regarding potential breaches of the UK Corporate Governance Code related to director independence and related-party transactions involving the former CFO. The company is cooperating fully with this investigation.\n\nA former supplier has filed a breach-of-contract claim seeking $45 million in damages related to cancelled purchase orders. This matter is currently in mediation.\n\nGUIDANCE\n\nDue to the challenging macro environment and ongoing restructuring activities, the company is withdrawing its full-year FY2025 guidance. For Q3 FY2025, we expect:\n- Revenue of $4.3 billion to $4.6 billion\n- Operating loss of $(100) million to $(150) million\n- Restructuring charges of $50 million to $70 million\n\nCORPORATE GOVERNANCE\n\nDuring the quarter, two independent board members resigned, citing personal reasons. The Board currently has 8 members, of whom 5 are independent. The Audit Committee chair position is currently vacant following one of the departures.\n\nThe company's external auditor, PricewaterhouseCoopers LLP, included an emphasis-of-matter paragraph in its most recent audit report highlighting substantial doubt about the company's ability to continue as a going concern.\n\nRelated-party transactions totaling $12 million were identified during the quarter involving a logistics company partially owned by a family member of CEO Robert Wallace. These transactions were reviewed by the remaining independent directors and deemed to be at arm's length.\n\nThe company has not yet filed its Conflict of Interest declarations for three of its senior executives as required by the governance charter.",
+        "ground_truth": {
+            "risk": {
+                "overall_risk_rating": "High",
+                "liquidity_score_range": [
+                    0.0,
+                    0.35
+                ],
+                "key_risk_factors": [
+                    {
+                        "factor": "Extreme debt load and credit downgrade",
+                        "severity": "High",
+                        "keywords": [
+                            "debt-to-equity",
+                            "3.24",
+                            "credit downgrade",
+                            "Ba3",
+                            "Moody's"
+                        ]
+                    },
+                    {
+                        "factor": "Negative operating cash flow",
+                        "severity": "High",
+                        "keywords": [
+                            "negative",
+                            "operating cash flow",
+                            "-$210 million"
+                        ]
+                    },
+                    {
+                        "factor": "Going concern doubt",
+                        "severity": "High",
+                        "keywords": [
+                            "going concern",
+                            "PricewaterhouseCoopers",
+                            "substantial doubt"
+                        ]
+                    },
+                    {
+                        "factor": "Same-store sales decline",
+                        "severity": "High",
+                        "keywords": [
+                            "same-store sales",
+                            "fell",
+                            "8.3%",
+                            "fourth consecutive"
+                        ]
+                    },
+                    {
+                        "factor": "Potential covenant breach",
+                        "severity": "High",
+                        "keywords": [
+                            "covenant",
+                            "breach",
+                            "EBITDA",
+                            "$1.1 billion"
+                        ]
+                    },
+                    {
+                        "factor": "Restructuring execution risk",
+                        "severity": "Medium",
+                        "keywords": [
+                            "restructuring",
+                            "120 stores",
+                            "8,000 employees"
+                        ]
+                    },
+                    {
+                        "factor": "Class-action securities lawsuit",
+                        "severity": "Medium",
+                        "keywords": [
+                            "class-action",
+                            "securities laws",
+                            "inventory management"
+                        ]
+                    }
+                ],
+                "confidence_score_range": [
+                    0.6,
+                    1.0
+                ]
+            },
+            "sentiment": {
+                "overall_sentiment_score": "Negative",
+                "executive_confidence": "Low",
+                "forward_outlook": "Bearish",
+                "key_signals": [
+                    {
+                        "signal": "Guidance withdrawn",
+                        "sentiment": "Negative",
+                        "keywords": [
+                            "withdrawing",
+                            "guidance"
+                        ]
+                    },
+                    {
+                        "signal": "Fourth consecutive revenue decline",
+                        "sentiment": "Negative",
+                        "keywords": [
+                            "fourth consecutive",
+                            "revenue contraction"
+                        ]
+                    },
+                    {
+                        "signal": "Hedging language from executives",
+                        "sentiment": "Negative",
+                        "keywords": [
+                            "challenging period",
+                            "painful",
+                            "navigating"
+                        ]
+                    },
+                    {
+                        "signal": "Liquidity described as merely adequate",
+                        "sentiment": "Negative",
+                        "keywords": [
+                            "adequate",
+                            "renegotiate",
+                            "covenant terms"
+                        ]
+                    }
+                ]
+            },
+            "governance": {
+                "governance_risk_level": "High",
+                "compliance_risk_level": "High",
+                "key_findings": [
+                    {
+                        "issue": "Board member resignations and vacant Audit Committee chair",
+                        "category": "Governance",
+                        "severity": "High",
+                        "keywords": [
+                            "resigned",
+                            "Audit Committee chair",
+                            "vacant"
+                        ]
+                    },
+                    {
+                        "issue": "FCA investigation into director independence and related-party transactions",
+                        "category": "Legal",
+                        "severity": "High",
+                        "keywords": [
+                            "FCA",
+                            "investigation",
+                            "director independence",
+                            "related-party"
+                        ]
+                    },
+                    {
+                        "issue": "CEO related-party transaction with family-owned logistics company",
+                        "category": "Compliance",
+                        "severity": "Medium",
+                        "keywords": [
+                            "related-party",
+                            "$12 million",
+                            "family member",
+                            "CEO"
+                        ]
+                    },
+                    {
+                        "issue": "Missing Conflict of Interest declarations",
+                        "category": "Compliance",
+                        "severity": "Medium",
+                        "keywords": [
+                            "Conflict of Interest",
+                            "not yet filed",
+                            "three senior executives"
+                        ]
+                    },
+                    {
+                        "issue": "Going concern emphasis in audit report",
+                        "category": "Accounting",
+                        "severity": "High",
+                        "keywords": [
+                            "going concern",
+                            "emphasis-of-matter",
+                            "substantial doubt"
+                        ]
+                    }
+                ],
+                "non_disclosures": [],
+                "confidence_score_range": [
+                    0.6,
+                    1.0
+                ]
+            },
+            "research": {
+                "min_query_count": 3,
+                "expected_topics": [
+                    "class-action lawsuit",
+                    "FCA investigation",
+                    "debt restructuring",
+                    "competitor market share"
+                ]
+            },
+            "master": {
+                "expected_sections": [
+                    "Executive Summary",
+                    "Risk Assessment",
+                    "Sentiment",
+                    "Governance",
+                    "Recommendation"
+                ],
+                "expected_risk_level": "High",
+                "expected_outlook": "Bearish"
+            }
+        }
+    },
+    {
+        "test_id": "TC-003",
+        "description": "Ambiguous fintech with good revenue growth but regulatory concerns and mixed signals",
+        "earnings_report": "FINEDGE CAPITAL LTD\nQuarterly Earnings Report — Q3 FY2025\nPeriod Ending: September 30, 2025\n\nFINANCIAL HIGHLIGHTS\n\nRevenue for Q3 FY2025 was $890 million, an increase of 18% year-over-year, primarily driven by strong growth in our Digital Payments and Lending Platform segments. However, revenue growth decelerated from 26% in Q1 and 22% in Q2, reflecting market saturation in several key geographies.\n\nGross margin was 54.3%, relatively flat compared to 55.1% in the prior-year quarter. Net income was $78 million, or $0.62 per diluted share, compared to $72 million, or $0.57 per diluted share, in Q3 FY2024. On an adjusted basis, excluding $35 million in regulatory compliance costs and $20 million in acquisition integration expenses, adjusted net income was $133 million.\n\nOperating cash flow was $145 million. Total debt stands at $1.8 billion against total equity of $2.4 billion, giving a debt-to-equity ratio of 0.75. Cash and equivalents were $620 million at quarter end.\n\nSEGMENT PERFORMANCE\n\nDigital Payments: Revenue of $480 million (+24% YoY). Total Payment Volume (TPV) reached $42 billion, up 28% year-over-year. Take rate compressed by 8 basis points to 1.14% due to pricing pressure in the SMB segment.\n\nLending Platform: Revenue of $290 million (+19% YoY). Loan originations grew 15% to $3.8 billion. However, the 90+ day delinquency rate increased to 3.2% from 2.4% in the prior-year quarter. Provision for credit losses was $42 million, up 45% year-over-year.\n\nWealth Management: Revenue of $120 million (+2% YoY). Assets Under Management (AUM) were flat at $18 billion. Client churn increased to 12% from 9%, attributed to competitive robo-advisory offerings from larger incumbents.\n\nEXECUTIVE COMMENTARY\n\nCEO James Liu stated: 'FinEdge continues to execute on its strategy to become the leading integrated financial platform for mid-market enterprises. Our Digital Payments momentum remains strong, and our lending business is scaling as planned. We are confident in our ability to navigate the current regulatory environment while delivering sustainable growth.'\n\nCEO Liu also mentioned: 'We are in active discussions with regulators in three jurisdictions regarding our lending license applications. We expect resolution on at least two of these by the end of Q1 FY2026.'\n\nCFO Priya Sharma commented: 'Our financial position is solid. We proactively increased our loan loss provisions to reflect the changing credit environment. Our capital ratios remain well above regulatory minimums, and we have significant headroom on our credit facilities.'\n\nCFO Sharma added: 'I want to be transparent about the headwinds we face. Payment take rates are under pressure, and our wealth management business needs revitalization. We are exploring strategic options for this segment.'\n\nRISK FACTORS\n\n- Revenue growth deceleration across all segments (from 26% to 18% over three quarters)\n- Rising delinquency rates in the lending portfolio (3.2% vs 2.4% YoY)\n- Pending lending license applications in three jurisdictions create operational uncertainty\n- Payment take rate compression due to increasing competitive intensity\n- Regulatory compliance costs of $35 million this quarter, expected to increase\n- Integration risk from two acquisitions completed in the past 12 months\n- Concentration risk: Digital Payments represents 54% of total revenue\n\nREGULATORY AND LEGAL MATTERS\n\nThe Monetary Authority of Singapore (MAS) issued a formal advisory to the company regarding deficiencies in its Anti-Money Laundering (AML) transaction monitoring systems. The company has engaged external consultants from KPMG and committed to a $25 million remediation program to be completed by June 2026.\n\nThe company received a Notice of Inquiry from the Australian Securities and Investments Commission (ASIC) regarding marketing practices for its buy-now-pay-later (BNPL) product. The inquiry is in its preliminary stages.\n\nFinEdge's application for a digital banking license in Malaysia is pending with Bank Negara Malaysia. A decision is expected in Q1 FY2026. The outcome is uncertain and could impact our growth strategy in Southeast Asia.\n\nThere are no class-action lawsuits or material litigation pending against the company.\n\nGUIDANCE\n\nFor Q4 FY2025, we expect:\n- Revenue of $900 million to $940 million (15-20% YoY growth)\n- Adjusted operating margin of 18-20%\n- Provision for credit losses of $45 million to $55 million\n\nFull-year FY2025 revenue guidance is maintained at $3.4 billion to $3.5 billion.\n\nCORPORATE GOVERNANCE\n\nThe Board of Directors has 10 members, 7 of whom are independent. The Risk Committee was expanded during the quarter to include an additional member with regulatory compliance expertise, in response to the MAS advisory.\n\nThe company's external auditor is Ernst & Young LLP. There were no qualifications or emphasis-of-matter paragraphs in the most recent audit opinion.\n\nDuring the quarter, the company established a dedicated Regulatory Affairs office reporting directly to the Board. The Chief Compliance Officer role was elevated to a C-suite position.\n\nExecutive compensation clawback provisions were strengthened during the quarter to include regulatory compliance failures as a trigger event.\n\nNote: The company has not yet published its annual ESG report for FY2024, which was due in August 2025. Management has indicated the report will be published by November 2025.",
+        "ground_truth": {
+            "risk": {
+                "overall_risk_rating": "Medium",
+                "liquidity_score_range": [
+                    0.4,
+                    0.7
+                ],
+                "key_risk_factors": [
+                    {
+                        "factor": "Revenue growth deceleration",
+                        "severity": "Medium",
+                        "keywords": [
+                            "deceleration",
+                            "26%",
+                            "18%",
+                            "growth"
+                        ]
+                    },
+                    {
+                        "factor": "Rising loan delinquency rates",
+                        "severity": "Medium",
+                        "keywords": [
+                            "delinquency",
+                            "3.2%",
+                            "2.4%",
+                            "credit losses"
+                        ]
+                    },
+                    {
+                        "factor": "MAS AML deficiency advisory",
+                        "severity": "Medium",
+                        "keywords": [
+                            "MAS",
+                            "AML",
+                            "deficiencies",
+                            "remediation"
+                        ]
+                    },
+                    {
+                        "factor": "Pending lending licenses in 3 jurisdictions",
+                        "severity": "Medium",
+                        "keywords": [
+                            "lending license",
+                            "pending",
+                            "three jurisdictions"
+                        ]
+                    },
+                    {
+                        "factor": "Payment take rate compression",
+                        "severity": "Medium",
+                        "keywords": [
+                            "take rate",
+                            "compressed",
+                            "8 basis points"
+                        ]
+                    },
+                    {
+                        "factor": "Segment concentration in Digital Payments",
+                        "severity": "Low",
+                        "keywords": [
+                            "concentration",
+                            "54%",
+                            "Digital Payments"
+                        ]
+                    }
+                ],
+                "confidence_score_range": [
+                    0.5,
+                    0.9
+                ]
+            },
+            "sentiment": {
+                "overall_sentiment_score": "Neutral",
+                "executive_confidence": "Moderate",
+                "forward_outlook": "Neutral",
+                "key_signals": [
+                    {
+                        "signal": "Revenue guidance maintained but not raised",
+                        "sentiment": "Neutral",
+                        "keywords": [
+                            "maintained",
+                            "guidance",
+                            "$3.4 billion"
+                        ]
+                    },
+                    {
+                        "signal": "CFO transparency about headwinds",
+                        "sentiment": "Negative",
+                        "keywords": [
+                            "transparent",
+                            "headwinds",
+                            "pressure",
+                            "revitalization"
+                        ]
+                    },
+                    {
+                        "signal": "CEO confidence in navigating regulation",
+                        "sentiment": "Positive",
+                        "keywords": [
+                            "confident",
+                            "navigate",
+                            "regulatory environment"
+                        ]
+                    },
+                    {
+                        "signal": "Exploring strategic options for wealth management",
+                        "sentiment": "Negative",
+                        "keywords": [
+                            "exploring strategic options",
+                            "wealth management"
+                        ]
+                    },
+                    {
+                        "signal": "Strong Digital Payments momentum",
+                        "sentiment": "Positive",
+                        "keywords": [
+                            "momentum",
+                            "strong",
+                            "TPV",
+                            "28%"
+                        ]
+                    }
+                ]
+            },
+            "governance": {
+                "governance_risk_level": "Medium",
+                "compliance_risk_level": "High",
+                "key_findings": [
+                    {
+                        "issue": "MAS formal advisory on AML deficiencies",
+                        "category": "Compliance",
+                        "severity": "High",
+                        "keywords": [
+                            "MAS",
+                            "AML",
+                            "deficiencies",
+                            "formal advisory"
+                        ]
+                    },
+                    {
+                        "issue": "ASIC inquiry into BNPL marketing practices",
+                        "category": "Legal",
+                        "severity": "Medium",
+                        "keywords": [
+                            "ASIC",
+                            "Notice of Inquiry",
+                            "BNPL",
+                            "marketing"
+                        ]
+                    },
+                    {
+                        "issue": "Delayed ESG report publication",
+                        "category": "Governance",
+                        "severity": "Low",
+                        "keywords": [
+                            "ESG report",
+                            "not yet published",
+                            "due in August"
+                        ]
+                    }
+                ],
+                "non_disclosures": [
+                    "Detail on AML remediation milestones"
+                ],
+                "confidence_score_range": [
+                    0.5,
+                    0.9
+                ]
+            },
+            "research": {
+                "min_query_count": 3,
+                "expected_topics": [
+                    "MAS AML enforcement",
+                    "BNPL regulation",
+                    "fintech lending delinquency",
+                    "digital banking license"
+                ]
+            },
+            "master": {
+                "expected_sections": [
+                    "Executive Summary",
+                    "Risk Assessment",
+                    "Sentiment",
+                    "Governance",
+                    "Recommendation"
+                ],
+                "expected_risk_level": "Medium",
+                "expected_outlook": "Neutral"
+            }
+        }
+    }
+]

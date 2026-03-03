@@ -1,0 +1,209 @@
+{
+  "run_timestamp": "2026-03-03_200717",
+  "tests_requested": [
+    "all"
+  ],
+  "test_cases": [
+    {
+      "test_id": "TC-001",
+      "description": "Healthy tech company with strong growth and clean governance",
+      "ground_truth": {
+        "risk": {
+          "overall_risk_rating": "Low",
+          "liquidity_score_range": [
+            0.7,
+            1.0
+          ],
+          "key_risk_factors": [
+            {
+              "factor": "AI market competition from hyperscalers",
+              "severity": "Medium",
+              "keywords": [
+                "competition",
+                "hyperscaler",
+                "AI"
+              ]
+            },
+            {
+              "factor": "Customer concentration",
+              "severity": "Low",
+              "keywords": [
+                "customer concentration",
+                "top 10",
+                "18%"
+              ]
+            },
+            {
+              "factor": "Foreign exchange risk",
+              "severity": "Low",
+              "keywords": [
+                "foreign exchange",
+                "currency",
+                "35%"
+              ]
+            },
+            {
+              "factor": "EU AI regulatory uncertainty",
+              "severity": "Low",
+              "keywords": [
+                "regulatory",
+                "EU",
+                "AI governance"
+              ]
+            }
+          ],
+          "confidence_score_range": [
+            0.6,
+            1.0
+          ]
+        },
+        "sentiment": {
+          "overall_sentiment_score": "Positive",
+          "executive_confidence": "High",
+          "forward_outlook": "Bullish",
+          "key_signals": [
+            {
+              "signal": "Raised full-year revenue guidance",
+              "sentiment": "Positive",
+              "keywords": [
+                "raising",
+                "guidance",
+                "$9.2 billion"
+              ]
+            },
+            {
+              "signal": "Unprecedented AI demand",
+              "sentiment": "Positive",
+              "keywords": [
+                "unprecedented demand",
+                "AI Services",
+                "accelerating"
+              ]
+            },
+            {
+              "signal": "Strong share buyback program",
+              "sentiment": "Positive",
+              "keywords": [
+                "$1.5 billion",
+                "buyback",
+                "returning capital"
+              ]
+            },
+            {
+              "signal": "Aggressive R&D investment",
+              "sentiment": "Positive",
+              "keywords": [
+                "investing aggressively",
+                "R&D",
+                "competitive edge"
+              ]
+            }
+          ]
+        },
+        "governance": {
+          "governance_risk_level": "Low",
+          "compliance_risk_level": "Low",
+          "key_findings": [],
+          "non_disclosures": [],
+          "confidence_score_range": [
+            0.6,
+            1.0
+          ]
+        },
+        "research": {
+          "min_query_count": 3,
+          "expected_topics": [
+            "AI competition",
+            "regulatory",
+            "market share"
+          ]
+        },
+        "master": {
+          "expected_sections": [
+            "Executive Summary",
+            "Risk Assessment",
+            "Sentiment",
+            "Governance",
+            "Recommendation"
+          ],
+          "expected_risk_level": "Low",
+          "expected_outlook": "Bullish"
+        }
+      },
+      "agent_outputs": {
+        "risk": "{\n  \"overall_risk_rating\": \"Medium\",\n  \"liquidity_score\": 3.3,\n  \"key_risk_factors\": [\n    {\n      \"factor\": \"Increasing competition in the AI services market\",\n      \"impact\": \"Potential market share loss\",\n      \"severity\": \"High\",\n      \"evidence\": \"Increasing competition from hyperscalers\"\n    },\n    {\n      \"factor\": \"Customer concentration\",\n      \"impact\": \"Revenue volatility\",\n      \"severity\": \"Medium\",\n      \"evidence\": \"Top 10 customers represent 18% of total revenue\"\n    },\n    {\n      \"factor\": \"Foreign exchange headwinds\",\n      \"impact\": \"Potentially lower profitability\",\n      \"severity\": \"Low\",\n      \"evidence\": \"35% of revenue generated outside the United States\"\n    },\n    {\n      \"factor\": \"Regulatory uncertainty around AI governance\",\n      \"impact\": \"Uncertainty over future compliance and impact\",\n      \"severity\": \"High\",\n      \"evidence\": \"Uncertainty around AI governance in the European Union\"\n    }\n  ],\n  \"watchlist\": [\n    \"AI market competition\",\n    \"Customer concentration risk\",\n    \"Regulatory environment\",\n    \"Foreign exchange risk\"\n  ],\n  \"confidence_score\": 3.5\n}",
+        "sentiment": "{\n  \"overall_sentiment_score\": \"Positive\",\n  \"executive_confidence\": \"High\",\n  \"forward_outlook\": \"Bullish\",\n  \"key_signals\": [\n    {\n      \"signal\": \"Revenue growth and strong cash flow\",\n      \"sentiment\": \"Positive\",\n      \"evidence\": \"Revenue of $2.4 billion with a growth of 22% YoY and operating cash flow of $580 million.\",\n      \"explanation\": \"Demonstrates company’s strong financial health.\"\n    },\n    {\n      \"signal\": \"Confidence in future growth\",\n      \"sentiment\": \"Positive\",\n      \"evidence\": \"For Q4 FY2025, we expect revenue of $2.5 billion to $2.6 billion (20-25% YoY growth).\",\n      \"explanation\": \"Management's optimistic outlook on future growth.\"\n    },\n    {\n      \"signal\": \"Strong financial position\",\n      \"sentiment\": \"Positive\",\n      \"evidence\": \"Ending the quarter with $3.1 billion in cash and short-term investments and total debt of $1.2 billion, resulting in a net cash position of $1.9 billion.\",\n      \"explanation\": \"Highlights the company's robust financial stability.\"\n    }\n  ],\n  \"language_patterns\": [\"Repetitive use of financial jargon\"],\n  \"transparency_score\": 0.8\n}",
+        "governance": "{\n  \"governance_risk_level\": \"Low\",\n  \"compliance_risk_level\": \"Low\",\n  \"key_findings\": [\n    {\n      \"issue\": \"No pending legal proceedings were disclosed.\",\n      \"category\": \"Legal\",\n      \"severity\": \"Low\",\n      \"evidence\": \"No pending legal proceedings that management believes would have a material adverse effect on the company's financial condition.\",\n      \"impact\": \"No impact on creditworthiness.\"\n    },\n    {\n      \"issue\": \"No material ESG risks were disclosed.\",\n      \"category\": \"Governance\",\n      \"severity\": \"Low\",\n      \"evidence\": \"No related-party transactions were disclosed beyond the regulatory requirements.\",\n      \"impact\": \"No specific impact on creditworthiness.\"\n    }\n  ],\n  \"non_disclosures\": [\"No material ESG risks were disclosed.\", \"No significant governance issues were disclosed.\"],\n  \"confidence_score\": 0.8,\n  \"limitations\": \"Limited information provided regarding governance and compliance risks.\"\n}",
+        "research": "{\n  \"thinking_trace\": \"The provided earnings report is comprehensive but lacks critical external data points that would provide a more thorough analysis. For instance, competitor benchmarks and market share are not directly stated, making it necessary to research externally. The macroeconomic context affecting the industry is not discussed explicitly, nor are the specific risk factors detailed enough to fully understand their impact. Unresolved questions from the analyst call are likely to contain critical information that is not directly addressed in the report.\",\n  \"search_queries\": [\n    {\n      \"topic\": \"Competitor Benchmarks\",\n      \"query\": \"Current market share and revenue figures of major competitors in the AI services market\",\n      \"rationale\": \"To understand the competitive landscape and the company's position relative to peers\",\n      \"status\": \"pending\",\n      \"result\": null\n    },\n    {\n      \"topic\": \"Macroeconomic Context\",\n      \"query\": \"Latest macroeconomic indicators affecting the tech industry\",\n      \"rationale\": \"To understand the macroeconomic environment influencing the company's performance\",\n      \"status\": \"pending\",\n      \"result\": null\n    },\n    {\n      \"topic\": \"Pending Legal Proceedings\",\n      \"query\": \"Detailed list of pending legal cases filed against the company\",\n      \"rationale\": \"To verify the statement that there are no material pending legal proceedings\",\n      \"status\": \"pending\",\n      \"result\": null\n    },\n    {\n      \"topic\": \"Unanswered Questions\",\n      \"query\": \"Specific questions from the analyst call that require clarification\",\n      \"rationale\": \"To address the analyst call's unresolved questions\",\n      \"status\": \"pending\",\n      \"result\": null\n    }\n  ],\n  \"confidence_gap\": \"The biggest unknown is the exact nature and impact of the regulatory uncertainty around AI governance in the European Union.\"\n}",
+        "discussion": [
+          {
+            "agent": "Risk Analyst",
+            "content": "I see your point on the company's strong financial position and future outlook, but let's also consider the potential risks highlighted in the report. For instance, the increasing competition from hyperscalers in the AI services market could be a significant challenge. The top 10 customers represent 18% of the total revenue, indicating a high concentration risk. This is supported by the fact that \"Regulatory uncertainty around AI governance in the European Union\" is noted as a risk factor. Adding to your point on financial stability, while the net cash position of $1.9 billion is impressive, it's important to monitor the debt-to-equity ratio of 0.18 closely as it reflects the company's financial leverage.",
+            "round": 1
+          },
+          {
+            "agent": "Sentiment Analyst",
+            "content": "I see your point on the potential risks highlighted in the report, particularly regarding the increasing competition from hyperscalers and the high concentration risk among top customers. However, adding to your point on financial stability, while these are valid concerns, the company's strong financial metrics suggest resilience. For instance, their operating cash flow of $580 million and free cash flow of $420 million indicate robust liquidity and financial health. The debt-to-equity ratio of 0.18, while reflecting financial leverage, is still within a relatively safe range.",
+            "round": 1
+          },
+          {
+            "agent": "Governance Analyst",
+            "content": "I see your point on the company's strong financial position, but let's consider the potential risks highlighted in the report. For instance, the increasing competition from hyperscalers in the AI services market could be a significant challenge, as indicated by the revenue growth rate of AI Services segment being only 45% YoY. Additionally, the top 10 customers represent 18% of the total revenue, which underscores high concentration risk, consistent with the fact that \"Regulatory uncertainty around AI governance in the European Union\" is noted as a risk factor.\n\nAdding to your point on financial stability, while the net cash position of $1.9 billion is impressive, it's important to closely monitor the debt-to-equity ratio of 0.18. This ratio reflects the company's financial leverage and, although it's within a relatively safe range, it still reflects the company's risk exposure.",
+            "round": 1
+          },
+          {
+            "agent": "Risk Analyst",
+            "content": "I see your point on the increasing competition from hyperscalers and the top 10 customers representing 18% of total revenue, which indeed highlights potential risks. However, adding to your point on financial stability, while the debt-to-equity ratio of 0.18 is concerning, it’s important to note that this ratio reflects the company's financial leverage and is within a relatively safe range. For instance, the strong cash position of $1.9 billion and the robust free cash flow of $420 million indicate that the company maintains a solid financial cushion. Nonetheless, closely monitoring the debt-to-equity ratio is crucial to ensure sustainable growth.",
+            "round": 2
+          },
+          {
+            "agent": "Sentiment Analyst",
+            "content": "Adding to your point on the debt-to-equity ratio, while the company's current ratio of 0.18 is within a relatively safe range, it's important to note that this metric reflects the company’s financial leverage. For instance, the strong cash position of $1.9 billion underscores financial stability, but the debt of $1.2 billion remains a critical factor. Closely monitoring the debt-to-equity ratio is indeed crucial to ensure sustainable growth, as highlighted in the report's emphasis on maintaining a solid financial cushion.",
+            "round": 2
+          },
+          {
+            "agent": "Governance Analyst",
+            "content": "Adding to your point on the debt-to-equity ratio, while the company's current ratio of 0.18 is within a relatively safe range, I see your emphasis on financial stability but would like to highlight that the debt of $1.2 billion still represents a significant portion of the company's assets. Closely monitoring the debt-to-equity ratio is indeed crucial to ensure sustainable growth. For instance, the strong cash position of $1.9 billion underscores financial stability, but it’s important to ensure that this liquidity is not overly allocated to debt servicing.",
+            "round": 2
+          },
+          {
+            "agent": "Risk Analyst",
+            "content": "Adding to your point on the debt-to-equity ratio, while the current debt of $1.2 billion is a significant portion of the assets, I see your emphasis on financial stability but would like to highlight the importance of maintaining a healthy liquidity coverage ratio. For instance, the company's debt-to-equity ratio of 0.18 reflects a manageable debt level, but ensuring that liquidity remains robust, such as maintaining a current ratio of at least 1.5 or higher, is crucial. This would ensure that the company can withstand potential market downturns or financing demands without jeopardizing its financial health.",
+            "round": 3
+          },
+          {
+            "agent": "Sentiment Analyst",
+            "content": "I see your point on the debt-to-equity ratio, but let's consider the company's liquidity position. While the debt-to-equity ratio of 0.18 is indeed a positive indicator, maintaining robust liquidity is crucial. For instance, the company ended the quarter with $3.1 billion in cash and short-term investments, which is substantial. However, ensuring that the current ratio remains healthy, ideally above 1.5, is essential. This would provide a buffer to withstand potential market downturns or financing demands. For instance, their operating cash flow of $580 million further supports a strong liquidity position, making them well-positioned to manage through any challenges.",
+            "round": 3
+          },
+          {
+            "agent": "Governance Analyst",
+            "content": "I see your point on the debt-to-equency ratio and liquidity, but let's focus on the specific metrics provided in the report. The company ended the quarter with $3.1 billion in cash and short-term investments, and their operating cash flow was $580 million. While these figures reflect robust liquidity, ensuring that the current ratio remains healthy is crucial. For instance, maintaining a current ratio above 1.5 is essential. This would provide a buffer to withstand potential market downturns or financing demands. For example, their current ratio would need to be higher than 1.5 to ensure financial resilience.\n\nAdding to your point on liquidity, I see your emphasis on the company's strong cash position. However, the report does not explicitly provide the current ratio metric. Therefore, listing the current ratio as a non-disclosure is necessary.",
+            "round": 3
+          }
+        ],
+        "master": "# 📊 EARNINGS ANALYSIS REPORT\n\n## Executive Summary\nNOVATECH SOLUTIONS INC. posted strong financial performance with revenue growth and robust cash flow metrics. However, increasing competition and customer concentration remain significant risks. The company maintains a solid financial cushion but faces critical governance and compliance risks, particularly regarding regulatory uncertainty around AI governance in the European Union.\n\n## Financial Stability\n- **Revenue Metrics:** AI Services segment saw significant growth at 45% YoY.\n- **Liquidity:** Current cash position stands at $1.9 billion with a robust operating cash flow of $580 million.\n- **Financial Leverage:** Debt-to-equity ratio stands at 0.18, indicating manageable debt levels.\n- **Critical Focus:** Current ratio should be maintained above 1.5 to ensure financial resilience.\n\n## Critical Risk Factors\n### Competition\n- Increasing competition from hyperscalers poses a significant threat.\n- Top 10 customers represent 18% of total revenue, highlighting high concentration risk.\n\n### Governance & Compliance\n- Regulatory uncertainty around AI governance in the European Union remains unresolved.\n- No material ESG risks were disclosed beyond regulatory requirements.\n- Limited information provided regarding governance and compliance risks.\n\n## Resolved Disagreements\n- **Debt-to-Equity Ratio:** Both risk and sentiment analysts agree that a current ratio above 1.5 is crucial for financial resilience.\n- **Liquidity:** Both risk and sentiment analysts stress the importance of maintaining a robust current ratio to ensure financial stability.\n\n## External Research Findings\n- Unresolved macroeconomic context affecting the tech industry.\n- Unresolved regulatory uncertainty around AI governance in the European Union.\n- Unresolved pending legal proceedings.\n\n## Resolved Disagreements\n- **Debt-to-Equity Ratio:** Risk Analyst: 0.18 ratio is manageable but critical to maintain liquidity above 1.5.\n- **Liquidity:** Sentiment Analyst: Robust cash position ($1.9 billion) further underscores financial stability.\n\n## Summary of Findings\n- **Strengthened Financial Metrics:** Despite solid financial metrics, critical governance and compliance risks must be monitored closely.\n- **Critical Risks:** Regulatory uncertainty and unresolved macroeconomic context are critical unknowns.\n- **Liquidity:** Current ratio should be maintained above 1.5 to ensure financial resilience.\n\n## Recommendations\n- **Monitor Liquidity:** Closely monitor the current ratio to ensure financial resilience.\n- **Strengthen Governance:** Address unresolved macroeconomic and regulatory risks through external research.\n- **Monitor Compliance:** Ensure transparency around unresolved risks and provide clarity.\n\n---\n\n**Final Report** synthesizes all findings and recommendations based on the analysts' discussions and research gaps. Critical risks such as regulatory uncertainty remain unresolved and should be addressed externally. Maintaining liquidity above 1.5 is crucial to ensure financial resilience amidst critical governance and compliance risks."
+      },
+      "evaluations": {
+        "schema_integrity": {
+          "status": "not_implemented"
+        },
+        "reference_based": {
+          "status": "not_implemented"
+        },
+        "section_completeness": {
+          "status": "not_implemented"
+        },
+        "warroom": {
+          "status": "not_implemented"
+        },
+        "query_diversity": {
+          "status": "not_implemented"
+        },
+        "variance": {
+          "status": "not_implemented"
+        }
+      }
+    }
+  ]
+}
