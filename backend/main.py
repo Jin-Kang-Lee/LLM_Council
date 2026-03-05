@@ -16,7 +16,7 @@ from sse_starlette.sse import EventSourceResponse
 
 from document_parser import parse_earnings_content, format_for_agents
 from workflow import analysis_workflow, AnalysisState
-from agents import RiskAgent, SentimentAgent, MasterAgent
+from agents import RiskAgent, SentimentAgent, MasterAgent, GovernanceAgent, DeepResearchAgent
 from config import API_HOST, API_PORT, MAX_DISCUSSION_ROUNDS
 
 
@@ -99,7 +99,7 @@ async def health_check():
     return {
         "status": "healthy",
         "ollama": ollama_status,
-        "agents": ["RiskAgent", "SentimentAgent", "MasterAgent"]
+        "agents": ["RiskAgent", "SentimentAgent", "GovernanceAgent", "MasterAgent"]
     }
 
 
@@ -183,10 +183,11 @@ async def stream_analysis(session_id: str):
         """Generate SSE events for the analysis workflow."""
         import traceback
         try:
-            # Initialize agents
             print(f"Initializing agents for session {session_id}...")
             risk_agent = RiskAgent()
             sentiment_agent = SentimentAgent()
+            governance_agent = GovernanceAgent()
+            deep_research_agent = DeepResearchAgent()
             master_agent = MasterAgent()
             print("Agents initialized")
 
@@ -232,7 +233,9 @@ async def stream_analysis(session_id: str):
                 "data": json.dumps({
                     "agent": "risk",
                     "status": "complete",
-                    "content": risk_analysis
+                    "content": risk_analysis,
+                    "reference_context": getattr(risk_agent, "last_reference_context", ""),
+                    "reference_query": getattr(risk_agent, "last_reference_query", "")
                 })
             }
 
@@ -255,7 +258,68 @@ async def stream_analysis(session_id: str):
                 "data": json.dumps({
                     "agent": "sentiment",
                     "status": "complete",
-                    "content": sentiment_analysis
+                    "content": sentiment_analysis,
+                    "reference_context": getattr(sentiment_agent, "last_reference_context", ""),
+                    "reference_query": getattr(sentiment_agent, "last_reference_query", "")
+                })
+            }
+
+            # Run governance analysis
+            print("Governance Agent starting analysis...")
+            yield {
+                "event": "agent",
+                "data": json.dumps({
+                    "agent": "governance",
+                    "status": "thinking",
+                    "message": "Governance Analyst is analyzing..."
+                })
+            }
+
+            governance_analysis = await governance_agent.analyze(parsed_content)
+            print("Governance Agent analysis complete")
+
+            yield {
+                "event": "agent",
+                "data": json.dumps({
+                    "agent": "governance",
+                    "status": "complete",
+                    "content": governance_analysis,
+                    "reference_context": getattr(governance_agent, "last_reference_context", ""),
+                    "reference_query": getattr(governance_agent, "last_reference_query", "")
+                })
+            }
+
+            # Run deep research
+            yield {
+                "event": "phase",
+                "data": json.dumps({
+                    "phase": 2.5,
+                    "status": "started",
+                    "message": "Analytic gaps identified. Initiating deep research..."
+                })
+            }
+
+            print("Deep Research Agent starting analysis...")
+            yield {
+                "event": "agent",
+                "data": json.dumps({
+                    "agent": "research",
+                    "status": "thinking",
+                    "message": "Deep Research Analyst is identifying gaps..."
+                })
+            }
+
+            research_analysis = await deep_research_agent.analyze(parsed_content)
+            print("Deep Research Agent analysis complete")
+
+            yield {
+                "event": "agent",
+                "data": json.dumps({
+                    "agent": "research",
+                    "status": "complete",
+                    "content": research_analysis,
+                    "reference_context": getattr(deep_research_agent, "last_reference_context", ""),
+                    "reference_query": getattr(deep_research_agent, "last_reference_query", "")
                 })
             }
 
@@ -298,10 +362,10 @@ async def stream_analysis(session_id: str):
                         parsed_content
                     )
                 else:
-                    last_sentiment = discussion_messages[-1]["content"]
+                    last_msg = discussion_messages[-1]["content"]
                     discussion_prompt = risk_agent.respond_to(
                         "Sentiment Analyst",
-                        last_sentiment,
+                        last_msg,
                         parsed_content
                     )
 
@@ -346,6 +410,30 @@ async def stream_analysis(session_id: str):
                     })
                 }
 
+                # Governance agent responds
+                discussion_prompt = governance_agent.respond_to(
+                    "Risk and Sentiment Analysts",
+                    f"Risk says: {risk_response}\n\nSentiment says: {sentiment_response}",
+                    parsed_content
+                )
+
+                gov_response = await governance_agent.generate(parsed_content, discussion_prompt)
+                discussion_messages.append({
+                    "agent": "Governance Analyst",
+                    "content": gov_response,
+                    "round": round_num
+                })
+
+                yield {
+                    "event": "message",
+                    "data": json.dumps({
+                        "agent": "governance",
+                        "agentName": "Governance Analyst",
+                        "content": gov_response,
+                        "round": round_num
+                    })
+                }
+
                 yield {
                     "event": "discussion",
                     "data": json.dumps({
@@ -383,6 +471,8 @@ async def stream_analysis(session_id: str):
                 parsed_content,
                 risk_analysis,
                 sentiment_analysis,
+                governance_analysis,
+                research_analysis,
                 discussion_transcript
             )
             print("Final report generated")
@@ -422,7 +512,6 @@ async def stream_analysis(session_id: str):
                 })
             }
         finally:
-            # Clean up session
             if session_id in active_sessions:
                 del active_sessions[session_id]
 

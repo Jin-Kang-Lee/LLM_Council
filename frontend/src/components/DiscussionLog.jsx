@@ -1,31 +1,39 @@
 import React, { useEffect, useRef } from 'react';
-import { ShieldAlert, Heart, MessageCircle } from 'lucide-react';
+import { ShieldAlert, Heart, MessageCircle, Gavel } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 
 function MessageBubble({ message }) {
-    const isRisk = message.agent === 'risk';
+    const getAgentStyles = () => {
+        switch (message.agent) {
+            case 'risk':
+                return { color: 'bg-red-600', text: 'text-red-400', border: 'border-red-900/30', icon: ShieldAlert };
+            case 'sentiment':
+                return { color: 'bg-emerald-600', text: 'text-emerald-400', border: 'border-emerald-900/30', icon: Heart };
+            case 'governance':
+                return { color: 'bg-purple-600', text: 'text-purple-400', border: 'border-purple-900/30', icon: Gavel };
+            default:
+                return { color: 'bg-zinc-600', text: 'text-zinc-400', border: 'border-zinc-900/30', icon: MessageCircle };
+        }
+    };
+
+    const styles = getAgentStyles();
+    const isPrimary = message.agent === 'risk'; // Left-aligned
 
     return (
-        <div className={`flex gap-3 ${isRisk ? '' : 'flex-row-reverse'}`}>
+        <div className={`flex gap-3 ${isPrimary ? '' : 'flex-row-reverse'}`}>
             <div className={`
         flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center
-        ${isRisk ? 'bg-red-600' : 'bg-emerald-600'}
+        ${styles.color}
       `}>
-                {isRisk
-                    ? <ShieldAlert className="w-5 h-5 text-white" />
-                    : <Heart className="w-5 h-5 text-white" />
-                }
+                <styles.icon className="w-5 h-5 text-white" />
             </div>
 
             <div className={`
-        flex-1 max-w-[80%] rounded-2xl px-4 py-3
-        ${isRisk
-                    ? 'bg-zinc-800/50 border border-red-900/30 rounded-tl-md'
-                    : 'bg-zinc-800/50 border border-emerald-900/30 rounded-tr-md'
-                }
+        flex-1 max-w-[80%] rounded-2xl px-4 py-3 bg-zinc-800/50 border ${styles.border}
+        ${isPrimary ? 'rounded-tl-md' : 'rounded-tr-md'}
       `}>
                 <div className="flex items-center gap-2 mb-2">
-                    <span className={`text-sm font-medium ${isRisk ? 'text-red-400' : 'text-emerald-400'}`}>
+                    <span className={`text-sm font-medium ${styles.text}`}>
                         {message.agentName}
                     </span>
                     <span className="text-xs text-zinc-600">Round {message.round}</span>
@@ -54,8 +62,7 @@ function DiscussionLog({ messages, isActive }) {
                     <MessageCircle className="w-4 h-4 text-white" />
                 </div>
                 <div className="flex-1">
-                    <h3 className="font-medium text-zinc-200">Agent Discussion</h3>
-                    <p className="text-xs text-zinc-500">Risk vs Sentiment Analysis</p>
+                    <h3 className="font-medium text-zinc-200">Council Discussion</h3>
                 </div>
                 {isActive && (
                     <div className="flex items-center gap-2 px-3 py-1 bg-indigo-600/20 rounded-full">

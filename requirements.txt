@@ -1,0 +1,15 @@
+fastapi
+uvicorn[standard]
+python-multipart
+langchain
+langchain-core
+langchain-community
+langgraph
+pydantic
+httpx
+llama-cloud
+llama-index-core
+llama-index
+python-dotenv
+sse-starlette
+requests

@@ -107,6 +107,7 @@ async def pdf_to_markdown(
 
         # Local PDF text extraction fallback
         text_pages = []
+
         with open(target_path, "rb") as f:
             reader = PdfReader(f)
             for page in reader.pages:

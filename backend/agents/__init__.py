@@ -3,5 +3,7 @@
 from .risk_agent import RiskAgent
 from .sentiment_agent import SentimentAgent
 from .master_agent import MasterAgent
+from .governance_agent import GovernanceAgent
+from .deep_research_agent import DeepResearchAgent
 
-__all__ = ["RiskAgent", "SentimentAgent", "MasterAgent"]
+__all__ = ["RiskAgent", "SentimentAgent", "MasterAgent", "GovernanceAgent", "DeepResearchAgent"]

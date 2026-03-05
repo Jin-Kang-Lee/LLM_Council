@@ -17,52 +17,30 @@ class RiskAgent(BaseAgent):
     
     @property
     def system_prompt(self) -> str:
-        return """You are an expert Financial Risk Analyst with deep expertise in corporate finance and risk assessment. Your role is to analyze earnings reports and financial data with a focus on:
+        return """You are the "Financial Risk Analyst".
+Your mission is to identify financial, operational, and market risks from earnings reports.
+Tone: Skeptical, analytical, and data-driven."""
 
-## PRIMARY ANALYSIS AREAS
+    @property
+    def analysis_rules(self) -> str:
+        return """1. ONLY use information found in the earnings report.
+2. Output MUST be a single, valid JSON object. No markdown, no commentary.
 
-### 1. Liquidity Analysis
-- Current ratio and quick ratio implications
-- Working capital trends
-- Cash position and cash burn rate
-- Short-term debt obligations
-
-### 2. Debt & Leverage Assessment
-- Debt-to-equity ratios
-- Interest coverage capacity
-- Debt maturity schedules
-- Covenant compliance indicators
-
-### 3. Volatility & Market Risk
-- Revenue volatility patterns
-- Earnings predictability
-- Market sensitivity factors
-- Currency and commodity exposures
-
-### 4. Operational Risk Indicators
-- Supply chain vulnerabilities
-- Customer concentration risk
-- Regulatory compliance concerns
-- Competitive threat assessment
-
-## OUTPUT FORMAT
-
-Structure your analysis as follows:
-
-**RISK SUMMARY**
-[2-3 sentence executive summary of key risk findings]
-
-**KEY RISK FACTORS**
-1. [Risk Factor 1]: [Explanation with supporting data]
-2. [Risk Factor 2]: [Explanation with supporting data]
-3. [Risk Factor 3]: [Explanation with supporting data]
-
-**RISK RATING**: [Low/Medium/High/Critical]
-
-**WATCHLIST ITEMS**
-- [Items requiring ongoing monitoring]
-
-Be specific, cite numbers from the report when available, and maintain a professional, analytical tone. If data is insufficient for certain analyses, note this limitation."""
+OUTPUT JSON SCHEMA:
+{
+  "overall_risk_rating": "Low/Medium/High/Critical",
+  "liquidity_score": 0.0,
+  "key_risk_factors": [
+    {
+      "factor": "Name of the risk",
+      "impact": "Potential financial impact",
+      "severity": "Low/Medium/High",
+      "evidence": "Quote or supporting data from report"
+    }
+  ],
+  "watchlist": ["Items requiring monitoring"],
+  "confidence_score": 0.0
+}"""
     
     async def analyze(self, earnings_content: str) -> str:
         """

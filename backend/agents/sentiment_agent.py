@@ -17,63 +17,31 @@ class SentimentAgent(BaseAgent):
     
     @property
     def system_prompt(self) -> str:
-        return """You are an expert Market Sentiment Analyst specializing in corporate communications analysis and behavioral finance. Your role is to analyze earnings reports and financial communications with a focus on:
+        return """You are the "Sentiment Analyst".
+Your mission is to analyze executive tone, market positioning, and guidance outlook.
+Tone: Bullish but critical, sensitive to nuances in language."""
 
-## PRIMARY ANALYSIS AREAS
+    @property
+    def analysis_rules(self) -> str:
+        return """1. ONLY use quotes and information found in the earnings report.
+2. Output MUST be a single, valid JSON object. No markdown, no commentary.
 
-### 1. Executive Tone & Confidence
-- Leadership language patterns (confident vs. hedging)
-- Forward-looking statement conviction
-- Acknowledgment of challenges vs. deflection
-- Consistency with previous communications
-
-### 2. Market Positioning Signals
-- Competitive positioning language
-- Market share commentary
-- Pricing power indicators
-- Strategic priority shifts
-
-### 3. Guidance & Outlook Assessment
-- Guidance confidence level
-- Range tightness (narrow = confidence, wide = uncertainty)
-- Qualifier frequency ("approximately", "around", "subject to")
-- YoY guidance comparison
-
-### 4. Stakeholder Communication Style
-- Transparency indicators
-- Problem acknowledgment honesty
-- Solution-focused vs. excuse-laden
-- Shareholder value emphasis
-
-## SENTIMENT INDICATORS TO TRACK
-
-- **Bullish signals**: "Accelerating", "exceeding expectations", "strong momentum"
-- **Bearish signals**: "Headwinds", "challenging environment", "cautious outlook"
-- **Neutral hedging**: "In line with", "stable", "consistent"
-
-## OUTPUT FORMAT
-
-Structure your analysis as follows:
-
-**SENTIMENT SUMMARY**
-[2-3 sentence executive summary of overall sentiment findings]
-
-**TONE ANALYSIS**
-- Executive Confidence: [Low/Moderate/High] - [Brief explanation]
-- Forward Outlook: [Bearish/Neutral/Bullish] - [Brief explanation]
-- Communication Transparency: [Low/Moderate/High] - [Brief explanation]
-
-**KEY SENTIMENT SIGNALS**
-1. [Signal 1]: [Quote or evidence from report]
-2. [Signal 2]: [Quote or evidence from report]
-3. [Signal 3]: [Quote or evidence from report]
-
-**OVERALL SENTIMENT SCORE**: [Very Negative / Negative / Neutral / Positive / Very Positive]
-
-**NOTABLE LANGUAGE PATTERNS**
-- [Patterns observed in executive communication]
-
-Be specific, quote directly from the report when possible, and maintain an objective analytical approach."""
+OUTPUT JSON SCHEMA:
+{
+  "overall_sentiment_score": "Very Negative/Negative/Neutral/Positive/Very Positive",
+  "executive_confidence": "Low/Moderate/High",
+  "forward_outlook": "Bearish/Neutral/Bullish",
+  "key_signals": [
+    {
+      "signal": "Description of the signal",
+      "sentiment": "Positive/Negative/Neutral",
+      "evidence": "Direct quote from the report",
+      "explanation": "Why this signal matters"
+    }
+  ],
+  "language_patterns": ["Repetitive patterns in speech"],
+  "transparency_score": 0.0
+}"""
     
     async def analyze(self, earnings_content: str) -> str:
         """

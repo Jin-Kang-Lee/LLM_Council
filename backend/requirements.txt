@@ -13,3 +13,7 @@ llama-index
 python-dotenv==1.0.0
 sse-starlette==1.8.2
 PyPDF2==3.0.1
+chromadb
+sentence-transformers
+packaging==23.2
+chardet

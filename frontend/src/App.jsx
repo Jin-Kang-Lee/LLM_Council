@@ -4,7 +4,8 @@ import {
     Brain,
     FileText,
     MessageSquare,
-    CheckCircle2
+    CheckCircle2,
+    Search
 } from 'lucide-react';
 import UploadZone from './components/UploadZone';
 import AgentCards from './components/AgentCards';
@@ -12,6 +13,7 @@ import DiscussionLog from './components/DiscussionLog';
 import FinalReport from './components/FinalReport';
 import Header from './components/Header';
 import PhaseIndicator from './components/PhaseIndicator';
+import DeepResearchSpace from './components/DeepResearchSpace';
 
 const API_BASE = 'http://localhost:8000';
 
@@ -23,6 +25,20 @@ function App() {
     const [parsedContent, setParsedContent] = useState(null);
     const [riskAnalysis, setRiskAnalysis] = useState(null);
     const [sentimentAnalysis, setSentimentAnalysis] = useState(null);
+    const [governanceAnalysis, setGovernanceAnalysis] = useState(null);
+    const [researchAnalysis, setResearchAnalysis] = useState(null);
+    const [referenceContexts, setReferenceContexts] = useState({
+        risk: null,
+        sentiment: null,
+        governance: null,
+        research: null
+    });
+    const [referenceQueries, setReferenceQueries] = useState({
+        risk: null,
+        sentiment: null,
+        governance: null,
+        research: null
+    });
     const [discussionMessages, setDiscussionMessages] = useState([]);
     const [finalReport, setFinalReport] = useState(null);
 
@@ -30,6 +46,8 @@ function App() {
         parser: 'idle',
         risk: 'idle',
         sentiment: 'idle',
+        governance: 'idle',
+        research: 'idle',
         master: 'idle'
     });
 
@@ -40,12 +58,27 @@ function App() {
         setParsedContent(null);
         setRiskAnalysis(null);
         setSentimentAnalysis(null);
+        setGovernanceAnalysis(null);
+        setReferenceContexts({
+            risk: null,
+            sentiment: null,
+            governance: null,
+            research: null
+        });
+        setReferenceQueries({
+            risk: null,
+            sentiment: null,
+            governance: null,
+            research: null
+        });
         setDiscussionMessages([]);
         setFinalReport(null);
         setAgentStates({
             parser: 'idle',
             risk: 'idle',
             sentiment: 'idle',
+            governance: 'idle',
+            research: 'idle',
             master: 'idle'
         });
     }, []);
@@ -104,6 +137,12 @@ function App() {
                     if (agentData.content) {
                         setRiskAnalysis(agentData.content);
                     }
+                    if (agentData.reference_context) {
+                        setReferenceContexts(prev => ({ ...prev, risk: agentData.reference_context }));
+                    }
+                    if (agentData.reference_query) {
+                        setReferenceQueries(prev => ({ ...prev, risk: agentData.reference_query }));
+                    }
                 } else if (agentData.agent === 'sentiment') {
                     setAgentStates(prev => ({
                         ...prev,
@@ -111,6 +150,40 @@ function App() {
                     }));
                     if (agentData.content) {
                         setSentimentAnalysis(agentData.content);
+                    }
+                    if (agentData.reference_context) {
+                        setReferenceContexts(prev => ({ ...prev, sentiment: agentData.reference_context }));
+                    }
+                    if (agentData.reference_query) {
+                        setReferenceQueries(prev => ({ ...prev, sentiment: agentData.reference_query }));
+                    }
+                } else if (agentData.agent === 'governance') {
+                    setAgentStates(prev => ({
+                        ...prev,
+                        governance: agentData.status === 'complete' ? 'complete' : 'thinking'
+                    }));
+                    if (agentData.content) {
+                        setGovernanceAnalysis(agentData.content);
+                    }
+                    if (agentData.reference_context) {
+                        setReferenceContexts(prev => ({ ...prev, governance: agentData.reference_context }));
+                    }
+                    if (agentData.reference_query) {
+                        setReferenceQueries(prev => ({ ...prev, governance: agentData.reference_query }));
+                    }
+                } else if (agentData.agent === 'research') {
+                    setAgentStates(prev => ({
+                        ...prev,
+                        research: agentData.status === 'complete' ? 'complete' : 'thinking'
+                    }));
+                    if (agentData.content) {
+                        setResearchAnalysis(agentData.content);
+                    }
+                    if (agentData.reference_context) {
+                        setReferenceContexts(prev => ({ ...prev, research: agentData.reference_context }));
+                    }
+                    if (agentData.reference_query) {
+                        setReferenceQueries(prev => ({ ...prev, research: agentData.reference_query }));
                     }
                 }
             });
@@ -153,6 +226,7 @@ function App() {
     const phases = [
         { id: 1, label: 'Parse', icon: FileText },
         { id: 2, label: 'Analyze', icon: Brain },
+        { id: 2.5, label: 'Research', icon: Search },
         { id: 3, label: 'Discuss', icon: MessageSquare },
         { id: 4, label: 'Report', icon: BarChart3 }
     ];
@@ -193,12 +267,27 @@ function App() {
                         <AgentCards
                             riskAnalysis={riskAnalysis}
                             sentimentAnalysis={sentimentAnalysis}
+                            governanceAnalysis={governanceAnalysis}
                             riskState={agentStates.risk}
                             sentimentState={agentStates.sentiment}
+                            governanceState={agentStates.governance}
                             parserState={agentStates.parser}
                             parsedContent={parsedContent}
+                            riskReferenceContext={referenceContexts.risk}
+                            sentimentReferenceContext={referenceContexts.sentiment}
+                            governanceReferenceContext={referenceContexts.governance}
+                            riskReferenceQuery={referenceQueries.risk}
+                            sentimentReferenceQuery={referenceQueries.sentiment}
+                            governanceReferenceQuery={referenceQueries.governance}
                         />
                     </section>
+                )}
+
+                {currentPhase >= 2 && (agentStates.research !== 'idle') && (
+                    <DeepResearchSpace
+                        researchAnalysis={researchAnalysis}
+                        state={agentStates.research}
+                    />
                 )}
 
                 {currentPhase >= 3 && (
