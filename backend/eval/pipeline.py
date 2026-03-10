@@ -18,6 +18,8 @@ from eval.metrics.schema_integrity import evaluate_schema_integrity
 from eval.metrics.reference_based import evaluate_reference_based
 from eval.metrics.section_check import evaluate_section_completeness
 from eval.metrics.query_diversity import evaluate_query_diversity
+from eval.metrics.rag_retrieval import evaluate_rag_retrieval
+from eval.metrics.rag_faithfulness_llm import evaluate_rag_faithfulness_llm
 
 
 class EvalPipeline:
@@ -33,7 +35,7 @@ class EvalPipeline:
         asyncio.run(pipeline.run())
     """
 
-    VALID_TESTS = ["schema", "reference", "section", "warroom", "diversity", "variance"]
+    VALID_TESTS = ["schema", "reference", "section", "warroom", "diversity", "variance", "rag", "rag_faithfulness"]
 
     def __init__(
         self,
@@ -155,6 +157,10 @@ class EvalPipeline:
         print(f"   ✅ Risk Agent complete")
         if self.verbose:
             print(f"      Output preview: {risk_output[:200]}...")
+        risk_rag = {
+            "query": getattr(risk_agent, "last_reference_query", ""),
+            "context": getattr(risk_agent, "last_reference_context", ""),
+        }
 
         # Sentiment
         print(f"   🟢 Sentiment Agent analyzing...")
@@ -162,6 +168,10 @@ class EvalPipeline:
         print(f"   ✅ Sentiment Agent complete")
         if self.verbose:
             print(f"      Output preview: {sentiment_output[:200]}...")
+        sentiment_rag = {
+            "query": getattr(sentiment_agent, "last_reference_query", ""),
+            "context": getattr(sentiment_agent, "last_reference_context", ""),
+        }
 
         # Governance
         print(f"   🟣 Governance Agent analyzing...")
@@ -169,6 +179,10 @@ class EvalPipeline:
         print(f"   ✅ Governance Agent complete")
         if self.verbose:
             print(f"      Output preview: {governance_output[:200]}...")
+        governance_rag = {
+            "query": getattr(governance_agent, "last_reference_query", ""),
+            "context": getattr(governance_agent, "last_reference_context", ""),
+        }
 
         # Deep Research
         print(f"   🔵 Deep Research Agent analyzing...")
@@ -176,6 +190,10 @@ class EvalPipeline:
         print(f"   ✅ Deep Research Agent complete")
         if self.verbose:
             print(f"      Output preview: {research_output[:200]}...")
+        research_rag = {
+            "query": getattr(research_agent, "last_reference_query", ""),
+            "context": getattr(research_agent, "last_reference_context", ""),
+        }
 
         # ── Phase 3: War Room Discussion ──
         print(f"\n  [Phase 3] Running War Room discussion ({MAX_DISCUSSION_ROUNDS} rounds)...")
@@ -251,6 +269,12 @@ class EvalPipeline:
                 "sentiment": sentiment_output,
                 "governance": governance_output,
                 "research": research_output,
+                "rag": {
+                    "risk": risk_rag,
+                    "sentiment": sentiment_rag,
+                    "governance": governance_rag,
+                    "research": research_rag,
+                },
                 "discussion": discussion_messages,
                 "master": master_output,
             },
@@ -299,6 +323,17 @@ class EvalPipeline:
                 case_evals["query_diversity"] = self._eval_query_diversity(outputs)
                 qd = case_evals["query_diversity"]
                 print(f"✅ Diversity score: {qd.get('diversity_score', 'N/A')}")
+            if "rag" in self.tests or "all" in self.tests:
+                print("   RAG Retrieval... ", end="")
+                case_evals["rag_retrieval"] = self._eval_rag_retrieval(outputs, ground_truth)
+                summary = case_evals["rag_retrieval"].get("_summary", {})
+                print(f"OK {summary.get('passed', 0)}/{summary.get('total_checks', 0)} checks passed")
+
+            if "rag_faithfulness" in self.tests or "all" in self.tests:
+                print("   RAG Faithfulness (LLM Judge)... ", end="")
+                case_evals["rag_faithfulness"] = self._eval_rag_faithfulness(outputs, ground_truth)
+                summary = case_evals["rag_faithfulness"].get("_summary", {})
+                print(f"OK {summary.get('passed', 0)}/{summary.get('evaluated', 0)} passed")
 
             if "variance" in self.tests or "all" in self.tests:
                 print(f"   🎲 Variance... ", end="")
@@ -331,8 +366,16 @@ class EvalPipeline:
         """Test 5: Evaluate diversity of Deep Research queries."""
         return evaluate_query_diversity(outputs)
 
+    def _eval_rag_retrieval(self, outputs: dict, ground_truth: dict) -> dict:
+        """Test 6: Evaluate RAG retrieval quality against expected sources."""
+        return evaluate_rag_retrieval(outputs, ground_truth)
+
+    def _eval_rag_faithfulness(self, outputs: dict, ground_truth: dict) -> dict:
+        """Test 7: LLM-judged faithfulness of answers to retrieved context."""
+        return evaluate_rag_faithfulness_llm(outputs, ground_truth)
+
     def _eval_variance(self, outputs: dict) -> dict:
-        """Test 6: Variance across multiple runs (optional)."""
+        """Test 8: Variance across multiple runs (optional)."""
         # TODO: Implement in eval/metrics/variance.py
         return {"status": "not_implemented"}
 

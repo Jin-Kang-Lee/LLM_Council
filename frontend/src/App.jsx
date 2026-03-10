@@ -299,6 +299,8 @@ function App() {
                         <DiscussionLog
                             messages={discussionMessages}
                             isActive={currentPhase === 3 && isProcessing}
+                            referenceContexts={referenceContexts}
+                            referenceQueries={referenceQueries}
                         />
                     </section>
                 )}

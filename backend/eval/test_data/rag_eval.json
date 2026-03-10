@@ -1,0 +1,38 @@
+[
+  {
+    "test_id": "RAG-001",
+    "description": "ASC 606 variable consideration retrieval",
+    "earnings_report": "The company noted variable consideration and price concessions in its revenue contracts. Management discussed performance obligations and contract modifications under ASC 606.",
+    "ground_truth": {
+      "rag": {
+        "risk": {
+          "expected_sources": ["PWC_ASC606.md"],
+          "expected_keywords": ["variable consideration", "price concessions"],
+          "expected_facts": ["variable consideration", "price concessions"],
+          "required_points": ["ASC 606", "contract modifications"]
+        },
+        "governance": {
+          "expected_sources": ["PWC_ASC606.md"],
+          "expected_keywords": ["performance obligation"],
+          "expected_facts": ["performance obligation"],
+          "required_points": ["ASC 606"]
+        }
+      }
+    }
+  },
+  {
+    "test_id": "RAG-002",
+    "description": "Damodaran credit rating retrieval",
+    "earnings_report": "Interest coverage ratios deteriorated this quarter and the credit rating was downgraded, increasing default spreads and borrowing costs.",
+    "ground_truth": {
+      "rag": {
+        "risk": {
+          "expected_sources": ["Damodaran_Credit_Rating.md"],
+          "expected_keywords": ["interest coverage", "default spread"],
+          "expected_facts": ["interest coverage", "default spread"],
+          "required_points": ["credit rating", "downgraded"]
+        }
+      }
+    }
+  }
+]
