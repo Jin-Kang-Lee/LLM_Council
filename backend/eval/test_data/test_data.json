@@ -114,41 +114,6 @@
                     "market share"
                 ]
             },
-            "rag": {
-                "risk": {
-                    "expected_keywords": [
-                        "hyperscalers",
-                        "customer concentration",
-                        "foreign exchange",
-                        "EU",
-                        "AI governance"
-                    ],
-                    "expected_facts": [
-                        "customer concentration",
-                        "foreign exchange"
-                    ],
-                    "required_points": [
-                        "competition",
-                        "customer"
-                    ]
-                },
-                "governance": {
-                    "expected_keywords": [
-                        "independent",
-                        "Audit Committee",
-                        "Sarbanes-Oxley",
-                        "Deloitte"
-                    ],
-                    "expected_facts": [
-                        "independent",
-                        "Audit Committee"
-                    ],
-                    "required_points": [
-                        "independent",
-                        "Audit Committee"
-                    ]
-                }
-            },
             "master": {
                 "expected_sections": [
                     "Executive Summary",
@@ -360,45 +325,6 @@
                     "competitor market share"
                 ]
             },
-            "rag": {
-                "risk": {
-                    "expected_keywords": [
-                        "debt-to-equity",
-                        "credit downgrade",
-                        "negative operating cash flow",
-                        "covenant",
-                        "restructuring"
-                    ],
-                    "expected_facts": [
-                        "debt-to-equity",
-                        "credit downgrade",
-                        "covenant"
-                    ],
-                    "required_points": [
-                        "debt",
-                        "downgrade",
-                        "covenant"
-                    ]
-                },
-                "governance": {
-                    "expected_keywords": [
-                        "FCA",
-                        "investigation",
-                        "Audit Committee chair",
-                        "going concern",
-                        "related-party"
-                    ],
-                    "expected_facts": [
-                        "FCA",
-                        "investigation",
-                        "going concern"
-                    ],
-                    "required_points": [
-                        "going concern",
-                        "Audit Committee"
-                    ]
-                }
-            },
             "master": {
                 "expected_sections": [
                     "Executive Summary",
@@ -593,41 +519,6 @@
                     "fintech lending delinquency",
                     "digital banking license"
                 ]
-            },
-            "rag": {
-                "risk": {
-                    "expected_keywords": [
-                        "delinquency",
-                        "lending license",
-                        "take rate",
-                        "regulatory"
-                    ],
-                    "expected_facts": [
-                        "delinquency",
-                        "lending license"
-                    ],
-                    "required_points": [
-                        "delinquency",
-                        "license"
-                    ]
-                },
-                "governance": {
-                    "expected_keywords": [
-                        "MAS",
-                        "AML",
-                        "ASIC",
-                        "ESG report"
-                    ],
-                    "expected_facts": [
-                        "MAS",
-                        "AML",
-                        "ASIC"
-                    ],
-                    "required_points": [
-                        "AML",
-                        "ASIC"
-                    ]
-                }
             },
             "master": {
                 "expected_sections": [

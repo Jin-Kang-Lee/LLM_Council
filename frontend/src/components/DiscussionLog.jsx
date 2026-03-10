@@ -1,8 +1,8 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { ShieldAlert, Heart, MessageCircle, Gavel } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 
-function MessageBubble({ message, referenceContexts, referenceQueries }) {
+function MessageBubble({ message }) {
     const getAgentStyles = () => {
         switch (message.agent) {
             case 'risk':
@@ -18,9 +18,6 @@ function MessageBubble({ message, referenceContexts, referenceQueries }) {
 
     const styles = getAgentStyles();
     const isPrimary = message.agent === 'risk'; // Left-aligned
-    const [showReference, setShowReference] = useState(false);
-    const referenceContext = referenceContexts?.[message.agent];
-    const referenceQuery = referenceQueries?.[message.agent];
 
     return (
         <div className={`flex gap-3 ${isPrimary ? '' : 'flex-row-reverse'}`}>
@@ -40,35 +37,16 @@ function MessageBubble({ message, referenceContexts, referenceQueries }) {
                         {message.agentName}
                     </span>
                     <span className="text-xs text-zinc-600">Round {message.round}</span>
-                    {referenceContext && (
-                        <button
-                            type="button"
-                            onClick={() => setShowReference(prev => !prev)}
-                            className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-indigo-600/20 text-indigo-300 border border-indigo-500/30 hover:bg-indigo-500/30 transition-colors"
-                        >
-                            {showReference ? 'Hide RAG' : 'Show RAG'}
-                        </button>
-                    )}
                 </div>
                 <div className="prose-custom text-sm">
                     <ReactMarkdown>{message.content}</ReactMarkdown>
                 </div>
-                {referenceContext && showReference && (
-                    <div className="mt-3 text-xs text-zinc-300 bg-zinc-950/60 border border-zinc-800 rounded p-3 max-h-48 overflow-y-auto whitespace-pre-wrap">
-                        {referenceQuery && (
-                            <div className="text-zinc-500 mb-2">
-                                <span className="font-semibold">Query:</span> {referenceQuery}
-                            </div>
-                        )}
-                        <pre className="whitespace-pre-wrap font-sans">{referenceContext}</pre>
-                    </div>
-                )}
             </div>
         </div>
     );
 }
 
-function DiscussionLog({ messages, isActive, referenceContexts, referenceQueries }) {
+function DiscussionLog({ messages, isActive }) {
     const scrollRef = useRef(null);
 
     useEffect(() => {
@@ -104,12 +82,7 @@ function DiscussionLog({ messages, isActive, referenceContexts, referenceQueries
                     </div>
                 )}
                 {messages.map((message, index) => (
-                    <MessageBubble
-                        key={index}
-                        message={message}
-                        referenceContexts={referenceContexts}
-                        referenceQueries={referenceQueries}
-                    />
+                    <MessageBubble key={index} message={message} />
                 ))}
             </div>
 
