@@ -198,6 +198,42 @@ function AgentCard({
                         </div>
                     );
                 }
+
+                if (data.findings && typeof data.findings === 'object') {
+                    const entries = Object.entries(data.findings);
+                    const formatLabel = (value) => value
+                        .replace(/[_-]+/g, ' ')
+                        .replace(/\b\w/g, (char) => char.toUpperCase());
+
+                    return (
+                        <div className="space-y-4">
+                            {entries.map(([key, value], idx) => {
+                                const status = value?.status || 'Unknown';
+                                const changes = Array.isArray(value?.changes)
+                                    ? value.changes
+                                    : (value?.changes ? [value.changes] : []);
+
+                                return (
+                                    <div key={idx} className="border-l-2 border-indigo-500 pl-3 py-1 space-y-2">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-[10px] px-1.5 py-0.5 rounded uppercase font-bold bg-indigo-900/50 text-indigo-300">
+                                                {formatLabel(key)}
+                                            </span>
+                                            <span className="text-xs text-zinc-300">{status}</span>
+                                        </div>
+                                        {changes.length > 0 && (
+                                            <ul className="text-[11px] text-zinc-400 space-y-1 list-disc list-inside">
+                                                {changes.slice(0, 3).map((item, changeIdx) => (
+                                                    <li key={changeIdx}>{item}</li>
+                                                ))}
+                                            </ul>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    );
+                }
             }
         } catch (e) {
             // Fall back to markdown
