@@ -51,7 +51,23 @@ OUTPUT JSON SCHEMA:
     def analysis_rules(self) -> str:
         return "Return ONLY the JSON object. Do not perform actual searches yet; just plan them."
 
+    @property
+    def json_schema(self) -> dict:
+        return {
+            "thinking_trace": str,
+            "search_queries": [
+                {
+                    "topic": str,
+                    "query": str,
+                    "rationale": str,
+                    "status": str,
+                    "result": (str, type(None)),
+                }
+            ],
+            "confidence_gap": str,
+        }
+
     async def analyze(self, earnings_content: str) -> str:
         """Analyze content to generate research plan."""
         additional_instructions = "Analyze the report and identify exactly what is missing or needs external checking. Create a research plan in the required JSON format."
-        return await self.generate(earnings_content, additional_instructions)
+        return await self.generate(earnings_content, additional_instructions, expect_json=True)

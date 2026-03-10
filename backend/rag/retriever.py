@@ -5,12 +5,24 @@ Retriever utilities for the LLM Council reference library.
 from __future__ import annotations
 
 import os
+from typing import Iterable, List, Tuple
 
 import chromadb
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import Chroma
 
-from config import VECTOR_DB_PATH
+from config import (
+    VECTOR_DB_PATH,
+    RAG_FETCH_K,
+    RAG_MAX_CHUNKS,
+    RAG_MAX_CHUNK_CHARS,
+    RAG_MAX_CONTEXT_CHARS,
+    RAG_MAX_DISTANCE,
+    RAG_MAX_QUERY_CHARS,
+    RAG_MIN_QUERY_CHARS,
+)
+from rag.guardrails import is_suspicious_chunk, normalize_whitespace, sanitize_query
+from rag.reranker import rerank
 
 COLLECTION_NAME = "council_reference"
 EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
@@ -43,20 +55,86 @@ def _infer_filter(query: str) -> dict | None:
     return None
 
 
-def _apply_filter(results: list, filter_dict: dict | None, k: int) -> list:
+def _apply_filter(
+    results: List[Tuple[object, float]],
+    filter_dict: dict | None,
+    k: int,
+    max_distance: float | None,
+) -> List[Tuple[object, float]]:
+    filtered: List[Tuple[object, float]] = []
+    for doc, score in results:
+        if max_distance is not None and score > max_distance:
+            continue
+        filtered.append((doc, score))
+
     if not filter_dict:
-        return results[:k]
+        return filtered[:k]
 
     key, value = next(iter(filter_dict.items()))
-    matches = [doc for doc in results if doc.metadata.get(key) == value]
+    matches = [(doc, score) for doc, score in filtered if doc.metadata.get(key) == value]
     if len(matches) >= k:
         return matches[:k]
 
-    remainder = [doc for doc in results if doc.metadata.get(key) != value]
+    remainder = [(doc, score) for doc, score in filtered if doc.metadata.get(key) != value]
     return (matches + remainder)[:k]
 
 
+def _format_source(doc: object) -> str:
+    metadata = getattr(doc, "metadata", {}) or {}
+    source = metadata.get("source_name") or metadata.get("source") or "unknown"
+    filename = os.path.basename(source)
+    header_1 = metadata.get("Header 1")
+    header_2 = metadata.get("Header 2")
+    if header_1 and header_2:
+        return f"{filename} | {header_1} > {header_2}"
+    if header_1:
+        return f"{filename} | {header_1}"
+    return filename
+
+
+def _trim_chunk(text: str, max_chars: int) -> str:
+    if not max_chars or len(text) <= max_chars:
+        return text
+    return text[:max_chars].rstrip() + "..."
+
+
+def _iter_chunks(results: Iterable[Tuple[object, float]]) -> list[str]:
+    chunks: list[str] = []
+    total_chars = 0
+    chunk_index = 1
+    seen_contents: set[str] = set()
+    for doc, _score in results:
+        content = getattr(doc, "page_content", "") or ""
+        content = content.strip()
+        if not content or is_suspicious_chunk(content):
+            continue
+
+        content = _trim_chunk(content, RAG_MAX_CHUNK_CHARS)
+        normalized = normalize_whitespace(content).lower()
+        if normalized in seen_contents:
+            continue
+        seen_contents.add(normalized)
+
+        label = _format_source(doc)
+        block = f"[C{chunk_index}] {label}\n{content}".strip()
+
+        if total_chars + len(block) > RAG_MAX_CONTEXT_CHARS:
+            break
+
+        chunks.append(block)
+        total_chars += len(block)
+        chunk_index += 1
+
+    return chunks
+
+
 def get_council_context(query: str, k: int = 4) -> str:
+    cleaned_query = sanitize_query(query, RAG_MAX_QUERY_CHARS, RAG_MIN_QUERY_CHARS)
+    if not cleaned_query:
+        return ""
+
+    k = max(1, min(k, RAG_MAX_CHUNKS))
+
     client = chromadb.PersistentClient(path=VECTOR_DB_PATH)
     embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL)
 
@@ -66,18 +144,19 @@ def get_council_context(query: str, k: int = 4) -> str:
         embedding_function=embeddings,
     )
 
-    fetch_k = max(k * 3, 12)
-    results = store.similarity_search(query, k=fetch_k)
+    fetch_k = max(k * 3, RAG_FETCH_K)
+    try:
+        results = store.similarity_search_with_score(cleaned_query, k=fetch_k)
+    except AttributeError:
+        docs = store.similarity_search(cleaned_query, k=fetch_k)
+        results = [(doc, 0.0) for doc in docs]
+
     if not results:
         return ""
 
-    filter_dict = _infer_filter(query)
-    results = _apply_filter(results, filter_dict, k)
+    results = rerank(cleaned_query, results)
+    filter_dict = _infer_filter(cleaned_query)
+    results = _apply_filter(results, filter_dict, k, RAG_MAX_DISTANCE)
 
-    chunks = []
-    for doc in results:
-        source = doc.metadata.get("source", "unknown")
-        filename = os.path.basename(source)
-        chunks.append(f"[{filename}]\n{doc.page_content}".strip())
-
+    chunks = _iter_chunks(results)
     return "\n\n---\n\n".join(chunks)

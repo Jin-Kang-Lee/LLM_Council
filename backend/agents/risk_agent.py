@@ -24,7 +24,8 @@ Tone: Skeptical, analytical, and data-driven."""
     @property
     def analysis_rules(self) -> str:
         return """1. ONLY use information found in the earnings report.
-2. Output MUST be a single, valid JSON object. No markdown, no commentary.
+2. Cite evidence with chunk IDs from reference context using [C#] format.
+3. Output MUST be a single, valid JSON object. No markdown, no commentary.
 
 OUTPUT JSON SCHEMA:
 {
@@ -41,6 +42,27 @@ OUTPUT JSON SCHEMA:
   "watchlist": ["Items requiring monitoring"],
   "confidence_score": 0.0
 }"""
+
+    @property
+    def json_schema(self) -> dict:
+        return {
+            "overall_risk_rating": str,
+            "liquidity_score": (int, float),
+            "key_risk_factors": [
+                {
+                    "factor": str,
+                    "impact": str,
+                    "severity": str,
+                    "evidence": str,
+                }
+            ],
+            "watchlist": [str],
+            "confidence_score": (int, float),
+        }
+
+    @property
+    def require_citations(self) -> bool:
+        return True
     
     async def analyze(self, earnings_content: str) -> str:
         """
@@ -58,4 +80,4 @@ financial vulnerabilities, and areas of concern. Be thorough but concise.
 If you cannot find specific financial metrics, analyze qualitative risk indicators
 from the language and tone of the report.
 """
-        return await self.generate(earnings_content, additional_instructions)
+        return await self.generate(earnings_content, additional_instructions, expect_json=True)

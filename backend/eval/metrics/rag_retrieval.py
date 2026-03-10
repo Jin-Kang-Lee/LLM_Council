@@ -9,7 +9,8 @@ from __future__ import annotations
 import re
 
 
-_SOURCE_PATTERN = re.compile(r"^\[(.+?)\]\s*$")
+_LEGACY_SOURCE_PATTERN = re.compile(r"^\[(.+?)\]\s*$")
+_CHUNK_PREFIX_PATTERN = re.compile(r"^\[C\d+\]\s*(.+)$")
 
 
 def _extract_sources(reference_context: str) -> list[str]:
@@ -18,9 +19,22 @@ def _extract_sources(reference_context: str) -> list[str]:
         return sources
 
     for line in reference_context.splitlines():
-        match = _SOURCE_PATTERN.match(line.strip())
+        stripped = line.strip()
+        if not stripped.startswith("["):
+            continue
+
+        match = _CHUNK_PREFIX_PATTERN.match(stripped)
         if match:
-            sources.append(match.group(1))
+            label = match.group(1)
+        else:
+            legacy = _LEGACY_SOURCE_PATTERN.match(stripped)
+            if not legacy:
+                continue
+            label = legacy.group(1)
+
+        filename = label.split("|", 1)[0].strip()
+        if filename:
+            sources.append(filename)
     return sources
 
 

@@ -26,7 +26,8 @@ Tone: Audit-friendly, objective, and highly risk-averse."""
         return """1. ONLY use information found in the earnings report. 
 2. If evidence for a category is missing, explicitly list it in 'non_disclosures'.
 3. DO NOT hallucinate or guess. 
-4. Output MUST be a single, valid JSON object. No markdown, no commentary.
+4. Cite evidence with chunk IDs from reference context using [C#] format.
+5. Output MUST be a single, valid JSON object. No markdown, no commentary.
 
 OUTPUT JSON SCHEMA:
 {
@@ -45,6 +46,29 @@ OUTPUT JSON SCHEMA:
   "confidence_score": 0.0,
   "limitations": "Short summary of data gaps"
 }"""
+
+    @property
+    def json_schema(self) -> dict:
+        return {
+            "governance_risk_level": str,
+            "compliance_risk_level": str,
+            "key_findings": [
+                {
+                    "issue": str,
+                    "category": str,
+                    "severity": str,
+                    "evidence": str,
+                    "impact": str,
+                }
+            ],
+            "non_disclosures": [str],
+            "confidence_score": (int, float),
+            "limitations": str,
+        }
+
+    @property
+    def require_citations(self) -> bool:
+        return True
     
     async def analyze(self, earnings_content: str) -> str:
         """
@@ -61,4 +85,4 @@ Analyze the provided earnings report content. Focus exclusively on governance,
 compliance, legal risks, and accounting quality. Ground all findings in evidence.
 REMEMBER: Output MUST be STRICT JSON only.
 """
-        return await self.generate(earnings_content, additional_instructions)
+        return await self.generate(earnings_content, additional_instructions, expect_json=True)
