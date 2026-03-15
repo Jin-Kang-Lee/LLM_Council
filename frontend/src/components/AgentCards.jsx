@@ -6,7 +6,8 @@ import {
     Loader2,
     CheckCircle2,
     AlertTriangle,
-    Gavel
+    Gavel,
+    TrendingUp
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 
@@ -48,6 +49,12 @@ function AgentCard({
             border: 'border-emerald-600/50',
             text: 'text-emerald-400',
             tag: 'bg-emerald-900/30 text-emerald-400'
+        },
+        yellow: {
+            bg: 'bg-yellow-600',
+            border: 'border-yellow-600/50',
+            text: 'text-yellow-400',
+            tag: 'bg-yellow-900/30 text-yellow-400'
         },
         purple: {
             bg: 'bg-purple-600',
@@ -113,39 +120,45 @@ function AgentCard({
                     );
                 }
 
-                // 2. SENTIMENT AGENT RENDERING
-                if (data.overall_sentiment_score) {
+                // 2. BUSINESS OPS AGENT RENDERING
+                if (data.capex_analysis) {
                     return (
                         <div className="space-y-4">
-                            <div className="grid grid-cols-2 gap-2">
-                                <div className="p-2 bg-zinc-800/50 rounded border border-emerald-900/20 text-center">
-                                    <p className="text-[10px] text-zinc-500 uppercase">Confidence</p>
-                                    <p className="text-xs font-bold text-emerald-400">{data.executive_confidence}</p>
-                                </div>
-                                <div className="p-2 bg-zinc-800/50 rounded border border-emerald-900/20 text-center">
-                                    <p className="text-[10px] text-zinc-500 uppercase">Outlook</p>
-                                    <p className="text-xs font-bold text-emerald-400">{data.forward_outlook}</p>
+                            <div className="flex flex-col gap-2 p-3 bg-zinc-800/50 rounded-lg border border-yellow-900/30">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-zinc-400 text-xs uppercase tracking-wider">Ops Risk Rating</span>
+                                    <span className={`text-xs font-bold px-2 py-0.5 rounded ${data.operational_risk_rating === 'High' || data.operational_risk_rating === 'Critical' ? 'bg-red-600 text-white' : 'bg-yellow-600 text-zinc-900'}`}>
+                                        {data.operational_risk_rating}
+                                    </span>
                                 </div>
                             </div>
 
                             <div className="space-y-3">
-                                {data.key_signals?.map((sig, idx) => (
-                                    <div key={idx} className="bg-zinc-800/30 p-2 rounded border border-zinc-700/50">
-                                        <div className="flex items-center justify-between mb-1">
-                                            <h4 className="text-zinc-200 font-medium text-xs">{sig.signal}</h4>
-                                            <span className={`text-[9px] px-1 rounded ${sig.sentiment === 'Positive' ? 'text-emerald-400' : 'text-red-400'}`}>
-                                                {sig.sentiment}
+                                {data.capex_analysis && (
+                                    <div className="border-l-2 border-yellow-500 pl-3 py-1">
+                                        <h4 className="text-zinc-200 font-medium text-xs mb-1">
+                                            CapEx Watch
+                                            {data.capex_analysis.trend && (
+                                                <span className="text-zinc-500 font-normal"> ({data.capex_analysis.trend})</span>
+                                            )}
+                                        </h4>
+                                        <p className="text-zinc-400 text-[11px] mb-1 leading-snug">{data.capex_analysis.risk_assessment}</p>
+                                        <p className="text-zinc-500 text-[10px] italic">"{data.capex_analysis.evidence}"</p>
+                                    </div>
+                                )}
+
+                                {data.key_business_risks?.map((risk, idx) => (
+                                    <div key={idx} className="border-l-2 border-yellow-500/50 pl-3 py-1 mt-3">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <span className={`text-[10px] px-1.5 py-0.5 rounded uppercase font-bold ${risk.severity === 'High' ? 'bg-red-900/50 text-red-300' : 'bg-yellow-900/40 text-yellow-500'}`}>
+                                                {risk.severity} Risk
                                             </span>
+                                            <h4 className="text-zinc-200 font-medium text-xs">{risk.category}</h4>
                                         </div>
-                                        <p className="text-zinc-400 text-[11px] font-light leading-snug">"{sig.evidence}"</p>
+                                        <p className="text-zinc-400 text-[11px] mb-1 leading-relaxed">{risk.description}</p>
+                                        <p className="text-zinc-500 text-[10px] italic">"{risk.evidence}"</p>
                                     </div>
                                 ))}
-                            </div>
-
-                            <div className="pt-2">
-                                <p className="text-center text-xs font-medium text-emerald-400 py-1 bg-emerald-500/10 rounded-full border border-emerald-500/20">
-                                    Score: {data.overall_sentiment_score}
-                                </p>
                             </div>
                         </div>
                     );
@@ -392,18 +405,18 @@ function ParserCard({ state, parsedContent }) {
 
 function AgentCards({
     riskAnalysis,
-    sentimentAnalysis,
+    businessOpsAnalysis,
     governanceAnalysis,
     riskState,
-    sentimentState,
+    businessOpsState,
     governanceState,
     parserState,
     parsedContent,
     riskReferenceContext,
-    sentimentReferenceContext,
+    businessOpsReferenceContext,
     governanceReferenceContext,
     riskReferenceQuery,
-    sentimentReferenceQuery,
+    businessOpsReferenceQuery,
     governanceReferenceQuery
 }) {
     return (
@@ -421,13 +434,13 @@ function AgentCards({
             />
 
             <AgentCard
-                title="Sentiment Analyst"
-                icon={Heart}
-                accentColor="green"
-                state={sentimentState}
-                content={sentimentAnalysis}
-                referenceContext={sentimentReferenceContext}
-                referenceQuery={sentimentReferenceQuery}
+                title="Business & Ops Analyst"
+                icon={TrendingUp}
+                accentColor="yellow"
+                state={businessOpsState}
+                content={businessOpsAnalysis}
+                referenceContext={businessOpsReferenceContext}
+                referenceQuery={businessOpsReferenceQuery}
             />
 
             <AgentCard

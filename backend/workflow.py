@@ -7,7 +7,7 @@ from typing import TypedDict, Annotated, Sequence, Literal
 from langgraph.graph import StateGraph, END
 import operator
 
-from agents import RiskAgent, SentimentAgent, MasterAgent, GovernanceAgent, DeepResearchAgent
+from agents import RiskAgent, BusinessOpsRiskAgent, MasterAgent, GovernanceAgent, DeepResearchAgent
 from config import MAX_DISCUSSION_ROUNDS
 
 
@@ -26,7 +26,7 @@ class AnalysisState(TypedDict):
     
     # Phase 2: Individual Analyses
     risk_analysis: str
-    sentiment_analysis: str
+    business_ops_analysis: str
     governance_analysis: str
     research_analysis: str
     
@@ -45,7 +45,7 @@ class AnalysisState(TypedDict):
 
 # Initialize agents
 risk_agent = RiskAgent()
-sentiment_agent = SentimentAgent()
+business_ops_agent = BusinessOpsRiskAgent()
 governance_agent = GovernanceAgent()
 deep_research_agent = DeepResearchAgent()
 master_agent = MasterAgent()
@@ -75,18 +75,18 @@ async def risk_analysis_node(state: AnalysisState) -> dict:
         }
 
 
-async def sentiment_analysis_node(state: AnalysisState) -> dict:
-    """Phase 2b: Run Sentiment Agent analysis."""
+async def business_ops_analysis_node(state: AnalysisState) -> dict:
+    """Phase 2b: Run Business & Ops Risk Agent analysis."""
     try:
-        analysis = await sentiment_agent.analyze(state["parsed_content"])
+        analysis = await business_ops_agent.analyze(state["parsed_content"])
         return {
-            "sentiment_analysis": analysis,
+            "business_ops_analysis": analysis,
             "current_phase": 2,
-            "status": "sentiment_analysis_complete"
+            "status": "business_ops_analysis_complete"
         }
     except Exception as e:
         return {
-            "sentiment_analysis": f"Error in sentiment analysis: {str(e)}",
+            "business_ops_analysis": f"Error in business ops analysis: {str(e)}",
             "error": str(e)
         }
 
@@ -130,10 +130,10 @@ async def discussion_node(state: AnalysisState) -> dict:
     
     try:
         if current_round == 1:
-            # Risk agent starts by responding to sentiment analysis
+            # Risk agent starts by responding to business ops analysis
             discussion_prompt = risk_agent.respond_to(
-                "Sentiment Analyst",
-                state["sentiment_analysis"],
+                "Business & Ops Analyst",
+                state["business_ops_analysis"],
                 state["parsed_content"]
             )
             risk_response = await risk_agent.generate_discussion(
@@ -146,26 +146,26 @@ async def discussion_node(state: AnalysisState) -> dict:
                 "round": current_round
             })
             
-            # Sentiment agent responds to Risk
-            discussion_prompt = sentiment_agent.respond_to(
+            # Business & Ops agent responds to Risk
+            discussion_prompt = business_ops_agent.respond_to(
                 "Risk Analyst",
                 risk_response,
                 state["parsed_content"]
             )
-            sentiment_response = await sentiment_agent.generate_discussion(
+            business_ops_response = await business_ops_agent.generate_discussion(
                 state["parsed_content"],
                 discussion_prompt
             )
             messages.append({
-                "agent": "Sentiment Analyst",
-                "content": sentiment_response,
+                "agent": "Business & Ops Analyst",
+                "content": business_ops_response,
                 "round": current_round
             })
 
             # Governance agent responds to both
             discussion_prompt = governance_agent.respond_to(
-                "Risk and Sentiment Analysts",
-                f"Risk says: {risk_response}\n\nSentiment says: {sentiment_response}",
+                "Risk and Business & Ops Analysts",
+                f"Risk says: {risk_response}\n\nBusiness & Ops says: {business_ops_response}",
                 state["parsed_content"]
             )
             gov_response = await governance_agent.generate_discussion(
@@ -198,26 +198,26 @@ async def discussion_node(state: AnalysisState) -> dict:
                 "round": current_round
             })
             
-            # 2. Sentiment responds to Risk
-            discussion_prompt = sentiment_agent.respond_to(
+            # 2. Business & Ops responds to Risk
+            discussion_prompt = business_ops_agent.respond_to(
                 "Risk Analyst",
                 risk_response,
                 state["parsed_content"]
             )
-            sentiment_response = await sentiment_agent.generate_discussion(
+            business_ops_response = await business_ops_agent.generate_discussion(
                 state["parsed_content"],
                 discussion_prompt
             )
             messages.append({
-                "agent": "Sentiment Analyst",
-                "content": sentiment_response,
+                "agent": "Business & Ops Analyst",
+                "content": business_ops_response,
                 "round": current_round
             })
 
-            # 3. Governance responds to Sentiment
+            # 3. Governance responds to Business & Ops
             discussion_prompt = governance_agent.respond_to(
-                "Sentiment Analyst",
-                sentiment_response,
+                "Business & Ops Analyst",
+                business_ops_response,
                 state["parsed_content"]
             )
             gov_response = await governance_agent.generate_discussion(
@@ -263,7 +263,7 @@ async def consolidation_node(state: AnalysisState) -> dict:
         final_report = await master_agent.consolidate(
             state["parsed_content"],
             state["risk_analysis"],
-            state["sentiment_analysis"],
+            state["business_ops_analysis"],
             state["governance_analysis"],
             discussion_transcript
         )
@@ -287,7 +287,7 @@ def create_workflow() -> StateGraph:
     # Add nodes - names must not match state attribute names
     workflow.add_node("parse", parse_node)
     workflow.add_node("run_risk", risk_analysis_node)
-    workflow.add_node("run_sentiment", sentiment_analysis_node)
+    workflow.add_node("run_business_ops", business_ops_analysis_node)
     workflow.add_node("run_governance", governance_analysis_node)
     workflow.add_node("run_research", research_node)
     workflow.add_node("run_discussion", discussion_node)
@@ -298,12 +298,12 @@ def create_workflow() -> StateGraph:
     
     # After parsing, run all analyses in parallel
     workflow.add_edge("parse", "run_risk")
-    workflow.add_edge("parse", "run_sentiment")
+    workflow.add_edge("parse", "run_business_ops")
     workflow.add_edge("parse", "run_governance")
     
     # All analyses lead to research
     workflow.add_edge("run_risk", "run_research")
-    workflow.add_edge("run_sentiment", "run_research")
+    workflow.add_edge("run_business_ops", "run_research")
     workflow.add_edge("run_governance", "run_research")
     
     # Research leads to discussion

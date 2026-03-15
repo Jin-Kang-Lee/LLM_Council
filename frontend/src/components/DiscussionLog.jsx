@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ShieldAlert, Heart, MessageCircle, Gavel } from 'lucide-react';
+import { ShieldAlert, Heart, MessageCircle, Gavel, TrendingUp } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 
 function MessageBubble({ message, referenceContexts, referenceQueries }) {
@@ -7,8 +7,8 @@ function MessageBubble({ message, referenceContexts, referenceQueries }) {
         switch (message.agent) {
             case 'risk':
                 return { color: 'bg-red-600', text: 'text-red-400', border: 'border-red-900/30', icon: ShieldAlert };
-            case 'sentiment':
-                return { color: 'bg-emerald-600', text: 'text-emerald-400', border: 'border-emerald-900/30', icon: Heart };
+            case 'business_ops':
+                return { color: 'bg-yellow-600', text: 'text-yellow-400', border: 'border-yellow-900/30', icon: TrendingUp };
             case 'governance':
                 return { color: 'bg-purple-600', text: 'text-purple-400', border: 'border-purple-900/30', icon: Gavel };
             default:

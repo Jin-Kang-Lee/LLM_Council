@@ -11,7 +11,7 @@ import os
 from datetime import datetime
 from typing import Optional
 
-from agents import RiskAgent, SentimentAgent, GovernanceAgent, DeepResearchAgent, MasterAgent
+from agents import RiskAgent, BusinessOpsRiskAgent, GovernanceAgent, DeepResearchAgent, MasterAgent
 from document_parser import parse_earnings_content, format_for_agents
 from config import MAX_DISCUSSION_ROUNDS
 from eval.metrics.schema_integrity import evaluate_schema_integrity
@@ -146,7 +146,7 @@ class EvalPipeline:
         print(f"\n  [Phase 2] Running individual agent analyses...")
 
         risk_agent = RiskAgent()
-        sentiment_agent = SentimentAgent()
+        business_ops_agent = BusinessOpsRiskAgent()
         governance_agent = GovernanceAgent()
         research_agent = DeepResearchAgent()
         master_agent = MasterAgent()
@@ -162,15 +162,15 @@ class EvalPipeline:
             "context": getattr(risk_agent, "last_reference_context", ""),
         }
 
-        # Sentiment
-        print(f"   🟢 Sentiment Agent analyzing...")
-        sentiment_output = await sentiment_agent.analyze(formatted)
-        print(f"   ✅ Sentiment Agent complete")
+        # Business & Ops
+        print(f"   🟡 Business & Ops Agent analyzing...")
+        business_ops_output = await business_ops_agent.analyze(formatted)
+        print(f"   ✅ Business & Ops Agent complete")
         if self.verbose:
-            print(f"      Output preview: {sentiment_output[:200]}...")
-        sentiment_rag = {
-            "query": getattr(sentiment_agent, "last_reference_query", ""),
-            "context": getattr(sentiment_agent, "last_reference_context", ""),
+            print(f"      Output preview: {business_ops_output[:200]}...")
+        business_ops_rag = {
+            "query": getattr(business_ops_agent, "last_reference_query", ""),
+            "context": getattr(business_ops_agent, "last_reference_context", ""),
         }
 
         # Governance
@@ -204,7 +204,7 @@ class EvalPipeline:
 
             # Risk responds
             if round_num == 1:
-                prompt = risk_agent.respond_to("Sentiment Analyst", sentiment_output, formatted)
+                prompt = risk_agent.respond_to("Business & Ops Analyst", business_ops_output, formatted)
             else:
                 last_msg = discussion_messages[-1]["content"]
                 prompt = risk_agent.respond_to("Governance Analyst", last_msg, formatted)
@@ -216,19 +216,19 @@ class EvalPipeline:
                 "round": round_num,
             })
 
-            # Sentiment responds to Risk
-            prompt = sentiment_agent.respond_to("Risk Analyst", risk_response, formatted)
-            sentiment_response = await sentiment_agent.generate(formatted, prompt)
+            # Business & Ops responds to Risk
+            prompt = business_ops_agent.respond_to("Risk Analyst", risk_response, formatted)
+            business_ops_response = await business_ops_agent.generate(formatted, prompt)
             discussion_messages.append({
-                "agent": "Sentiment Analyst",
-                "content": sentiment_response,
+                "agent": "Business & Ops Analyst",
+                "content": business_ops_response,
                 "round": round_num,
             })
 
             # Governance responds to both
             prompt = governance_agent.respond_to(
-                "Risk and Sentiment Analysts",
-                f"Risk says: {risk_response}\n\nSentiment says: {sentiment_response}",
+                "Risk and Business & Ops Analysts",
+                f"Risk says: {risk_response}\n\nBusiness & Ops says: {business_ops_response}",
                 formatted,
             )
             gov_response = await governance_agent.generate(formatted, prompt)
@@ -250,7 +250,7 @@ class EvalPipeline:
         master_output = await master_agent.consolidate(
             formatted,
             risk_output,
-            sentiment_output,
+            business_ops_output,
             governance_output,
             research_output,
             discussion_transcript,
@@ -266,12 +266,12 @@ class EvalPipeline:
             "ground_truth": test_case["ground_truth"],
             "agent_outputs": {
                 "risk": risk_output,
-                "sentiment": sentiment_output,
+                "business_ops": business_ops_output,
                 "governance": governance_output,
                 "research": research_output,
                 "rag": {
                     "risk": risk_rag,
-                    "sentiment": sentiment_rag,
+                    "business_ops": business_ops_rag,
                     "governance": governance_rag,
                     "research": research_rag,
                 },

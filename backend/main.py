@@ -16,7 +16,7 @@ from sse_starlette.sse import EventSourceResponse
 
 from document_parser import parse_earnings_content, format_for_agents
 from workflow import analysis_workflow, AnalysisState
-from agents import RiskAgent, SentimentAgent, MasterAgent, GovernanceAgent, DeepResearchAgent
+from agents import RiskAgent, BusinessOpsRiskAgent, MasterAgent, GovernanceAgent, DeepResearchAgent
 from config import API_HOST, API_PORT, MAX_DISCUSSION_ROUNDS
 
 
@@ -99,7 +99,7 @@ async def health_check():
     return {
         "status": "healthy",
         "ollama": ollama_status,
-        "agents": ["RiskAgent", "SentimentAgent", "GovernanceAgent", "MasterAgent"]
+        "agents": ["RiskAgent", "BusinessOpsRiskAgent", "GovernanceAgent", "MasterAgent"]
     }
 
 
@@ -185,7 +185,7 @@ async def stream_analysis(session_id: str):
         try:
             print(f"Initializing agents for session {session_id}...")
             risk_agent = RiskAgent()
-            sentiment_agent = SentimentAgent()
+            business_ops_agent = BusinessOpsRiskAgent()
             governance_agent = GovernanceAgent()
             deep_research_agent = DeepResearchAgent()
             master_agent = MasterAgent()
@@ -239,28 +239,28 @@ async def stream_analysis(session_id: str):
                 })
             }
 
-            # Run sentiment analysis
-            print("Sentiment Agent starting analysis...")
+            # Run business ops analysis
+            print("Business & Ops Agent starting analysis...")
             yield {
                 "event": "agent",
                 "data": json.dumps({
-                    "agent": "sentiment",
+                    "agent": "business_ops",
                     "status": "thinking",
-                    "message": "Sentiment Analyst is analyzing..."
+                    "message": "Business & Ops Analyst is analyzing..."
                 })
             }
 
-            sentiment_analysis = await sentiment_agent.analyze(parsed_content)
-            print("Sentiment Agent analysis complete")
+            business_ops_analysis = await business_ops_agent.analyze(parsed_content)
+            print("Business & Ops Agent analysis complete")
 
             yield {
                 "event": "agent",
                 "data": json.dumps({
-                    "agent": "sentiment",
+                    "agent": "business_ops",
                     "status": "complete",
-                    "content": sentiment_analysis,
-                    "reference_context": getattr(sentiment_agent, "last_reference_context", ""),
-                    "reference_query": getattr(sentiment_agent, "last_reference_query", "")
+                    "content": business_ops_analysis,
+                    "reference_context": getattr(business_ops_agent, "last_reference_context", ""),
+                    "reference_query": getattr(business_ops_agent, "last_reference_query", "")
                 })
             }
 
@@ -357,14 +357,14 @@ async def stream_analysis(session_id: str):
                 # Risk agent responds
                 if round_num == 1:
                     discussion_prompt = risk_agent.respond_to(
-                        "Sentiment Analyst",
-                        sentiment_analysis,
+                        "Business & Ops Analyst",
+                        business_ops_analysis,
                         parsed_content
                     )
                 else:
                     last_msg = discussion_messages[-1]["content"]
                     discussion_prompt = risk_agent.respond_to(
-                        "Sentiment Analyst",
+                        "Business & Ops Analyst",
                         last_msg,
                         parsed_content
                     )
@@ -386,34 +386,34 @@ async def stream_analysis(session_id: str):
                     })
                 }
 
-                # Sentiment agent responds
-                discussion_prompt = sentiment_agent.respond_to(
+                # Business & Ops agent responds
+                discussion_prompt = business_ops_agent.respond_to(
                     "Risk Analyst",
                     risk_response,
                     parsed_content
                 )
 
-                sentiment_response = await sentiment_agent.generate(parsed_content, discussion_prompt)
+                business_ops_response = await business_ops_agent.generate(parsed_content, discussion_prompt)
                 discussion_messages.append({
-                    "agent": "Sentiment Analyst",
-                    "content": sentiment_response,
+                    "agent": "Business & Ops Analyst",
+                    "content": business_ops_response,
                     "round": round_num
                 })
 
                 yield {
                     "event": "message",
                     "data": json.dumps({
-                        "agent": "sentiment",
-                        "agentName": "Sentiment Analyst",
-                        "content": sentiment_response,
+                        "agent": "business_ops",
+                        "agentName": "Business & Ops Analyst",
+                        "content": business_ops_response,
                         "round": round_num
                     })
                 }
 
                 # Governance agent responds
                 discussion_prompt = governance_agent.respond_to(
-                    "Risk and Sentiment Analysts",
-                    f"Risk says: {risk_response}\n\nSentiment says: {sentiment_response}",
+                    "Risk and Business & Ops Analysts",
+                    f"Risk says: {risk_response}\n\nBusiness & Ops says: {business_ops_response}",
                     parsed_content
                 )
 
@@ -470,7 +470,7 @@ async def stream_analysis(session_id: str):
             final_report = await master_agent.consolidate(
                 parsed_content,
                 risk_analysis,
-                sentiment_analysis,
+                business_ops_analysis,
                 governance_analysis,
                 research_analysis,
                 discussion_transcript

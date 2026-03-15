@@ -26,7 +26,7 @@ Tone: Audit-friendly, objective, and highly risk-averse."""
         return """1. ONLY use information found in the earnings report. 
 2. If evidence for a category is missing, explicitly list it in 'non_disclosures'.
 3. DO NOT hallucinate or guess. 
-4. Cite evidence with chunk IDs from reference context using [C#] format.
+4. Cite evidence by providing a direct, short quote from the text. DO NOT use [C#] or bracketed citations.
 5. Output MUST be a single, valid JSON object. No markdown, no commentary.
 
 OUTPUT JSON SCHEMA:
