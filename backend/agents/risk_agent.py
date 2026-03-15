@@ -24,7 +24,7 @@ Tone: Skeptical, analytical, and data-driven."""
     @property
     def analysis_rules(self) -> str:
         return """1. ONLY use information found in the earnings report.
-2. Cite evidence with chunk IDs from reference context using [C#] format.
+2. Cite evidence by providing a direct, short quote from the text. DO NOT use [C#] or bracketed citations.
 3. Output MUST be a single, valid JSON object. No markdown, no commentary.
 
 OUTPUT JSON SCHEMA:
