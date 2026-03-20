@@ -23,10 +23,10 @@ Tone: Audit-friendly, objective, and highly risk-averse."""
 
     @property
     def analysis_rules(self) -> str:
-        return """1. ONLY use information found in the earnings report. 
+        return """1. ONLY use information found in the earnings report and any provided REFERENCE CONTEXT. 
 2. If evidence for a category is missing, explicitly list it in 'non_disclosures'.
 3. DO NOT hallucinate or guess. 
-4. Cite evidence by providing a direct, short quote from the text. DO NOT use [C#] or bracketed citations.
+4. Evidence must be a direct, short quote. If REFERENCE CONTEXT is provided, the quote MUST be verbatim from that context and include a [C#] chunk citation.
 5. Output MUST be a single, valid JSON object. No markdown, no commentary.
 
 OUTPUT JSON SCHEMA:
@@ -70,7 +70,13 @@ OUTPUT JSON SCHEMA:
     def require_citations(self) -> bool:
         return True
     
-    async def analyze(self, earnings_content: str) -> str:
+    async def analyze(
+        self,
+        earnings_content: str,
+        reference_context: str | None = None,
+        reference_query: str | None = None,
+        allow_targeted_retrieval: bool = True,
+    ) -> str:
         """
         Perform governance and compliance analysis on earnings content.
         
@@ -85,4 +91,11 @@ Analyze the provided earnings report content. Focus exclusively on governance,
 compliance, legal risks, and accounting quality. Ground all findings in evidence.
 REMEMBER: Output MUST be STRICT JSON only.
 """
-        return await self.generate(earnings_content, additional_instructions, expect_json=True)
+        return await self.generate(
+            earnings_content,
+            additional_instructions,
+            expect_json=True,
+            reference_context=reference_context,
+            reference_query=reference_query,
+            allow_targeted_retrieval=allow_targeted_retrieval,
+        )

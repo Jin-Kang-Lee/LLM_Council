@@ -18,6 +18,7 @@ from document_parser import parse_earnings_content, format_for_agents
 from workflow import analysis_workflow, AnalysisState
 from agents import RiskAgent, BusinessOpsRiskAgent, MasterAgent, GovernanceAgent, DeepResearchAgent
 from config import API_HOST, API_PORT, MAX_DISCUSSION_ROUNDS
+from rag.retriever import build_shared_reference_query, get_council_context
 
 
 # Lifespan context manager
@@ -192,6 +193,10 @@ async def stream_analysis(session_id: str):
             print("Agents initialized")
 
             parsed_content = session["parsed_content"]
+            shared_reference_query = build_shared_reference_query(parsed_content)
+            shared_reference_context = (
+                get_council_context(shared_reference_query) if shared_reference_query else ""
+            )
 
             # Phase 1: Parsing Complete
             yield {
@@ -225,7 +230,12 @@ async def stream_analysis(session_id: str):
                 })
             }
 
-            risk_analysis = await risk_agent.analyze(parsed_content)
+            risk_analysis = await risk_agent.analyze(
+                parsed_content,
+                reference_context=shared_reference_context,
+                reference_query=shared_reference_query,
+                allow_targeted_retrieval=True,
+            )
             print("Risk Agent analysis complete")
 
             yield {
@@ -250,7 +260,12 @@ async def stream_analysis(session_id: str):
                 })
             }
 
-            business_ops_analysis = await business_ops_agent.analyze(parsed_content)
+            business_ops_analysis = await business_ops_agent.analyze(
+                parsed_content,
+                reference_context=shared_reference_context,
+                reference_query=shared_reference_query,
+                allow_targeted_retrieval=True,
+            )
             print("Business & Ops Agent analysis complete")
 
             yield {
@@ -275,7 +290,12 @@ async def stream_analysis(session_id: str):
                 })
             }
 
-            governance_analysis = await governance_agent.analyze(parsed_content)
+            governance_analysis = await governance_agent.analyze(
+                parsed_content,
+                reference_context=shared_reference_context,
+                reference_query=shared_reference_query,
+                allow_targeted_retrieval=True,
+            )
             print("Governance Agent analysis complete")
 
             yield {
@@ -309,7 +329,12 @@ async def stream_analysis(session_id: str):
                 })
             }
 
-            research_analysis = await deep_research_agent.analyze(parsed_content)
+            research_analysis = await deep_research_agent.analyze(
+                parsed_content,
+                reference_context=shared_reference_context,
+                reference_query=shared_reference_query,
+                allow_targeted_retrieval=True,
+            )
             print("Deep Research Agent analysis complete")
 
             yield {
@@ -369,7 +394,10 @@ async def stream_analysis(session_id: str):
                         parsed_content
                     )
 
-                risk_response = await risk_agent.generate(parsed_content, discussion_prompt)
+                risk_response = await risk_agent.generate_discussion(
+                    parsed_content,
+                    discussion_prompt
+                )
                 discussion_messages.append({
                     "agent": "Risk Analyst",
                     "content": risk_response,
@@ -393,7 +421,10 @@ async def stream_analysis(session_id: str):
                     parsed_content
                 )
 
-                business_ops_response = await business_ops_agent.generate(parsed_content, discussion_prompt)
+                business_ops_response = await business_ops_agent.generate_discussion(
+                    parsed_content,
+                    discussion_prompt
+                )
                 discussion_messages.append({
                     "agent": "Business & Ops Analyst",
                     "content": business_ops_response,
@@ -417,7 +448,10 @@ async def stream_analysis(session_id: str):
                     parsed_content
                 )
 
-                gov_response = await governance_agent.generate(parsed_content, discussion_prompt)
+                gov_response = await governance_agent.generate_discussion(
+                    parsed_content,
+                    discussion_prompt
+                )
                 discussion_messages.append({
                     "agent": "Governance Analyst",
                     "content": gov_response,

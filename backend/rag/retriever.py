@@ -21,11 +21,26 @@ from config import (
     RAG_MAX_QUERY_CHARS,
     RAG_MIN_QUERY_CHARS,
 )
-from rag.guardrails import is_suspicious_chunk, normalize_whitespace, sanitize_query
+from rag.guardrails import is_low_quality_chunk, is_suspicious_chunk, normalize_whitespace, sanitize_query
 from rag.reranker import rerank
 
 COLLECTION_NAME = "council_reference"
 EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
+
+
+def build_shared_reference_query(content: str) -> str:
+    if not content:
+        return ""
+
+    condensed = " ".join(content.split())
+    if not condensed:
+        return ""
+
+    snippet = condensed[:1200]
+    if len(condensed) > 1600:
+        snippet = f"{snippet} ... {condensed[-200:]}"
+
+    return f"Shared reference lookup for earnings analysis. Context: {snippet}"
 
 
 def _infer_filter(query: str) -> dict | None:
@@ -106,7 +121,7 @@ def _iter_chunks(results: Iterable[Tuple[object, float]]) -> list[str]:
     for doc, _score in results:
         content = getattr(doc, "page_content", "") or ""
         content = content.strip()
-        if not content or is_suspicious_chunk(content):
+        if not content or is_suspicious_chunk(content) or is_low_quality_chunk(content):
             continue
 
         content = _trim_chunk(content, RAG_MAX_CHUNK_CHARS)

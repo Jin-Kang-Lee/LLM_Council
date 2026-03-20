@@ -44,6 +44,33 @@ def _extract_json(text: str) -> dict | None:
         return None
 
 
+def _extract_evidence_texts(parsed: dict | None) -> list[str]:
+    if not parsed:
+        return []
+
+    evidence: list[str] = []
+
+    def walk(node: object) -> None:
+        if isinstance(node, dict):
+            for key, val in node.items():
+                if key == "evidence" and isinstance(val, str):
+                    evidence.append(val)
+                walk(val)
+        elif isinstance(node, list):
+            for item in node:
+                walk(item)
+
+    walk(parsed)
+    return evidence
+
+
+def _truncate_evidence_list(evidence: list[str]) -> str:
+    if not evidence:
+        return ""
+    joined = "\n".join(f"- {item}" for item in evidence)
+    return _truncate(joined, MAX_ANSWER_CHARS)
+
+
 def _build_prompt(answer: str, context: str) -> str:
     return (
         "You are a strict fact-checker. Decide whether the ANSWER is fully supported by the CONTEXT.\n"
@@ -122,13 +149,31 @@ def evaluate_rag_faithfulness_llm(agent_outputs: dict, ground_truth: dict) -> di
     skipped = 0
 
     for agent_name in rag_gt.keys():
-        answer = agent_outputs.get(agent_name, "")
-        context = rag_outputs.get(agent_name, {}).get("context", "")
+        raw_answer = agent_outputs.get(agent_name, "")
+        parsed_answer = _extract_json(raw_answer)
+        evidence_texts = _extract_evidence_texts(parsed_answer)
+        answer = _truncate_evidence_list(evidence_texts)
 
-        if not answer or not context:
+        rag_meta = rag_outputs.get(agent_name, {}) or {}
+        context_parts = [
+            rag_meta.get("shared_context", ""),
+            rag_meta.get("targeted_context", ""),
+            rag_meta.get("context", ""),
+        ]
+        context = "\n\n---\n\n".join([part for part in context_parts if part])
+
+        if not answer:
             results[agent_name] = {
                 "skipped": True,
-                "reason": "Missing answer or retrieved context",
+                "reason": "No evidence fields found in agent output",
+            }
+            skipped += 1
+            continue
+
+        if not context:
+            results[agent_name] = {
+                "skipped": True,
+                "reason": "Missing retrieved context",
             }
             skipped += 1
             continue

@@ -67,7 +67,20 @@ OUTPUT JSON SCHEMA:
             "confidence_gap": str,
         }
 
-    async def analyze(self, earnings_content: str) -> str:
+    async def analyze(
+        self,
+        earnings_content: str,
+        reference_context: str | None = None,
+        reference_query: str | None = None,
+        allow_targeted_retrieval: bool = True,
+    ) -> str:
         """Analyze content to generate research plan."""
         additional_instructions = "Analyze the report and identify exactly what is missing or needs external checking. Create a research plan in the required JSON format."
-        return await self.generate(earnings_content, additional_instructions, expect_json=True)
+        return await self.generate(
+            earnings_content,
+            additional_instructions,
+            expect_json=True,
+            reference_context=reference_context,
+            reference_query=reference_query,
+            allow_targeted_retrieval=allow_targeted_retrieval,
+        )

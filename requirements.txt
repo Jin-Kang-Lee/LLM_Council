@@ -14,3 +14,4 @@ python-dotenv
 sse-starlette
 requests
 sentence-transformers
+chromadb

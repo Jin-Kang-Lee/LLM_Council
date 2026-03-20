@@ -23,10 +23,11 @@ Tone: Analytical, thorough, and risk-aware."""
 
     @property
     def analysis_rules(self) -> str:
-        return """1. ONLY use information found in the earnings report.
-2. Cite evidence by providing a direct, short quote from the text. DO NOT use [C#] or bracketed citations.
-3. Output MUST be a single, valid JSON object. No markdown, no commentary.
-4. Pay special attention to the Cash Flow Statement to locate Capital Expenditure (CapEx) figures.
+        return """1. ONLY use information found in the earnings report and any provided REFERENCE CONTEXT. Do not use outside knowledge.
+2. DO NOT hallucinate or guess. If information is missing, say "Not Found" and list it under non_disclosures.
+3. Evidence must include a short direct quote. If REFERENCE CONTEXT is provided, the quote MUST be verbatim from that context and include a [C#] chunk citation.
+4. Output MUST be a single, valid JSON object. No markdown, no commentary.
+5. Pay special attention to the Cash Flow Statement to locate Capital Expenditure (CapEx) figures.
 
 OUTPUT JSON SCHEMA:
 {
@@ -46,7 +47,9 @@ OUTPUT JSON SCHEMA:
     }
   ],
   "watchlist": ["Items requiring monitoring"],
-  "confidence_score": 0.0
+  "non_disclosures": ["Expected items not found in report"],
+  "confidence_score": 0.0,
+  "limitations": "Short summary of data gaps"
 }"""
 
     @property
@@ -68,14 +71,22 @@ OUTPUT JSON SCHEMA:
                 }
             ],
             "watchlist": [str],
+            "non_disclosures": [str],
             "confidence_score": (int, float),
+            "limitations": str,
         }
 
     @property
     def require_citations(self) -> bool:
         return True
     
-    async def analyze(self, earnings_content: str) -> str:
+    async def analyze(
+        self,
+        earnings_content: str,
+        reference_context: str | None = None,
+        reference_query: str | None = None,
+        allow_targeted_retrieval: bool = True,
+    ) -> str:
         """
         Perform business, industry, and operational risk analysis on earnings content.
         
@@ -99,5 +110,13 @@ Specifically:
 5. Evaluate business continuity risks and scalability constraints.
 
 Be thorough but concise. If specific CapEx data is not found, note it explicitly.
+List any missing expected disclosures in non_disclosures and summarize data gaps in limitations.
 """
-        return await self.generate(earnings_content, additional_instructions, expect_json=True)
+        return await self.generate(
+            earnings_content,
+            additional_instructions,
+            expect_json=True,
+            reference_context=reference_context,
+            reference_query=reference_query,
+            allow_targeted_retrieval=allow_targeted_retrieval,
+        )

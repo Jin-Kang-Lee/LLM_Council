@@ -23,8 +23,8 @@ Tone: Skeptical, analytical, and data-driven."""
 
     @property
     def analysis_rules(self) -> str:
-        return """1. ONLY use information found in the earnings report.
-2. Cite evidence by providing a direct, short quote from the text. DO NOT use [C#] or bracketed citations.
+        return """1. ONLY use information found in the earnings report and any provided REFERENCE CONTEXT.
+2. Evidence must be a direct, short quote. If REFERENCE CONTEXT is provided, the quote MUST be verbatim from that context and include a [C#] chunk citation.
 3. Output MUST be a single, valid JSON object. No markdown, no commentary.
 
 OUTPUT JSON SCHEMA:
@@ -64,7 +64,13 @@ OUTPUT JSON SCHEMA:
     def require_citations(self) -> bool:
         return True
     
-    async def analyze(self, earnings_content: str) -> str:
+    async def analyze(
+        self,
+        earnings_content: str,
+        reference_context: str | None = None,
+        reference_query: str | None = None,
+        allow_targeted_retrieval: bool = True,
+    ) -> str:
         """
         Perform risk analysis on earnings content.
         
@@ -80,4 +86,11 @@ financial vulnerabilities, and areas of concern. Be thorough but concise.
 If you cannot find specific financial metrics, analyze qualitative risk indicators
 from the language and tone of the report.
 """
-        return await self.generate(earnings_content, additional_instructions, expect_json=True)
+        return await self.generate(
+            earnings_content,
+            additional_instructions,
+            expect_json=True,
+            reference_context=reference_context,
+            reference_query=reference_query,
+            allow_targeted_retrieval=allow_targeted_retrieval,
+        )

@@ -18,7 +18,10 @@ try:
 except ImportError:
     pass
 
-from llama_cloud.client import AsyncLlamaCloud
+try:
+    from llama_cloud.client import AsyncLlamaCloud
+except Exception:
+    AsyncLlamaCloud = None
 import md_postprocess
 
 try:
@@ -62,7 +65,7 @@ async def pdf_to_markdown(
 
         # 3. Parse with AsyncLlamaCloud (fallback to local PDF text extraction)
         api_key = os.getenv("LLAMA_CLOUD_API_KEY")
-        if api_key:
+        if api_key and AsyncLlamaCloud is not None:
             try:
                 client = AsyncLlamaCloud(token=api_key)
 
@@ -100,7 +103,10 @@ async def pdf_to_markdown(
             except Exception as e:
                 print(f"[WARNING] LlamaCloud parse failed: {e}. Falling back to local parser.")
         else:
-            print("[INFO] LLAMA_CLOUD_API_KEY not set. Falling back to local parser.")
+            if api_key and AsyncLlamaCloud is None:
+                print("[WARNING] llama_cloud not installed. Falling back to local parser.")
+            else:
+                print("[INFO] LLAMA_CLOUD_API_KEY not set. Falling back to local parser.")
 
         if PdfReader is None:
             raise ValueError("PyPDF2 is not installed. Install it to enable local PDF parsing.")

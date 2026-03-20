@@ -24,6 +24,11 @@ _INJECTION_PHRASES = (
     "confidential prompt",
 )
 
+_INJECTION_RE = re.compile("|".join(re.escape(p) for p in _INJECTION_PHRASES), re.IGNORECASE)
+
+_LOW_ALPHA_RATIO = 0.3
+_MIN_CHUNK_CHARS = 50
+
 
 def normalize_whitespace(text: str) -> str:
     return _WHITESPACE_RE.sub(" ", text or "").strip()
@@ -35,11 +40,17 @@ def sanitize_query(query: str, max_chars: int, min_chars: int) -> str:
 
     cleaned = _CONTROL_RE.sub(" ", query)
     cleaned = normalize_whitespace(cleaned)
+    if cleaned:
+        cleaned = _INJECTION_RE.sub(" ", cleaned)
+        cleaned = normalize_whitespace(cleaned)
 
     if max_chars and len(cleaned) > max_chars:
         cleaned = cleaned[:max_chars].rstrip()
 
     if min_chars and len(cleaned) < min_chars:
+        return ""
+
+    if cleaned and _alpha_ratio(cleaned) < _LOW_ALPHA_RATIO:
         return ""
 
     return cleaned
@@ -51,6 +62,23 @@ def is_suspicious_chunk(text: str) -> bool:
 
     lowered = text.lower()
     return any(phrase in lowered for phrase in _INJECTION_PHRASES)
+
+
+def _alpha_ratio(text: str) -> float:
+    if not text:
+        return 0.0
+    alpha = sum(1 for ch in text if ch.isalpha())
+    return alpha / max(1, len(text))
+
+
+def is_low_quality_chunk(text: str) -> bool:
+    if not text:
+        return True
+    if len(text.strip()) < _MIN_CHUNK_CHARS:
+        return True
+    if _alpha_ratio(text) < _LOW_ALPHA_RATIO:
+        return True
+    return False
 
 
 def dedupe_chunks(chunks: Iterable[str]) -> list[str]:

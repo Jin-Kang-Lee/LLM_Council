@@ -8,6 +8,7 @@ from langgraph.graph import StateGraph, END
 import operator
 
 from agents import RiskAgent, BusinessOpsRiskAgent, MasterAgent, GovernanceAgent, DeepResearchAgent
+from rag.retriever import build_shared_reference_query, get_council_context
 from config import MAX_DISCUSSION_ROUNDS
 
 
@@ -23,6 +24,10 @@ class AnalysisState(TypedDict):
     # Input
     raw_content: str
     parsed_content: str
+
+    # Shared RAG context
+    reference_query: str
+    reference_context: str
     
     # Phase 2: Individual Analyses
     risk_analysis: str
@@ -59,10 +64,35 @@ async def parse_node(state: AnalysisState) -> dict:
     }
 
 
+async def reference_node(state: AnalysisState) -> dict:
+    """Phase 1.5: Shared reference lookup for hybrid RAG."""
+    try:
+        query = build_shared_reference_query(state["parsed_content"])
+        context = get_council_context(query) if query else ""
+        return {
+            "reference_query": query,
+            "reference_context": context,
+            "current_phase": 1,
+            "status": "reference_context_ready",
+        }
+    except Exception as e:
+        return {
+            "reference_query": "",
+            "reference_context": "",
+            "error": str(e),
+            "status": "reference_context_error",
+        }
+
+
 async def risk_analysis_node(state: AnalysisState) -> dict:
     """Phase 2a: Run Risk Agent analysis."""
     try:
-        analysis = await risk_agent.analyze(state["parsed_content"])
+        analysis = await risk_agent.analyze(
+            state["parsed_content"],
+            reference_context=state.get("reference_context", ""),
+            reference_query=state.get("reference_query", ""),
+            allow_targeted_retrieval=True,
+        )
         return {
             "risk_analysis": analysis,
             "current_phase": 2,
@@ -78,7 +108,12 @@ async def risk_analysis_node(state: AnalysisState) -> dict:
 async def business_ops_analysis_node(state: AnalysisState) -> dict:
     """Phase 2b: Run Business & Ops Risk Agent analysis."""
     try:
-        analysis = await business_ops_agent.analyze(state["parsed_content"])
+        analysis = await business_ops_agent.analyze(
+            state["parsed_content"],
+            reference_context=state.get("reference_context", ""),
+            reference_query=state.get("reference_query", ""),
+            allow_targeted_retrieval=True,
+        )
         return {
             "business_ops_analysis": analysis,
             "current_phase": 2,
@@ -94,7 +129,12 @@ async def business_ops_analysis_node(state: AnalysisState) -> dict:
 async def governance_analysis_node(state: AnalysisState) -> dict:
     """Phase 2c: Run Governance Agent analysis."""
     try:
-        analysis = await governance_agent.analyze(state["parsed_content"])
+        analysis = await governance_agent.analyze(
+            state["parsed_content"],
+            reference_context=state.get("reference_context", ""),
+            reference_query=state.get("reference_query", ""),
+            allow_targeted_retrieval=True,
+        )
         return {
             "governance_analysis": analysis,
             "current_phase": 2,
@@ -110,7 +150,12 @@ async def governance_analysis_node(state: AnalysisState) -> dict:
 async def research_node(state: AnalysisState) -> dict:
     """Phase 2.5: Deep Research into gaps identified in analyses."""
     try:
-        analysis = await deep_research_agent.analyze(state["parsed_content"])
+        analysis = await deep_research_agent.analyze(
+            state["parsed_content"],
+            reference_context=state.get("reference_context", ""),
+            reference_query=state.get("reference_query", ""),
+            allow_targeted_retrieval=True,
+        )
         return {
             "research_analysis": analysis,
             "current_phase": 2,
@@ -286,6 +331,7 @@ def create_workflow() -> StateGraph:
     
     # Add nodes - names must not match state attribute names
     workflow.add_node("parse", parse_node)
+    workflow.add_node("run_reference", reference_node)
     workflow.add_node("run_risk", risk_analysis_node)
     workflow.add_node("run_business_ops", business_ops_analysis_node)
     workflow.add_node("run_governance", governance_analysis_node)
@@ -296,10 +342,13 @@ def create_workflow() -> StateGraph:
     # Define edges
     workflow.set_entry_point("parse")
     
-    # After parsing, run all analyses in parallel
-    workflow.add_edge("parse", "run_risk")
-    workflow.add_edge("parse", "run_business_ops")
-    workflow.add_edge("parse", "run_governance")
+    # After parsing, run shared reference lookup
+    workflow.add_edge("parse", "run_reference")
+
+    # After reference lookup, run all analyses in parallel
+    workflow.add_edge("run_reference", "run_risk")
+    workflow.add_edge("run_reference", "run_business_ops")
+    workflow.add_edge("run_reference", "run_governance")
     
     # All analyses lead to research
     workflow.add_edge("run_risk", "run_research")

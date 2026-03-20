@@ -20,6 +20,7 @@ from eval.metrics.section_check import evaluate_section_completeness
 from eval.metrics.query_diversity import evaluate_query_diversity
 from eval.metrics.rag_retrieval import evaluate_rag_retrieval
 from eval.metrics.rag_faithfulness_llm import evaluate_rag_faithfulness_llm
+from rag.retriever import build_shared_reference_query, get_council_context
 
 
 class EvalPipeline:
@@ -140,6 +141,10 @@ class EvalPipeline:
         print(f"\n  [Phase 1] Parsing earnings report...")
         parsed = await parse_earnings_content(report_text)
         formatted = format_for_agents(parsed)
+        shared_reference_query = build_shared_reference_query(formatted)
+        shared_reference_context = (
+            get_council_context(shared_reference_query) if shared_reference_query else ""
+        )
         print(f"   ✅ Parsed — {parsed['word_count']} words, topics: {parsed['sections_identified']}")
 
         # ── Phase 2: Individual agent analyses ──
@@ -153,46 +158,82 @@ class EvalPipeline:
 
         # Risk
         print(f"   🔴 Risk Agent analyzing...")
-        risk_output = await risk_agent.analyze(formatted)
+        risk_output = await risk_agent.analyze(
+            formatted,
+            reference_context=shared_reference_context,
+            reference_query=shared_reference_query,
+            allow_targeted_retrieval=True,
+        )
         print(f"   ✅ Risk Agent complete")
         if self.verbose:
             print(f"      Output preview: {risk_output[:200]}...")
         risk_rag = {
             "query": getattr(risk_agent, "last_reference_query", ""),
             "context": getattr(risk_agent, "last_reference_context", ""),
+            "shared_query": getattr(risk_agent, "last_shared_reference_query", ""),
+            "shared_context": getattr(risk_agent, "last_shared_reference_context", ""),
+            "targeted_query": getattr(risk_agent, "last_targeted_reference_query", ""),
+            "targeted_context": getattr(risk_agent, "last_targeted_reference_context", ""),
         }
 
         # Business & Ops
         print(f"   🟡 Business & Ops Agent analyzing...")
-        business_ops_output = await business_ops_agent.analyze(formatted)
+        business_ops_output = await business_ops_agent.analyze(
+            formatted,
+            reference_context=shared_reference_context,
+            reference_query=shared_reference_query,
+            allow_targeted_retrieval=True,
+        )
         print(f"   ✅ Business & Ops Agent complete")
         if self.verbose:
             print(f"      Output preview: {business_ops_output[:200]}...")
         business_ops_rag = {
             "query": getattr(business_ops_agent, "last_reference_query", ""),
             "context": getattr(business_ops_agent, "last_reference_context", ""),
+            "shared_query": getattr(business_ops_agent, "last_shared_reference_query", ""),
+            "shared_context": getattr(business_ops_agent, "last_shared_reference_context", ""),
+            "targeted_query": getattr(business_ops_agent, "last_targeted_reference_query", ""),
+            "targeted_context": getattr(business_ops_agent, "last_targeted_reference_context", ""),
         }
 
         # Governance
         print(f"   🟣 Governance Agent analyzing...")
-        governance_output = await governance_agent.analyze(formatted)
+        governance_output = await governance_agent.analyze(
+            formatted,
+            reference_context=shared_reference_context,
+            reference_query=shared_reference_query,
+            allow_targeted_retrieval=True,
+        )
         print(f"   ✅ Governance Agent complete")
         if self.verbose:
             print(f"      Output preview: {governance_output[:200]}...")
         governance_rag = {
             "query": getattr(governance_agent, "last_reference_query", ""),
             "context": getattr(governance_agent, "last_reference_context", ""),
+            "shared_query": getattr(governance_agent, "last_shared_reference_query", ""),
+            "shared_context": getattr(governance_agent, "last_shared_reference_context", ""),
+            "targeted_query": getattr(governance_agent, "last_targeted_reference_query", ""),
+            "targeted_context": getattr(governance_agent, "last_targeted_reference_context", ""),
         }
 
         # Deep Research
         print(f"   🔵 Deep Research Agent analyzing...")
-        research_output = await research_agent.analyze(formatted)
+        research_output = await research_agent.analyze(
+            formatted,
+            reference_context=shared_reference_context,
+            reference_query=shared_reference_query,
+            allow_targeted_retrieval=True,
+        )
         print(f"   ✅ Deep Research Agent complete")
         if self.verbose:
             print(f"      Output preview: {research_output[:200]}...")
         research_rag = {
             "query": getattr(research_agent, "last_reference_query", ""),
             "context": getattr(research_agent, "last_reference_context", ""),
+            "shared_query": getattr(research_agent, "last_shared_reference_query", ""),
+            "shared_context": getattr(research_agent, "last_shared_reference_context", ""),
+            "targeted_query": getattr(research_agent, "last_targeted_reference_query", ""),
+            "targeted_context": getattr(research_agent, "last_targeted_reference_context", ""),
         }
 
         # ── Phase 3: War Room Discussion ──
@@ -209,7 +250,7 @@ class EvalPipeline:
                 last_msg = discussion_messages[-1]["content"]
                 prompt = risk_agent.respond_to("Governance Analyst", last_msg, formatted)
 
-            risk_response = await risk_agent.generate(formatted, prompt)
+            risk_response = await risk_agent.generate_discussion(formatted, prompt)
             discussion_messages.append({
                 "agent": "Risk Analyst",
                 "content": risk_response,
@@ -218,7 +259,7 @@ class EvalPipeline:
 
             # Business & Ops responds to Risk
             prompt = business_ops_agent.respond_to("Risk Analyst", risk_response, formatted)
-            business_ops_response = await business_ops_agent.generate(formatted, prompt)
+            business_ops_response = await business_ops_agent.generate_discussion(formatted, prompt)
             discussion_messages.append({
                 "agent": "Business & Ops Analyst",
                 "content": business_ops_response,
@@ -231,7 +272,7 @@ class EvalPipeline:
                 f"Risk says: {risk_response}\n\nBusiness & Ops says: {business_ops_response}",
                 formatted,
             )
-            gov_response = await governance_agent.generate(formatted, prompt)
+            gov_response = await governance_agent.generate_discussion(formatted, prompt)
             discussion_messages.append({
                 "agent": "Governance Analyst",
                 "content": gov_response,
@@ -391,3 +432,6 @@ class EvalPipeline:
             json.dump(self.results, f, indent=2, ensure_ascii=False)
 
         print(f"\n📄 Results saved to: {output_path}")
+
+
+
