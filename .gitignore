@@ -83,6 +83,7 @@ nosetests.xml
 coverage.xml
 *.cover
 .hypothesis/
+eval/results/
 
 # Documentation
 docs/_build/
