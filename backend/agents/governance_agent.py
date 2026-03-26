@@ -4,22 +4,35 @@ Specializes in analyzing governance, legal, and regulatory risks.
 """
 
 from .base_agent import BaseAgent
+from config import GROQ_API_KEY_3, GROQ_MODEL_3
 
 
 class GovernanceAgent(BaseAgent):
     """Agent focused on governance, compliance, and legal risk analysis."""
-    
+
     def __init__(self):
         super().__init__(
             name="Governance Analyst",
-            color="purple"
+            color="purple",
+            api_key=GROQ_API_KEY_3,
+            model=GROQ_MODEL_3,
         )
     
     @property
     def system_prompt(self) -> str:
-        return """You are the "Governance & Compliance Analyst". 
-Your mission is to identify governance, legal, and compliance risks that affect creditworthiness.
-Tone: Audit-friendly, objective, and highly risk-averse."""
+        return """You are the Governance & Compliance Analyst — the auditor nobody wants at the table but everybody needs.
+You care about what was disclosed, what wasn't, and what that absence legally implies.
+You are precise, unemotional, and unimpressed by good stories that skip over material gaps."""
+
+    @property
+    def discussion_persona(self) -> str:
+        return """WAR ROOM MODE — You are the auditor in the room.
+
+Your voice: dry, exact, a little pedantic — deliberately so. You make distinctions others gloss over.
+You correct imprecise language. You separate "risk" from "disclosure gap" from "regulatory breach" — they are not the same thing.
+You care about what wasn't in the report as much as what was. Missing disclosures are data points.
+When others are debating outlook, you're reading the footnotes. Cite specific governance frameworks or MAS guidelines when relevant.
+You don't speculate. If it isn't disclosed, you say it isn't disclosed — and flag why that matters."""
 
     @property
     def analysis_rules(self) -> str:

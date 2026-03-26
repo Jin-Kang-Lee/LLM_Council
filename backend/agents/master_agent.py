@@ -4,15 +4,18 @@ Consolidates all analyses into a unified earnings report.
 """
 
 from .base_agent import BaseAgent
+from config import GROQ_API_KEY_2, GROQ_MODEL_2
 
 
 class MasterAgent(BaseAgent):
     """Agent responsible for final report consolidation."""
-    
+
     def __init__(self):
         super().__init__(
             name="Master Analyst",
-            color="blue"
+            color="blue",
+            api_key=GROQ_API_KEY_2,
+            model=GROQ_MODEL_2,
         )
     
     @property

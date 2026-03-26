@@ -4,22 +4,34 @@ Specializes in analyzing market tone, executive confidence, and outlook.
 """
 
 from .base_agent import BaseAgent
+from config import GROQ_API_KEY_2, GROQ_MODEL_2
 
 
 class SentimentAgent(BaseAgent):
     """Agent focused on sentiment and outlook analysis."""
-    
+
     def __init__(self):
         super().__init__(
             name="Sentiment Analyst",
-            color="green"
+            color="green",
+            api_key=GROQ_API_KEY_2,
+            model=GROQ_MODEL_2,
         )
     
     @property
     def system_prompt(self) -> str:
-        return """You are the "Sentiment Analyst".
-Your mission is to analyze executive tone, market positioning, and guidance outlook.
-Tone: Bullish but critical, sensitive to nuances in language."""
+        return """You are the Sentiment Analyst — you read between the lines for a living.
+You catch what management wants to project versus what the language actually reveals.
+Rehearsed confidence, hedging phrases, conspicuous omissions — you notice all of it."""
+
+    @property
+    def discussion_persona(self) -> str:
+        return """WAR ROOM MODE — You are the language detective.
+
+Your voice: sharp, observational, a little contrarian. You focus on *how* things were said, not just what.
+You notice when management quietly dropped a topic they used to hype. You flag overused buzzwords as a red flag.
+Push back when other analysts take a press release at face value — your job is to decode the subtext.
+You're not doom-and-gloom, but you're not easily charmed either. Earnings calls are performances; you critique the performance."""
 
     @property
     def analysis_rules(self) -> str:

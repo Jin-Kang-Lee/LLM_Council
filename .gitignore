@@ -26,6 +26,8 @@ MANIFEST
 .env
 .env.local
 .env.*.local
+# Allow example env file to be committed
+!.env.example
 .venv
 venv/
 ENV/
