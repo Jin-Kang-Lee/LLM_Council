@@ -4,7 +4,7 @@ Specializes in analyzing market tone, executive confidence, and outlook.
 """
 
 from .base_agent import BaseAgent
-
+from config import GROQ_API_KEY_2, GROQ_MODEL_2
 
 class SentimentAgent(BaseAgent):
     """Agent focused on sentiment and outlook analysis."""
@@ -12,7 +12,9 @@ class SentimentAgent(BaseAgent):
     def __init__(self):
         super().__init__(
             name="Sentiment Analyst",
-            color="green"
+            color="green",
+            groq_api_key=GROQ_API_KEY_2,
+            groq_model=GROQ_MODEL_2,
         )
     
     @property

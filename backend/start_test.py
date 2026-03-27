@@ -105,8 +105,7 @@ def main():
     tests = validate_tests(args.tests)
 
     # Check for OpenAI key if warroom test is requested
-    if ("warroom" in tests or "all" in tests) and not args.openai_key:
-        print("⚠️  Warning: 'warroom' test requires --openai_key. It will be skipped.")
+    # (Removed: We now use Groq keys loaded automatically from the .env file)
 
     # Create and run the pipeline
     pipeline = EvalPipeline(

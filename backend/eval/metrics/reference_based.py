@@ -137,6 +137,23 @@ def _eval_sentiment(parsed: dict, ground_truth: dict) -> dict:
     return result
 
 
+def _eval_business_ops(parsed: dict, ground_truth: dict) -> dict:
+    """Evaluate Business Ops Agent output against ground truth."""
+    result = {}
+
+    if "operational_risk_rating" in parsed and "operational_risk_rating" in ground_truth:
+        result["operational_risk_rating"] = _check_categorical(
+            parsed["operational_risk_rating"], ground_truth["operational_risk_rating"]
+        )
+        
+    if "key_business_risks" in ground_truth:
+        raw_text = json.dumps(parsed)
+        result["key_business_risks_recall"] = _check_keyword_recall(
+            raw_text, ground_truth["key_business_risks"]
+        )
+
+    return result
+
 def _eval_governance(parsed: dict, ground_truth: dict) -> dict:
     """Evaluate Governance Agent output against ground truth."""
     result = {}
@@ -194,6 +211,7 @@ def _eval_research(parsed: dict, ground_truth: dict) -> dict:
 
 AGENT_EVALUATORS = {
     "risk": _eval_risk,
+    "business_ops": _eval_business_ops,
     "sentiment": _eval_sentiment,
     "governance": _eval_governance,
     "research": _eval_research,

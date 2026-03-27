@@ -5,6 +5,7 @@ Specializes in identifying information gaps and searching for external verificat
 
 from .base_agent import BaseAgent
 from typing import Optional
+from config import GROQ_API_KEY_1, GROQ_MODEL_1
 
 class DeepResearchAgent(BaseAgent):
     """Agent focused on finding external information and filling data gaps."""
@@ -12,7 +13,9 @@ class DeepResearchAgent(BaseAgent):
     def __init__(self):
         super().__init__(
             name="Deep Research Analyst",
-            color="blue"
+            color="blue",
+            groq_api_key=GROQ_API_KEY_1,
+            groq_model=GROQ_MODEL_1,
         )
     
     @property

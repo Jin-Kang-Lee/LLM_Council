@@ -1,7 +1,8 @@
 """
 RAG Faithfulness (LLM Judge)
 
-Uses an LLM to verify that the agent answer is supported by the retrieved context.
+Uses a local Ollama LLM to verify that the agent's answer is supported
+by the retrieved context. Evaluates Risk, Business Ops, and Governance agents.
 """
 
 from __future__ import annotations
@@ -14,11 +15,14 @@ import httpx
 
 from config import OLLAMA_BASE_URL, OLLAMA_MODEL
 
+OLLAMA_URL = f"{OLLAMA_BASE_URL}/v1/chat/completions"
+JUDGE_MODEL = os.getenv("EVAL_JUDGE_MODEL", OLLAMA_MODEL)
 
-OLLAMA_URL = f"{OLLAMA_BASE_URL}/api/generate"
-JUDGE_MODEL = os.getenv("RAG_JUDGE_MODEL", OLLAMA_MODEL)
 MAX_CONTEXT_CHARS = 6000
 MAX_ANSWER_CHARS = 2000
+
+# Specific agents to evaluate
+TARGET_AGENTS = {"risk", "business_ops", "governance"}
 
 
 def _truncate(text: str, limit: int) -> str:
@@ -44,43 +48,49 @@ def _extract_json(text: str) -> dict | None:
         return None
 
 
-def _build_prompt(answer: str, context: str) -> str:
-    return (
-        "You are a strict fact-checker. Decide whether the ANSWER is fully supported by the CONTEXT.\n"
+def _build_messages(answer: str, context: str) -> list[dict]:
+    system_prompt = (
+        "You are a strict, objective fact-checker. Decide whether the provided ANSWER is "
+        "fully supported by the provided CONTEXT.\n"
         "If any claim in the ANSWER is not explicitly supported by the CONTEXT, mark faithful=false.\n"
-        "Do not assume missing information. Output JSON only with this schema:\n"
-        '{"faithful": true/false, "score": 0-1, "unsupported_claims": ["..."], "notes": "..."}\n\n'
-        "CONTEXT:\n"
-        f"{context}\n\n"
-        "ANSWER:\n"
-        f"{answer}\n"
+        "Do not assume missing information. Your output MUST be a strict JSON object matching this schema:\n"
+        '{"faithful": true or false, "score": 0.0 to 1.0, "unsupported_claims": ["list of strings"], "notes": "brief explanation"}'
     )
+    user_prompt = (
+        f"CONTEXT:\n{context}\n\n"
+        f"ANSWER:\n{answer}\n\n"
+        "Respond ONLY with a JSON object, no markdown, no commentary."
+    )
+    return [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": user_prompt}
+    ]
 
 
-def _call_ollama(prompt: str) -> str:
+def _call_ollama_judge(messages: list[dict]) -> str:
     payload = {
         "model": JUDGE_MODEL,
-        "prompt": prompt,
-        "stream": False,
-        "options": {
-            "temperature": 0.0,
-            "top_p": 1.0,
-        },
+        "messages": messages,
+        "temperature": 0.0,
     }
 
-    with httpx.Client(timeout=120.0) as client:
+    with httpx.Client(timeout=300.0) as client:
         response = client.post(OLLAMA_URL, json=payload)
         response.raise_for_status()
         result = response.json()
-        return result.get("response", "")
+        return result["choices"][0]["message"]["content"]
 
 
 def _judge_faithfulness(answer: str, context: str) -> dict[str, Any]:
     trimmed_answer = _truncate(answer, MAX_ANSWER_CHARS)
     trimmed_context = _truncate(context, MAX_CONTEXT_CHARS)
+    messages = _build_messages(trimmed_answer, trimmed_context)
 
-    prompt = _build_prompt(trimmed_answer, trimmed_context)
-    raw = _call_ollama(prompt)
+    try:
+        raw = _call_ollama_judge(messages)
+    except Exception as e:
+        return {"skipped": True, "reason": f"API Error: {str(e)}"}
+
     parsed = _extract_json(raw)
     if not parsed:
         return {
@@ -89,26 +99,18 @@ def _judge_faithfulness(answer: str, context: str) -> dict[str, Any]:
             "raw_response": raw[:500],
         }
 
-    faithful = bool(parsed.get("faithful", False))
-    score = parsed.get("score", 0.0)
-    unsupported = parsed.get("unsupported_claims", [])
-    notes = parsed.get("notes", "")
     return {
-        "faithful": faithful,
-        "score": score,
-        "unsupported_claims": unsupported if isinstance(unsupported, list) else [],
-        "notes": notes,
+        "faithful": bool(parsed.get("faithful", False)),
+        "score": float(parsed.get("score", 0.0)),
+        "unsupported_claims": parsed.get("unsupported_claims", []) if isinstance(parsed.get("unsupported_claims"), list) else [],
+        "notes": parsed.get("notes", ""),
     }
 
 
 def evaluate_rag_faithfulness_llm(agent_outputs: dict, ground_truth: dict) -> dict:
     """
-    Evaluate RAG faithfulness using an LLM judge.
-
-    Requires RAG ground truth to identify which agents to evaluate:
-    {
-      "rag": { "risk": { ... }, "governance": { ... } }
-    }
+    Evaluate RAG faithfulness using a local Ollama LLM judge
+    for the 3 specific targeted agents.
     """
     rag_gt = ground_truth.get("rag", {})
     rag_outputs = agent_outputs.get("rag", {})
@@ -122,23 +124,18 @@ def evaluate_rag_faithfulness_llm(agent_outputs: dict, ground_truth: dict) -> di
     skipped = 0
 
     for agent_name in rag_gt.keys():
+        if agent_name not in TARGET_AGENTS:
+            continue
+
         answer = agent_outputs.get(agent_name, "")
         context = rag_outputs.get(agent_name, {}).get("context", "")
 
         if not answer or not context:
-            results[agent_name] = {
-                "skipped": True,
-                "reason": "Missing answer or retrieved context",
-            }
+            results[agent_name] = {"skipped": True, "reason": "Missing answer or retrieved context"}
             skipped += 1
             continue
 
-        try:
-            judge_result = _judge_faithfulness(answer, context)
-        except Exception as e:
-            results[agent_name] = {"skipped": True, "reason": f"Judge error: {str(e)}"}
-            skipped += 1
-            continue
+        judge_result = _judge_faithfulness(answer, context)
 
         if judge_result.get("skipped"):
             results[agent_name] = judge_result
@@ -156,7 +153,7 @@ def evaluate_rag_faithfulness_llm(agent_outputs: dict, ground_truth: dict) -> di
         "passed": passed,
         "failed": evaluated - passed,
         "skipped": skipped,
-        "pass_rate": round(passed / evaluated, 2) if evaluated > 0 else 0,
+        "pass_rate": round(passed / evaluated, 2) if evaluated > 0 else 0.0,
     }
 
     return results

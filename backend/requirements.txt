@@ -17,3 +17,4 @@ chromadb
 sentence-transformers
 packaging==23.2
 chardet
+yfinance
