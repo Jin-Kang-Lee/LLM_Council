@@ -156,7 +156,7 @@ def get_insider_trading(ticker: str) -> str:
         })
 
 
-def get_competitor_benchmarking(primary_ticker: str, competitor_tickers: list[str]) -> str:
+def get_competitor_benchmarking(primary_ticker: str, competitor_tickers: list[str] = None, **kwargs) -> str:
     """
     Compare a company's key performance metrics against its competitors.
 
@@ -171,6 +171,9 @@ def get_competitor_benchmarking(primary_ticker: str, competitor_tickers: list[st
     Returns:
         JSON string with a comparison grid, or an error message.
     """
+    # Defensive: Handle cases where model might pass 'competitors' instead of 'competitor_tickers'
+    tickers = competitor_tickers or kwargs.get("competitors") or []
+    
     def _fetch_metrics(ticker: str) -> dict:
         """Pull the comparison-relevant metrics for a single ticker."""
         try:
@@ -199,7 +202,7 @@ def get_competitor_benchmarking(primary_ticker: str, competitor_tickers: list[st
 
     try:
         # Cap competitors at 3 to avoid excessive API calls
-        competitors = competitor_tickers[:3]
+        competitors = tickers[:3]
 
         primary = _fetch_metrics(primary_ticker)
         competitor_data = [_fetch_metrics(t) for t in competitors]

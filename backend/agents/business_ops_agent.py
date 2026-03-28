@@ -32,7 +32,7 @@ You have access to a tool called `get_competitor_benchmarking` that compares a
 company's financial performance against its industry rivals. You MUST use this tool:
 1. First, identify the company's stock ticker symbol from the earnings report text.
 2. Identify 2-3 of its biggest publicly-traded competitors in the same industry.
-3. Call `get_competitor_benchmarking` with the primary ticker and competitor tickers.
+3. Call `get_competitor_benchmarking` with the primary ticker and `competitor_tickers`.
 4. Use the comparison data to assess whether the company is GAINING or LOSING
    market share relative to its peers. If management claims strong growth but
    competitors are growing faster, flag this as a concern.
@@ -131,7 +131,9 @@ OUTPUT JSON SCHEMA:
         additional_instructions = """
 Analyze the provided earnings report content. Follow these steps:
 
-STEP 1: Identify the company being discussed. Determine its stock ticker symbol.
+STEP 1: Identify the stock ticker from the report header and use it EXACTLY. 
+         (Example: If header says 'NovaTech (NVTC)', the ticker is 'NVTC'. 
+          DO NOT use 'NovaTech' or 'NOVS').
 STEP 2: Identify 2-3 of its biggest publicly-traded competitors in the same industry.
 STEP 3: Call the `get_competitor_benchmarking` tool with the primary ticker and
          competitor tickers to get a side-by-side performance comparison.

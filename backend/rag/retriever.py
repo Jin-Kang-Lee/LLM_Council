@@ -72,6 +72,12 @@ def _apply_filter(
 
     key, value = next(iter(filter_dict.items()))
     matches = [(doc, score) for doc, score in filtered if doc.metadata.get(key) == value]
+    
+    # NEW: If we have zero matches for the specific tag, don't return an empty list
+    # Return the best general hits instead of absolute empty list.
+    if not matches:
+        return filtered[:k]
+
     if len(matches) >= k:
         return matches[:k]
 
@@ -147,16 +153,22 @@ def get_council_context(query: str, k: int = 4) -> str:
     fetch_k = max(k * 3, RAG_FETCH_K)
     try:
         results = store.similarity_search_with_score(cleaned_query, k=fetch_k)
+        print(f"   [RAG] Found {len(results)} initial candidates for query: '{cleaned_query[:50]}...'")
     except AttributeError:
         docs = store.similarity_search(cleaned_query, k=fetch_k)
         results = [(doc, 0.0) for doc in docs]
+        print(f"   [RAG] Found {len(results)} initial candidates (no scores)")
 
     if not results:
+        print(f"   [RAG] ⚠️ No results found in vector store.")
         return ""
 
     results = rerank(cleaned_query, results)
     filter_dict = _infer_filter(cleaned_query)
+    
+    # Relax RAG_MAX_DISTANCE to a very high value if it was causing issues (0.0 means no limit in my logic)
     results = _apply_filter(results, filter_dict, k, RAG_MAX_DISTANCE)
-
+    
     chunks = _iter_chunks(results)
+    print(f"   [RAG] Retaining {len(chunks)} chunks after filtering.")
     return "\n\n---\n\n".join(chunks)

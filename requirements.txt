@@ -14,3 +14,5 @@ python-dotenv
 sse-starlette
 requests
 sentence-transformers
+yfinance
+matplotlib

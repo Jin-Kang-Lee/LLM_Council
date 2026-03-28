@@ -5,9 +5,9 @@
         "earnings_report": "NOVATECH SOLUTIONS INC.\nQuarterly Earnings Report \u00e2\u20ac\u201d Q3 FY2025\nPeriod Ending: September 30, 2025\n\nFINANCIAL HIGHLIGHTS\n\nRevenue for Q3 FY2025 reached $2.4 billion, representing a 22% year-over-year increase, driven primarily by growth in our Cloud Infrastructure and AI Services segments. Gross margin improved to 68.2%, up from 64.8% in the prior-year quarter, reflecting our continued shift toward higher-margin recurring revenue streams.\n\nNet income attributable to shareholders was $412 million, or $3.18 per diluted share, compared to $298 million, or $2.31 per diluted share, in Q3 FY2024. This represents a 38% increase in earnings per share.\n\nOperating cash flow was $580 million, and free cash flow was $420 million. We ended the quarter with $3.1 billion in cash and short-term investments and total debt of $1.2 billion, resulting in a net cash position of $1.9 billion.\n\nSEGMENT PERFORMANCE\n\nCloud Infrastructure: Revenue of $1.1 billion (+31% YoY). Annual Recurring Revenue (ARR) grew to $4.2 billion, with a net retention rate of 128%. We added 340 new enterprise customers during the quarter.\n\nAI Services: Revenue of $680 million (+45% YoY). This segment continues to experience accelerating demand as enterprises adopt our generative AI platform. Bookings grew 52% year-over-year.\n\nEnterprise Software: Revenue of $620 million (+8% YoY). While growth was more modest, this segment maintained a 74% gross margin and strong renewal rates of 93%.\n\nEXECUTIVE COMMENTARY\n\nCEO Maria Chen stated: 'This quarter demonstrates the power of our multi-cloud strategy. Our AI Services segment is experiencing unprecedented demand, and we are well-positioned to capture the next wave of enterprise digital transformation. We are investing aggressively in R&D to maintain our competitive edge.'\n\nCFO David Park noted: 'Our balance sheet remains exceptionally strong. We generated over $400 million in free cash flow this quarter, and our debt-to-equity ratio stands at 0.18. We are confident in our ability to fund both organic growth and strategic acquisitions while returning capital to shareholders through our $1.5 billion share buyback program.'\n\nRISK FACTORS\n\nWhile the company's financial position is strong, we note the following risk factors:\n- Increasing competition in the AI services market from hyperscalers\n- Customer concentration: our top 10 customers represent 18% of total revenue\n- Foreign exchange headwinds, with 35% of revenue generated outside the United States\n- Regulatory uncertainty around AI governance in the European Union\n\nGUIDANCE\n\nFor Q4 FY2025, we expect:\n- Revenue of $2.5 billion to $2.6 billion (20-25% YoY growth)\n- Non-GAAP operating margin of 28-30%\n- Free cash flow of $430 million to $460 million\n\nFor full-year FY2025, we are raising our revenue guidance to $9.2 billion to $9.4 billion, up from our previous range of $8.8 billion to $9.0 billion.\n\nCORPORATE GOVERNANCE\n\nThe Board of Directors consists of 11 members, 9 of whom are independent. The Audit Committee met 6 times during the quarter. The company maintains compliance with all SEC reporting requirements and Sarbanes-Oxley provisions. Our external auditor, Deloitte & Touche LLP, issued an unqualified opinion on our most recent annual financial statements.\n\nThe company adopted a new ESG framework during the quarter, including Scope 1 and Scope 2 carbon emissions reporting. Executive compensation is tied to both financial performance metrics and ESG targets.\n\nAll related-party transactions were disclosed in accordance with applicable regulations. There are no pending legal proceedings that management believes would have a material adverse effect on the company's financial condition.",
         "ground_truth": {
             "risk": {
-                "overall_risk_rating": "Low",
+                "overall_risk_rating": "Medium",
                 "liquidity_score_range": [
-                    0.7,
+                    0.5,
                     1.0
                 ],
                 "key_risk_factors": [
@@ -51,7 +51,11 @@
                 "confidence_score_range": [
                     0.6,
                     1.0
-                ]
+                ],
+                "tool_eval": {
+                    "expected_ticker": "NVTC",
+                    "expected_tool": "get_company_financials"
+                }
             },
             "sentiment": {
                 "overall_sentiment_score": "Positive",
@@ -98,13 +102,17 @@
             },
             "governance": {
                 "governance_risk_level": "Low",
-                "compliance_risk_level": "Low",
+                "compliance_risk_level": "Medium",
                 "key_findings": [],
                 "non_disclosures": [],
                 "confidence_score_range": [
                     0.6,
                     1.0
-                ]
+                ],
+                "tool_eval": {
+                    "expected_ticker": "NVTC",
+                    "expected_tool": "get_insider_trading"
+                }
             },
             "research": {
                 "min_query_count": 3,
@@ -116,36 +124,59 @@
             },
             "rag": {
                 "risk": {
+                    "expected_sources": [
+                        "PWC_ASC606.md",
+                        "Damodaran_Debt_Sector_Fundamentals.md"
+                    ],
                     "expected_keywords": [
-                        "hyperscalers",
-                        "customer concentration",
-                        "foreign exchange",
-                        "EU",
-                        "AI governance"
+                        "ASC 606",
+                        "revenue recognition",
+                        "debt",
+                        "risk"
                     ],
                     "expected_facts": [
-                        "customer concentration",
-                        "foreign exchange"
+                        "revenue growth",
+                        "gross margin",
+                        "debt-to-equity"
                     ],
                     "required_points": [
-                        "competition",
-                        "customer"
+                        "revenue recognition"
+                    ]
+                },
+                "business_ops": {
+                    "expected_sources": [
+                        "PWC_ASC606.md",
+                        "Damodaran_Debt_Sector_Fundamentals.md"
+                    ],
+                    "expected_keywords": [
+                        "ASC 606",
+                        "revenue",
+                        "growth"
+                    ],
+                    "expected_facts": [
+                        "gross margin",
+                        "segment performance"
+                    ],
+                    "required_points": [
+                        "revenue"
                     ]
                 },
                 "governance": {
+                    "expected_sources": [
+                        "PWC_ASC606.md",
+                        "Damodaran_Debt_Sector_Fundamentals.md"
+                    ],
                     "expected_keywords": [
-                        "independent",
-                        "Audit Committee",
-                        "Sarbanes-Oxley",
-                        "Deloitte"
+                        "ASC 606",
+                        "governance",
+                        "revenue"
                     ],
                     "expected_facts": [
-                        "independent",
-                        "Audit Committee"
+                        "9 of whom are independent",
+                        "Audit Committee met 6 times"
                     ],
                     "required_points": [
-                        "independent",
-                        "Audit Committee"
+                        "governance"
                     ]
                 }
             },
@@ -161,7 +192,7 @@
                 "expected_outlook": "Bullish"
             },
             "business_ops": {
-                "operational_risk_rating": "Low",
+                "operational_risk_rating": "Medium",
                 "key_business_risks": [
                     {
                         "risk_type": "Competition",
@@ -177,7 +208,11 @@
                             "18%"
                         ]
                     }
-                ]
+                ],
+                "tool_eval": {
+                    "expected_ticker": "NVTC",
+                    "expected_tool": "get_competitor_benchmarking"
+                }
             }
         }
     },
@@ -190,7 +225,7 @@
                 "overall_risk_rating": "High",
                 "liquidity_score_range": [
                     0.0,
-                    0.35
+                    0.5
                 ],
                 "key_risk_factors": [
                     {
@@ -210,7 +245,8 @@
                         "keywords": [
                             "negative",
                             "operating cash flow",
-                            "-$210 million"
+                            "cash flow",
+                            "$(210)"
                         ]
                     },
                     {
@@ -219,7 +255,8 @@
                         "keywords": [
                             "going concern",
                             "PricewaterhouseCoopers",
-                            "substantial doubt"
+                            "substantial doubt",
+                            "continue as a going"
                         ]
                     },
                     {
@@ -256,7 +293,10 @@
                         "severity": "Medium",
                         "keywords": [
                             "class-action",
+                            "securities law",
                             "securities laws",
+                            "Class-action",
+                            "lawsuit",
                             "inventory management"
                         ]
                     }
@@ -264,7 +304,11 @@
                 "confidence_score_range": [
                     0.6,
                     1.0
-                ]
+                ],
+                "tool_eval": {
+                    "expected_ticker": "GLBM",
+                    "expected_tool": "get_company_financials"
+                }
             },
             "sentiment": {
                 "overall_sentiment_score": "Negative",
@@ -309,7 +353,7 @@
             },
             "governance": {
                 "governance_risk_level": "High",
-                "compliance_risk_level": "High",
+                "compliance_risk_level": "Medium",
                 "key_findings": [
                     {
                         "issue": "Board member resignations and vacant Audit Committee chair",
@@ -317,8 +361,10 @@
                         "severity": "High",
                         "keywords": [
                             "resigned",
+                            "Audit Committee",
                             "Audit Committee chair",
-                            "vacant"
+                            "vacant",
+                            "board member"
                         ]
                     },
                     {
@@ -350,7 +396,9 @@
                         "keywords": [
                             "Conflict of Interest",
                             "not yet filed",
-                            "three senior executives"
+                            "conflict",
+                            "three senior executives",
+                            "governance charter"
                         ]
                     },
                     {
@@ -360,7 +408,9 @@
                         "keywords": [
                             "going concern",
                             "emphasis-of-matter",
-                            "substantial doubt"
+                            "emphasis",
+                            "substantial doubt",
+                            "continue as a going"
                         ]
                     }
                 ],
@@ -368,7 +418,11 @@
                 "confidence_score_range": [
                     0.6,
                     1.0
-                ]
+                ],
+                "tool_eval": {
+                    "expected_ticker": "GLBM",
+                    "expected_tool": "get_insider_trading"
+                }
             },
             "research": {
                 "min_query_count": 3,
@@ -381,40 +435,55 @@
             },
             "rag": {
                 "risk": {
+                    "expected_sources": [
+                        "EY_ASC326.md",
+                        "Damodaran_Debt_Sector_Fundamentals.md"
+                    ],
                     "expected_keywords": [
-                        "debt-to-equity",
-                        "credit downgrade",
-                        "negative operating cash flow",
-                        "covenant",
-                        "restructuring"
+                        "ASC 326",
+                        "debt",
+                        "risk"
                     ],
                     "expected_facts": [
-                        "debt-to-equity",
-                        "credit downgrade",
-                        "covenant"
+                        "debt-to-equity ratio",
+                        "Moody's"
                     ],
                     "required_points": [
+                        "debt"
+                    ]
+                },
+                "business_ops": {
+                    "expected_sources": [
+                        "EY_ASC326.md",
+                        "Damodaran_Debt_Sector_Fundamentals.md"
+                    ],
+                    "expected_keywords": [
                         "debt",
-                        "downgrade",
-                        "covenant"
+                        "operating margin"
+                    ],
+                    "expected_facts": [
+                        "gross margin contracted",
+                        "same-store sales"
+                    ],
+                    "required_points": [
+                        "debt"
                     ]
                 },
                 "governance": {
+                    "expected_sources": [
+                        "EY_ASC326.md",
+                        "Damodaran_Debt_Sector_Fundamentals.md"
+                    ],
                     "expected_keywords": [
-                        "FCA",
-                        "investigation",
-                        "Audit Committee chair",
                         "going concern",
-                        "related-party"
+                        "ASC 326"
                     ],
                     "expected_facts": [
-                        "FCA",
-                        "investigation",
-                        "going concern"
+                        "substantial doubt",
+                        "ability to continue as a going concern"
                     ],
                     "required_points": [
-                        "going concern",
-                        "Audit Committee"
+                        "going concern"
                     ]
                 }
             },
@@ -430,23 +499,31 @@
                 "expected_outlook": "Bearish"
             },
             "business_ops": {
-                "operational_risk_rating": "High",
+                "operational_risk_rating": "Medium",
                 "key_business_risks": [
                     {
                         "risk_type": "Revenue Contraction",
                         "keywords": [
                             "decline of 12%",
-                            "fourth consecutive"
+                            "fourth consecutive",
+                            "revenue contraction",
+                            "same-store sales"
                         ]
                     },
                     {
                         "risk_type": "Execution Risk",
                         "keywords": [
                             "120 underperforming stores",
-                            "$95 million"
+                            "$95 million",
+                            "restructuring",
+                            "store closure"
                         ]
                     }
-                ]
+                ],
+                "tool_eval": {
+                    "expected_ticker": "GLBMH",
+                    "expected_tool": "get_competitor_benchmarking"
+                }
             }
         }
     },
@@ -523,7 +600,11 @@
                 "confidence_score_range": [
                     0.5,
                     0.9
-                ]
+                ],
+                "tool_eval": {
+                    "expected_ticker": "FINEDGE",
+                    "expected_tool": "get_company_financials"
+                }
             },
             "sentiment": {
                 "overall_sentiment_score": "Neutral",
@@ -580,7 +661,7 @@
             },
             "governance": {
                 "governance_risk_level": "Medium",
-                "compliance_risk_level": "High",
+                "compliance_risk_level": "Medium",
                 "key_findings": [
                     {
                         "issue": "MAS formal advisory on AML deficiencies",
@@ -600,7 +681,9 @@
                         "keywords": [
                             "ASIC",
                             "Notice of Inquiry",
+                            "Australian",
                             "BNPL",
+                            "buy-now-pay-later",
                             "marketing"
                         ]
                     },
@@ -610,7 +693,9 @@
                         "severity": "Low",
                         "keywords": [
                             "ESG report",
+                            "ESG",
                             "not yet published",
+                            "annual ESG",
                             "due in August"
                         ]
                     }
@@ -621,7 +706,11 @@
                 "confidence_score_range": [
                     0.5,
                     0.9
-                ]
+                ],
+                "tool_eval": {
+                    "expected_ticker": "FINEDGE",
+                    "expected_tool": "get_insider_trading"
+                }
             },
             "research": {
                 "min_query_count": 3,
@@ -634,36 +723,53 @@
             },
             "rag": {
                 "risk": {
+                    "expected_sources": [
+                        "EY_ASC326.md"
+                    ],
                     "expected_keywords": [
+                        "ASC 326",
                         "delinquency",
-                        "lending license",
-                        "take rate",
-                        "regulatory"
+                        "revenue"
                     ],
                     "expected_facts": [
-                        "delinquency",
-                        "lending license"
+                        "delinquency rate",
+                        "debt-to-equity ratio"
                     ],
                     "required_points": [
                         "delinquency",
-                        "license"
+                        "revenue"
+                    ]
+                },
+                "business_ops": {
+                    "expected_sources": [
+                        "EY_ASC326.md"
+                    ],
+                    "expected_keywords": [
+                        "ASC 326",
+                        "revenue"
+                    ],
+                    "expected_facts": [
+                        "take rate",
+                        "revenue growth decelerated"
+                    ],
+                    "required_points": [
+                        "revenue"
                     ]
                 },
                 "governance": {
+                    "expected_sources": [
+                        "EY_ASC326.md"
+                    ],
                     "expected_keywords": [
-                        "MAS",
-                        "AML",
-                        "ASIC",
-                        "ESG report"
+                        "ASC 326",
+                        "compliance"
                     ],
                     "expected_facts": [
-                        "MAS",
-                        "AML",
-                        "ASIC"
+                        "KPMG",
+                        "formal advisory"
                     ],
                     "required_points": [
-                        "AML",
-                        "ASIC"
+                        "compliance"
                     ]
                 }
             },
@@ -679,24 +785,226 @@
                 "expected_outlook": "Neutral"
             },
             "business_ops": {
-                "operational_risk_rating": "Critical",
+                "operational_risk_rating": "Medium",
                 "key_business_risks": [
                     {
                         "risk_type": "Deceleration",
                         "keywords": [
                             "decelerated from 26%",
-                            "saturation"
+                            "decelerated",
+                            "saturation",
+                            "revenue growth"
                         ]
                     },
                     {
                         "risk_type": "Take Rate",
                         "keywords": [
                             "compressed by 8",
-                            "SMB segment"
+                            "compressed",
+                            "take rate",
+                            "SMB segment",
+                            "pricing pressure"
                         ]
                     }
-                ]
+                ],
+                "tool_eval": {
+                    "expected_ticker": "FNLG",
+                    "expected_tool": "get_competitor_benchmarking"
+                }
             }
+        }
+    },
+    {
+        "test_id": "TC-004",
+        "description": "Legacy automaker transitioning to EV",
+        "earnings_report": "AUTO MOTORS INC.\nQuarterly Earnings Report \u2014 Q3 FY2025\n\nFINANCIAL HIGHLIGHTS\nRevenue dropped 5% YoY to $32.4 billion. EV segment grew 40% but margins are negative. Legacy ICE segment margins compressed to 8%. We issued $4B in new debt to fund battery plants.\n\nGUIDANCE\nFull year guidance lowered due to weak China sales.\n\nRISK FACTORS\nHigh debt, supply chain delays for lithium, intense EV competition.\n\nGOVERNANCE\nCEO recently sold 50,000 shares. No major litigation.",
+        "ground_truth": {
+            "risk": {
+                "overall_risk_rating": "High",
+                "tool_eval": {
+                    "expected_ticker": "AUTO",
+                    "expected_tool": "get_company_financials"
+                }
+            },
+            "business_ops": {
+                "tool_eval": {
+                    "expected_ticker": "AUTO",
+                    "expected_tool": "get_competitor_benchmarking"
+                }
+            },
+            "governance": {
+                "tool_eval": {
+                    "expected_ticker": "AUTO",
+                    "expected_tool": "get_insider_trading"
+                }
+            },
+            "rag": {
+                "risk": {
+                    "expected_sources": [
+                        "Damodaran_Debt_Sector_Fundamentals.md"
+                    ],
+                    "expected_keywords": [
+                        "debt",
+                        "margin"
+                    ]
+                }
+            }
+        }
+    },
+    {
+        "test_id": "TC-005",
+        "description": "Biotech facing patent cliff",
+        "earnings_report": "NEXTGEN PHARMA\nQ3 FY2025\n\nRevenue grew 10% to $5.2B. Our leading drug faces patent expiration next year. Pipeline is strong but delayed by FDA scrutiny.\n\nRISK\nPatent cliff, FDA delays.\nGOVERNANCE\nClean audit, CFO bought 10k shares.",
+        "ground_truth": {
+            "risk": {
+                "tool_eval": {
+                    "expected_ticker": "PHRM",
+                    "expected_tool": "get_company_financials"
+                }
+            },
+            "business_ops": {
+                "tool_eval": {
+                    "expected_ticker": "PHRM",
+                    "expected_tool": "get_competitor_benchmarking"
+                }
+            },
+            "governance": {
+                "tool_eval": {
+                    "expected_ticker": "PHRM",
+                    "expected_tool": "get_insider_trading"
+                }
+            },
+            "rag": {}
+        }
+    },
+    {
+        "test_id": "TC-006",
+        "description": "Aerospace with supply chain woes",
+        "earnings_report": "AEROSKY DYNAMICS\nQ2 FY2025\n\nRevenue flat at $12B. Deliveries halted due to fuselage defects. $500M penalty paid. Margins took a hit.\n\nRISK\nQuality control, supply chain.\nGOVERNANCE\nGovernment probe ongoing.",
+        "ground_truth": {
+            "risk": {
+                "tool_eval": {
+                    "expected_ticker": "AERO",
+                    "expected_tool": "get_company_financials"
+                }
+            },
+            "business_ops": {
+                "tool_eval": {
+                    "expected_ticker": "AERO",
+                    "expected_tool": "get_competitor_benchmarking"
+                }
+            },
+            "governance": {
+                "tool_eval": {
+                    "expected_ticker": "AERO",
+                    "expected_tool": "get_insider_trading"
+                }
+            },
+            "rag": {}
+        }
+    },
+    {
+        "test_id": "TC-007",
+        "description": "Regional Bank with CRE exposure",
+        "earnings_report": "HEARTLAND BANK\nQ1 FY2025\n\nNet interest margin compressed to 2.4%. Commercial Real Estate (CRE) loan defaults rose 1.5%. Provision for credit losses increased by 200%. Deposits stabilized after Q4 outflows.\n\nRISK\nCRE exposure, NIM compression.\nGOVERNANCE\nAudit committee met 8 times.",
+        "ground_truth": {
+            "risk": {
+                "tool_eval": {
+                    "expected_ticker": "BNK",
+                    "expected_tool": "get_company_financials"
+                }
+            },
+            "business_ops": {
+                "tool_eval": {
+                    "expected_ticker": "BNK",
+                    "expected_tool": "get_competitor_benchmarking"
+                }
+            },
+            "governance": {
+                "tool_eval": {
+                    "expected_ticker": "BNK",
+                    "expected_tool": "get_insider_trading"
+                }
+            },
+            "rag": {}
+        }
+    },
+    {
+        "test_id": "TC-008",
+        "description": "Beverage giant with steady growth",
+        "earnings_report": "GLOBAL COLA CORP\nQ4 FY2025\n\nOrganic revenue grew 5%, driven by pricing power. Volumes flat. Operating margin expanded to 31%. Strong free cash flow of $8B.\n\nRISK\nFX headwinds, ingredient inflation.\nGOVERNANCE\nStandard, clean disclosures.",
+        "ground_truth": {
+            "risk": {
+                "tool_eval": {
+                    "expected_ticker": "COKE",
+                    "expected_tool": "get_company_financials"
+                }
+            },
+            "business_ops": {
+                "tool_eval": {
+                    "expected_ticker": "COKE",
+                    "expected_tool": "get_competitor_benchmarking"
+                }
+            },
+            "governance": {
+                "tool_eval": {
+                    "expected_ticker": "COKE",
+                    "expected_tool": "get_insider_trading"
+                }
+            },
+            "rag": {}
+        }
+    },
+    {
+        "test_id": "TC-009",
+        "description": "Office REIT struggling with vacancies",
+        "earnings_report": "METRO PROPERTIES REIT\nQ3 FY2025\n\nFunds From Operations (FFO) dropped 18%. Office occupancy sits at 76%. Exploring conversion of 3 properties to residential. Debt refinancing coming up next year at higher rates.\n\nRISK\nRefinancing at high rates, vacancy.\nGOVERNANCE\nDividend cut by 40%.",
+        "ground_truth": {
+            "risk": {
+                "tool_eval": {
+                    "expected_ticker": "REIT",
+                    "expected_tool": "get_company_financials"
+                }
+            },
+            "business_ops": {
+                "tool_eval": {
+                    "expected_ticker": "REIT",
+                    "expected_tool": "get_competitor_benchmarking"
+                }
+            },
+            "governance": {
+                "tool_eval": {
+                    "expected_ticker": "REIT",
+                    "expected_tool": "get_insider_trading"
+                }
+            },
+            "rag": {}
+        }
+    },
+    {
+        "test_id": "TC-010",
+        "description": "Renewable energy firm hit by rates",
+        "earnings_report": "SUNWIND ENERGY\nQ2 FY2025\n\nProjects delayed due to financing costs. Revenue up 12% but net loss widened. Backlog stands at $4B. \n\nRISK\nInterest rates pricing out projects.\nGOVERNANCE\nCFO resigned.",
+        "ground_truth": {
+            "risk": {
+                "tool_eval": {
+                    "expected_ticker": "NRGY",
+                    "expected_tool": "get_company_financials"
+                }
+            },
+            "business_ops": {
+                "tool_eval": {
+                    "expected_ticker": "NRGY",
+                    "expected_tool": "get_competitor_benchmarking"
+                }
+            },
+            "governance": {
+                "tool_eval": {
+                    "expected_ticker": "NRGY",
+                    "expected_tool": "get_insider_trading"
+                }
+            },
+            "rag": {}
         }
     }
 ]

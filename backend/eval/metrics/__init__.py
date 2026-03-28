@@ -6,6 +6,7 @@ from .section_check import evaluate_section_completeness
 from .query_diversity import evaluate_query_diversity
 from .rag_retrieval import evaluate_rag_retrieval
 from .rag_faithfulness_llm import evaluate_rag_faithfulness_llm
+from .tool_faithfulness import evaluate_tool_faithfulness
 
 __all__ = [
     "evaluate_schema_integrity",
@@ -14,4 +15,5 @@ __all__ = [
     "evaluate_query_diversity",
     "evaluate_rag_retrieval",
     "evaluate_rag_faithfulness_llm",
+    "evaluate_tool_faithfulness",
 ]

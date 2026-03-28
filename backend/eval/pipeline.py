@@ -21,6 +21,8 @@ from eval.metrics.query_diversity import evaluate_query_diversity
 from eval.metrics.rag_retrieval import evaluate_rag_retrieval
 from eval.metrics.rag_faithfulness_llm import evaluate_rag_faithfulness_llm
 from eval.metrics.llm_judge import evaluate_warroom_discussion
+from eval.metrics.tool_faithfulness import evaluate_tool_faithfulness
+from eval.mock_tools import install_mocks, uninstall_mocks, TOOL_CALL_LOG, get_mock_data_for_agent
 
 
 class EvalPipeline:
@@ -36,7 +38,7 @@ class EvalPipeline:
         asyncio.run(pipeline.run())
     """
 
-    VALID_TESTS = ["schema", "reference", "section", "warroom", "diversity", "variance", "rag", "rag_faithfulness"]
+    VALID_TESTS = ["schema", "reference", "section", "warroom", "diversity", "variance", "rag", "rag_faithfulness", "tools"]
 
     def __init__(
         self,
@@ -146,18 +148,19 @@ class EvalPipeline:
         # ── Phase 2: Individual agent analyses ──
         print(f"\n  [Phase 2] Running individual agent analyses...")
 
+        # Install mock tools so tool calls return controlled data
+        use_mocks = "tools" in self.tests or "all" in self.tests
+        if use_mocks:
+            install_mocks()
+
         risk_agent = RiskAgent()
         business_ops_agent = BusinessOpsRiskAgent()
         governance_agent = GovernanceAgent()
-        research_agent = DeepResearchAgent()
-        master_agent = MasterAgent()
-
+        
         # Risk
         print(f"   🔴 Risk Agent analyzing...")
         risk_output = await risk_agent.analyze(formatted)
         print(f"   ✅ Risk Agent complete")
-        if self.verbose:
-            print(f"      Output preview: {risk_output[:200]}...")
         risk_rag = {
             "query": getattr(risk_agent, "last_reference_query", ""),
             "context": getattr(risk_agent, "last_reference_context", ""),
@@ -167,8 +170,6 @@ class EvalPipeline:
         print(f"   🟡 Business & Ops Agent analyzing...")
         business_ops_output = await business_ops_agent.analyze(formatted)
         print(f"   ✅ Business & Ops Agent complete")
-        if self.verbose:
-            print(f"      Output preview: {business_ops_output[:200]}...")
         business_ops_rag = {
             "query": getattr(business_ops_agent, "last_reference_query", ""),
             "context": getattr(business_ops_agent, "last_reference_context", ""),
@@ -178,29 +179,25 @@ class EvalPipeline:
         print(f"   🟣 Governance Agent analyzing...")
         governance_output = await governance_agent.analyze(formatted)
         print(f"   ✅ Governance Agent complete")
-        if self.verbose:
-            print(f"      Output preview: {governance_output[:200]}...")
         governance_rag = {
             "query": getattr(governance_agent, "last_reference_query", ""),
             "context": getattr(governance_agent, "last_reference_context", ""),
         }
 
-        # Deep Research
-        print(f"   🔵 Deep Research Agent skipped (per user request) ...")
-        # research_output = await research_agent.analyze(formatted)
+        # Deep Research & Master Agent (Skipped)
+        print(f"   ⚪ Research & Master Agents skipped (per user request)")
         research_output = ""
-        research_rag = {
-            "query": "",
-            "context": "",
-        }
+        master_output = ""
+        research_rag = {"query": "", "context": ""}
 
         # ── Phase 3: War Room Discussion ──
         print(f"\n  [Phase 3] War Room discussion skipped (per user request).")
         discussion_messages = []
 
-        # ── Phase 4: Master Agent Consolidation ──
-        print(f"\n  [Phase 4] Master Agent skipped (per user request).")
-        master_output = ""
+        # Capture tool call log before uninstalling mocks
+        tool_log_snapshot = list(TOOL_CALL_LOG)
+        if use_mocks:
+            uninstall_mocks()
 
         # ── Package results ──
         return {
@@ -221,6 +218,7 @@ class EvalPipeline:
                 "discussion": discussion_messages,
                 "master": master_output,
             },
+            "tool_call_log": tool_log_snapshot,
         }
 
     # ------------------------------------------------------------------ #
@@ -284,6 +282,15 @@ class EvalPipeline:
                 case_evals["variance"] = self._eval_variance(outputs)
                 print("TODO")
 
+            if "tools" in self.tests or "all" in self.tests:
+                print(f"   🔧 Tool Faithfulness... ", end="")
+                tool_log = case.get("tool_call_log", [])
+                case_evals["tool_faithfulness"] = self._eval_tool_faithfulness(
+                    outputs, ground_truth, tool_log
+                )
+                summary = case_evals["tool_faithfulness"].get("_summary", {})
+                print(f"✅ {summary.get('passed', 0)}/{summary.get('total_checks', 0)} checks passed")
+
             case["evaluations"] = case_evals
 
     # ------------------------------------------------------------------ #
@@ -321,6 +328,12 @@ class EvalPipeline:
         """Test 8: Variance across multiple runs (optional)."""
         # TODO: Implement in eval/metrics/variance.py
         return {"status": "not_implemented"}
+
+    def _eval_tool_faithfulness(self, outputs: dict, ground_truth: dict, tool_call_log: list) -> dict:
+        """Test 9: Evaluate tool calling correctness and data faithfulness."""
+        return evaluate_tool_faithfulness(
+            outputs, ground_truth, tool_call_log, get_mock_data_for_agent
+        )
 
     # ------------------------------------------------------------------ #
     #  Results output

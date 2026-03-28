@@ -120,7 +120,9 @@ OUTPUT JSON SCHEMA:
         additional_instructions = """
 Analyze the provided earnings report content. Follow these steps:
 
-STEP 1: Identify the company being discussed. Determine its stock ticker symbol.
+STEP 1: Identify the stock ticker from the report header and use it EXACTLY. 
+         (Example: If header says 'NovaTech (NVTC)', the ticker is 'NVTC'. 
+          DO NOT use 'NovaTech' or 'NOVS').
 STEP 2: Call the `get_insider_trading` tool with that ticker to fetch recent
          insider buy/sell transactions by executives and board members.
 STEP 3: Compare insider trading behaviour against management's stated outlook.

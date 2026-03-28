@@ -43,7 +43,7 @@ Examples:
         required=True,
         help=(
             "Comma-separated list of tests to run. "
-            "Options: schema, reference, section, warroom, diversity, variance, rag, rag_faithfulness, all"
+            "Options: schema, reference, section, warroom, diversity, variance, rag, rag_faithfulness, tools, all"
         ),
     )
 
@@ -86,7 +86,7 @@ Examples:
 
 def validate_tests(tests_str: str) -> list[str]:
     """Validate and parse the --tests argument."""
-    valid = {"schema", "reference", "section", "warroom", "diversity", "variance", "rag", "rag_faithfulness", "all"}
+    valid = {"schema", "reference", "section", "warroom", "diversity", "variance", "rag", "rag_faithfulness", "tools", "all"}
     tests = [t.strip().lower() for t in tests_str.split(",")]
 
     invalid = [t for t in tests if t not in valid]

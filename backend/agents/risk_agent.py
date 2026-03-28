@@ -27,7 +27,6 @@ Your mission is to identify financial, operational, and market risks from earnin
 Tone: Skeptical, analytical, and data-driven.
 
 IMPORTANT — TOOL USAGE:
-You have access to a tool called `get_company_financials` that fetches real-time 
 financial data for any publicly traded company. You MUST use this tool:
 1. First, identify the company's stock ticker symbol from the earnings report text.
 2. Call `get_company_financials` with that ticker to retrieve actual market data.
@@ -95,26 +94,29 @@ OUTPUT JSON SCHEMA:
     def require_citations(self) -> bool:
         return True
     
-    async def analyze(self, earnings_content: str) -> str:
+    async def analyze(self, earnings_content: str, expect_json: bool = False) -> str:
         """
         Perform risk analysis on earnings content using tool calling.
         
-        The agent will:
-        1. Read the earnings report
-        2. Identify the company's ticker
-        3. Call get_company_financials to fetch real-time data
-        4. Produce a risk analysis that cross-references both sources
-        
         Args:
             earnings_content: Parsed earnings report content
+            expect_json: Whether to return strict JSON (for evaluation) or natural text (for UI)
         
         Returns:
-            Detailed risk analysis in JSON format
+            Detailed risk analysis (JSON string or Markdown text)
         """
-        additional_instructions = """
+        json_rule = ""
+        if expect_json:
+            json_rule = "\nCRITICAL: Output MUST be a single, valid JSON object following the schema. No markdown, no commentary."
+        else:
+            json_rule = "\nOutput should be a human-readable Markdown report. DO NOT output raw JSON unless specifically requested."
+
+        additional_instructions = f"""
 Analyze the provided earnings report content. Follow these steps:
 
-STEP 1: Identify the company being discussed. Determine its stock ticker symbol.
+STEP 1: Identify the stock ticker from the report header and use it EXACTLY. 
+         (Example: If header says 'NovaTech (NVTC)', the ticker is 'NVTC'. 
+          DO NOT use 'NovaTech' or 'NOVS').
 STEP 2: Call the `get_company_financials` tool with that ticker to fetch real-time
          financial metrics (debt, cash, ratios, margins, etc.).
 STEP 3: Compare the tool's data against claims made in the earnings report.
@@ -126,12 +128,12 @@ STEP 3: Compare the tool's data against claims made in the earnings report.
            "actual_data": "Not available in tool data" and set verdict to "Inconclusive".
          - Only use field values like current_ratio, total_debt, debt_to_equity,
            free_cashflow, etc. that the tool actually returned.
-STEP 4: Produce your final risk analysis as a JSON object following the schema.
+STEP 4: Produce your final risk analysis.{json_rule}
 
 Focus exclusively on risk factors, financial vulnerabilities, and areas of concern.
 Be thorough but concise. If you cannot find specific financial metrics, analyze
 qualitative risk indicators from the language and tone of the report.
 """
         return await self.generate_with_tools(
-            earnings_content, additional_instructions, expect_json=True
+            earnings_content, additional_instructions, expect_json=expect_json
         )

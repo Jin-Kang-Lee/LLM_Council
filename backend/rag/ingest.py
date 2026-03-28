@@ -8,11 +8,16 @@ import os
 from typing import List
 
 import chromadb
-from langchain.schema import Document
-from langchain.text_splitter import MarkdownHeaderTextSplitter
+from langchain_core.documents import Document
 from langchain_community.document_loaders import DirectoryLoader, TextLoader
-from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import Chroma
+
+import sys
+import os
+
+# Add root directory to path for imports
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from config import REFERENCE_LIB_PATH, VECTOR_DB_PATH
 
@@ -79,9 +84,12 @@ def load_documents() -> List[Document]:
 
 
 def split_documents(documents: List[Document]) -> List[Document]:
-    splitter = MarkdownHeaderTextSplitter(
-        headers_to_split_on=[("#", "Header 1"), ("##", "Header 2")],
-        strip_headers=False,
+    from langchain_text_splitters import RecursiveCharacterTextSplitter
+    
+    splitter = RecursiveCharacterTextSplitter(
+        chunk_size=1000,
+        chunk_overlap=150,
+        separators=["\n## ", "\n### ", "\n", " ", ""],
     )
 
     split_docs: List[Document] = []
@@ -89,9 +97,9 @@ def split_documents(documents: List[Document]) -> List[Document]:
         chunks = splitter.split_text(doc.page_content)
         if not chunks:
             continue
-        for chunk in chunks:
-            chunk.metadata = {**doc.metadata, **chunk.metadata}
-            split_docs.append(chunk)
+        for chunk_text in chunks:
+            # Create a new Document for each chunk, preserving metadata
+            split_docs.append(Document(page_content=chunk_text, metadata=doc.metadata.copy()))
 
     return split_docs
 
@@ -110,15 +118,23 @@ def ingest(reset: bool = True) -> None:
     split_docs = split_documents(documents)
 
     embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL)
-    Chroma.from_documents(
-        documents=split_docs,
-        embedding=embeddings,
+    store = Chroma(
         client=client,
         collection_name=COLLECTION_NAME,
+        embedding_function=embeddings,
     )
+    
+    # Add documents in batches to avoid any overhead issues
+    store.add_documents(split_docs)
 
-    print(f"Loaded {len(documents)} files and created {len(split_docs)} chunks.")
-    print(f"Persisted Chroma DB to: {VECTOR_DB_PATH}")
+    print(f"✅ Ingestion Complete!")
+    print(f"   - Files loaded: {len(documents)}")
+    print(f"   - Chunks created: {len(split_docs)}")
+    
+    # Verify final count in the collection
+    final_count = client.get_collection(COLLECTION_NAME).count()
+    print(f"   - Final collection count: {final_count}")
+    print(f"   - Persisted to: {VECTOR_DB_PATH}")
 
 
 if __name__ == "__main__":

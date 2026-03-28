@@ -20,87 +20,94 @@ def plot_reference_metrics():
     with open(latest_file, "r", encoding="utf-8") as f:
         data = json.load(f)
 
-    # Initialize accuracy stats per agent
+    # Initialize stats per agent for different categories
     agent_stats = {
-        "risk": {"passed": 0, "total": 0},
-        "business_ops": {"passed": 0, "total": 0},
-        "governance": {"passed": 0, "total": 0}
+        "risk": {"data_passed": 0, "data_total": 0, "rag_passed": 0, "rag_total": 0, "tool_passed": 0, "tool_total": 0},
+        "business_ops": {"data_passed": 0, "data_total": 0, "rag_passed": 0, "rag_total": 0, "tool_passed": 0, "tool_total": 0},
+        "governance": {"data_passed": 0, "data_total": 0, "rag_passed": 0, "rag_total": 0, "tool_passed": 0, "tool_total": 0}
     }
 
-    overall_passed = 0
-    overall_total = 0
-
     test_cases = data.get("test_cases", [])
-    if not test_cases:
-        print("Data format not recognized.")
-        return
-
-    # Extract accuracy from reference_based
     for case in test_cases:
         evals = case.get("evaluations", {})
+        
+        # 1. Reference-Based (Data Accuracy)
         ref_eval = evals.get("reference_based", {})
+        for agent in agent_stats:
+            res = ref_eval.get(agent, {})
+            if "skipped" not in res:
+                for k, v in res.items():
+                    if isinstance(v, dict):
+                        if "match" in v:
+                            agent_stats[agent]["data_total"] += 1
+                            if v["match"]: agent_stats[agent]["data_passed"] += 1
+                        elif "found" in v and "total_expected" in v:
+                            agent_stats[agent]["data_total"] += v["total_expected"]
+                            agent_stats[agent]["data_passed"] += v["found"]
         
-        for agent_name in agent_stats.keys():
-            agent_result = ref_eval.get(agent_name, {})
-            if "skipped" in agent_result: continue
-            
-            # Count categorical match booleans
-            for key, val in agent_result.items():
-                if isinstance(val, dict):
-                    if "match" in val:
-                        agent_stats[agent_name]["total"] += 1
-                        overall_total += 1
-                        if val["match"]:
-                            agent_stats[agent_name]["passed"] += 1
-                            overall_passed += 1
-                    # Extract keyword recall fractions
-                    elif "found" in val and "total_expected" in val:
-                        agent_stats[agent_name]["total"] += val["total_expected"]
-                        overall_total += val["total_expected"]
-                        agent_stats[agent_name]["passed"] += val["found"]
-                        overall_passed += val["found"]
+        # 2. RAG Retrieval
+        rag_eval = evals.get("rag_retrieval", {})
+        for agent in agent_stats:
+            res = rag_eval.get(agent, {})
+            if res:
+                # Use source hit rate and keyword hit rate
+                agent_stats[agent]["rag_total"] += 2 
+                if res.get("source_hit_rate", 0) > 0: agent_stats[agent]["rag_passed"] += 1
+                if res.get("keyword_hit_rate", 0) > 0.5: agent_stats[agent]["rag_passed"] += 1
+        
+        # 3. Tool Faithfulness
+        tool_eval = evals.get("tool_faithfulness", {})
+        for agent in agent_stats:
+            res = tool_eval.get(agent, {})
+            if res:
+                agent_stats[agent]["tool_total"] += 1
+                invoc = res.get("tool_invocation", {})
+                if invoc.get("passed"): agent_stats[agent]["tool_passed"] += 1
 
     print("=" * 50)
-    print(" 📈 STRICT DATA ACCURACY SCORES (NO RAG) ")
+    print(" 📈 AGENT ECOSYSTEM SCORECARD (RAG & TOOLS) ")
     print("=" * 50)
-    print(f"Overall Checks Performed: {overall_total}")
-    if overall_total > 0:
-        print(f"Overall Ecosystem Accuracy: {overall_passed}/{overall_total} ({(overall_passed/overall_total)*100:.1f}%)\n")
     
-    labels = []
-    pass_rates = []
-    colors = ['#ff595e', '#ffca3a', '#8ac926']
+    agents = ["Risk", "Business Ops", "Governance"]
+    data_acc = []
+    rag_acc = []
+    tool_acc = []
     
-    for idx, (agent, stats) in enumerate(agent_stats.items()):
-        total = stats['total']
-        passed = stats['passed']
-        if total > 0:
-            rate = (passed / total) * 100
-            print(f"➤ {agent.replace('_', ' ').title()}: Passed {passed}/{total} data-point checks ({rate:.0f}% Accuracy)")
-            labels.append(agent.replace('_', ' ').title())
-            pass_rates.append(rate)
-
-    print("=" * 50 + "\n")
-
-    if not labels:
-        print("No Reference-Based data found to plot. Run test using: --tests=reference")
-        return
+    for key in ["risk", "business_ops", "governance"]:
+        stats = agent_stats[key]
+        d_rate = (stats["data_passed"] / stats["data_total"] * 100) if stats["data_total"] > 0 else 0
+        r_rate = (stats["rag_passed"] / stats["rag_total"] * 100) if stats["rag_total"] > 0 else 0
+        t_rate = (stats["tool_passed"] / stats["tool_total"] * 100) if stats["tool_total"] > 0 else 0
         
-    plt.figure(figsize=(8, 6))
-    bars = plt.bar(labels, pass_rates, color=colors[:len(labels)])
+        print(f"➤ {key.replace('_',' ').title()}:")
+        print(f"   - Data Accuracy: {d_rate:.0f}% ({stats['data_passed']}/{stats['data_total']})")
+        print(f"   - RAG Retrieval: {r_rate:.0f}%")
+        print(f"   - Tool Success:  {t_rate:.0f}%")
+        
+        data_acc.append(d_rate)
+        rag_acc.append(r_rate)
+        tool_acc.append(t_rate)
+
+    import numpy as np
+    x = np.arange(len(agents))
+    width = 0.25
     
+    plt.figure(figsize=(12, 7))
+    plt.bar(x - width, data_acc, width, label='Data Accuracy', color='#ff595e')
+    plt.bar(x, rag_acc, width, label='RAG Retrieval', color='#8ac926')
+    plt.bar(x + width, tool_acc, width, label='Tool Success', color='#1982c4')
+    
+    plt.xlabel('Agents', fontsize=12, fontweight='bold')
+    plt.ylabel('Success Rate (%)', fontsize=12, fontweight='bold')
+    plt.title('Agent Performance: RAG, Tools & Accuracy', fontsize=15, fontweight='bold')
+    plt.xticks(x, agents)
     plt.ylim(0, 110)
-    plt.ylabel('Strict Data Accuracy (%)', fontsize=12, fontweight='bold')
-    plt.title('Agent Fact-Extraction Performance (Non-RAG)', fontsize=14, fontweight='bold')
-    
-    for bar in bars:
-        yval = bar.get_height()
-        plt.text(bar.get_x() + bar.get_width()/2, yval + 2, f"{yval:.1f}%", ha='center', va='bottom', fontweight='bold')
+    plt.legend()
+    plt.grid(axis='y', linestyle='--', alpha=0.7)
 
     save_path = "eval/results/eval_accuracy_graph.png"
     plt.savefig(save_path, dpi=300, bbox_inches='tight')
-    print(f"📷 Graph successfully saved to: {save_path}")
-    print("Opening Data Accuracy graph...")
+    print(f"\n📷 Grouped chart saved to: {save_path}")
     plt.show()
 
 if __name__ == "__main__":

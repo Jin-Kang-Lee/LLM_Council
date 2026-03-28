@@ -76,6 +76,27 @@ GOVERNANCE_SCHEMA = {
     },
 }
 
+BUSINESS_OPS_SCHEMA = {
+    "required_keys": {
+        "operational_risk_rating": {"type": str, "enum": ["Low", "Medium", "High", "Critical"]},
+        "industry_position": {"type": str},
+        "capex_analysis": {"type": dict},
+        "key_business_risks": {"type": list},
+        "watchlist": {"type": list},
+        "confidence_score": {"type": (int, float)},
+    },
+    "nested": {
+        "key_business_risks": {
+            "required_keys": {
+                "risk_type": {"type": str},
+                "description": {"type": str},
+                "severity": {"type": str, "enum": ["Low", "Medium", "High", "Critical"]},
+                "evidence": {"type": str},
+            }
+        }
+    },
+}
+
 RESEARCH_SCHEMA = {
     "required_keys": {
         "thinking_trace": {"type": str},
@@ -99,6 +120,7 @@ AGENT_SCHEMAS = {
     "risk": RISK_SCHEMA,
     "sentiment": SENTIMENT_SCHEMA,
     "governance": GOVERNANCE_SCHEMA,
+    "business_ops": BUSINESS_OPS_SCHEMA,
     "research": RESEARCH_SCHEMA,
 }
 

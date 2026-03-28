@@ -8,6 +8,7 @@ import httpx
 from abc import ABC, abstractmethod
 from typing import Optional, Any
 import json
+import re
 
 from config import OLLAMA_BASE_URL, OLLAMA_MODEL
 
@@ -116,18 +117,12 @@ class BaseAgent(ABC):
         if not context:
             return ""
 
-        condensed = " ".join(context.split())
-        snippet = condensed[:1200]
-        if len(condensed) > 1600:
-            snippet = f"{snippet} ... {condensed[-200:]}"
-
         hints = self._extract_reference_hints(context)
-        hint_text = f" Focus: {', '.join(hints)}." if hints else ""
+        if not hints:
+            return ""
 
-        return (
-            f"{self.name} needs relevant benchmarks and accounting guidance.{hint_text}"
-            f" Context: {snippet}"
-        )
+        # Focus ONLY on the semantic hints to maximize retrieval precision
+        return f"{', '.join(hints)}"
 
     # ------------------------------------------------------------------ #
     #  Prompt building (unchanged)
@@ -171,22 +166,48 @@ class BaseAgent(ABC):
         if not text:
             return None, "Empty response"
 
+        text = text.strip()
+        
+        # Try direct parse
         try:
             return json.loads(text), None
         except json.JSONDecodeError:
             pass
 
-        # Attempt to salvage by extracting the first JSON object
-        start = text.find("{")
-        end = text.rfind("}")
-        if start == -1 or end == -1 or end <= start:
-            return None, "No JSON object found"
-
-        snippet = text[start : end + 1]
+        # Attempt to find all top-level JSON-like blocks and pick the last valid dictionary
+        # This handles cases where models output tool-call JSON followed by final-analysis JSON
         try:
-            return json.loads(snippet), None
-        except json.JSONDecodeError as e:
-            return None, f"Invalid JSON: {str(e)}"
+            blocks = []
+            stack = 0
+            start = -1
+            for i, char in enumerate(text):
+                if char == "{":
+                    if stack == 0:
+                        start = i
+                    stack += 1
+                elif char == "}":
+                    stack -= 1
+                    if stack == 0 and start != -1:
+                        blocks.append(text[start : i + 1])
+            
+            # Try parsing from last to first
+            for block in reversed(blocks):
+                try:
+                    # Strip markdown fences if present inside the extracted block
+                    clean = block
+                    if clean.startswith("```json"): clean = clean[7:].strip()
+                    elif clean.startswith("```"): clean = clean[3:].strip()
+                    if clean.endswith("```"): clean = clean[:-3].strip()
+                    
+                    candidate = json.loads(clean)
+                    if isinstance(candidate, dict):
+                        return candidate, None
+                except:
+                    continue
+        except Exception as e:
+            return None, f"Parsing error: {str(e)}"
+
+        return None, "No valid JSON object found"
 
     def _validate_json(self, data: Any) -> tuple[bool, str | None]:
         schema = self.json_schema
@@ -402,10 +423,6 @@ class BaseAgent(ABC):
         result = await self._call_groq(messages, temperature=0.8)
         return self._extract_content(result)
 
-    # ------------------------------------------------------------------ #
-    #  Tool-calling support (Groq /chat/completions with tools)
-    # ------------------------------------------------------------------ #
-
     def _execute_tool_call(self, tool_call: dict) -> str:
         """Execute a single tool call and return the result string."""
         from tools import TOOL_REGISTRY
@@ -427,9 +444,47 @@ class BaseAgent(ABC):
 
         func = TOOL_REGISTRY.get(func_name)
         if func is None:
-            return json.dumps({"error": f"Unknown tool: {func_name}"})
+            return json.dumps({"error": f"Unknown tool: {func_name}"}), tool_call_id
 
         return func(**arguments), tool_call_id
+
+    def _extract_tool_calls_from_text(self, text: str) -> list[dict] | None:
+        """
+        Fallback for models that write tool calls as text/markdown instead of 
+        using the formal tool_calls API field.
+        """
+        if not text:
+            return None
+            
+        # Look for JSON blocks that look like tool calls: {"name": "...", "parameters": {...}}
+        # This matches the OpenAI format often emitted by Ollama models
+        pattern = r"```(?:json|python)\s*(\{.*?\})\s*```|(\{[\s\n]*\"name\"[\s\n]*:[\s\n]*\".*?\"[\s\n]*,[\s\n]*\"parameters\"[\s\n]*:[\s\n]*\{.*\}[\s\n]*\})"
+        matches = re.findall(pattern, text, re.DOTALL)
+        
+        tool_calls = []
+        for match in matches:
+            # findall with multiple groups returns tuples
+            json_str = next((m for m in match if m), None)
+            if json_str:
+                try:
+                    data = json.loads(json_str)
+                    if "name" in data:
+                        # Extract arguments and ensure they are stringified for API compliance
+                        args = data.get("parameters", data.get("arguments", {}))
+                        args_str = json.dumps(args) if isinstance(args, dict) else str(args)
+                        
+                        tool_calls.append({
+                            "id": f"call_{re.sub(r'[^a-zA-Z0-9]', '', data['name'])}_{len(tool_calls)}",
+                            "type": "function",
+                            "function": {
+                                "name": data["name"],
+                                "arguments": args_str
+                            }
+                        })
+                except:
+                    continue
+        
+        return tool_calls if tool_calls else None
 
     async def generate_with_tools(
         self,
@@ -488,6 +543,11 @@ class BaseAgent(ABC):
             msg = self._extract_message(result)
 
             tool_calls = msg.get("tool_calls")
+            if not tool_calls:
+                # Fallback: Extraction from text (Ollama/Qwen mode)
+                content = msg.get("content", "")
+                tool_calls = self._extract_tool_calls_from_text(content)
+                
             if not tool_calls:
                 # Model returned final text — done
                 final_text = msg.get("content", "")
