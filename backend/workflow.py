@@ -7,7 +7,7 @@ from typing import TypedDict, Annotated, Sequence, Literal
 from langgraph.graph import StateGraph, END
 import operator
 
-from agents import RiskAgent, BusinessOpsRiskAgent, MasterAgent, GovernanceAgent, DeepResearchAgent
+from agents import RiskAgent, BusinessOpsRiskAgent, MasterAgent, GovernanceAgent
 from rag.retriever import build_shared_reference_query, get_council_context
 from config import MAX_DISCUSSION_ROUNDS
 
@@ -33,9 +33,6 @@ class AnalysisState(TypedDict):
     risk_analysis: str
     business_ops_analysis: str
     governance_analysis: str
-    research_analysis: str      # LLM-planned queries (pending JSON)
-    research_results: str       # Enriched JSON after DDGS execution
-
     # Phase 2 → 3 bridge: Position papers (plain-language stances, not JSON)
     risk_position: str
     business_ops_position: str
@@ -58,7 +55,6 @@ class AnalysisState(TypedDict):
 risk_agent = RiskAgent()
 business_ops_agent = BusinessOpsRiskAgent()
 governance_agent = GovernanceAgent()
-deep_research_agent = DeepResearchAgent()
 master_agent = MasterAgent()
 
 
@@ -152,42 +148,6 @@ async def governance_analysis_node(state: AnalysisState) -> dict:
             "error": str(e)
         }
 
-
-async def research_node(state: AnalysisState) -> dict:
-    """Phase 2.5a: Deep Research Agent plans the search queries."""
-    try:
-        analysis = await deep_research_agent.analyze(
-            state["parsed_content"],
-            reference_context=state.get("reference_context", ""),
-            reference_query=state.get("reference_query", ""),
-            allow_targeted_retrieval=True,
-        )
-        return {
-            "research_analysis": analysis,
-            "current_phase": 2,
-            "status": "research_plan_complete"
-        }
-    except Exception as e:
-        return {
-            "research_analysis": f"Error in research planning: {str(e)}",
-            "error": str(e)
-        }
-
-
-async def execute_research_node(state: AnalysisState) -> dict:
-    """Phase 2.5b: Execute planned queries via DDGS and store results in state."""
-    try:
-        enriched = await deep_research_agent.execute_searches(state["research_analysis"])
-        return {
-            "research_results": enriched,
-            "current_phase": 2,
-            "status": "research_execution_complete"
-        }
-    except Exception as e:
-        return {
-            "research_results": state.get("research_analysis", ""),
-            "error": str(e)
-        }
 
 
 async def discussion_node(state: AnalysisState) -> dict:
@@ -318,14 +278,12 @@ async def consolidation_node(state: AnalysisState) -> dict:
             for msg in state.get("discussion_messages", [])
         ])
 
-        research = state.get("research_results") or state.get("research_analysis", "")
-
         final_report = await master_agent.consolidate(
             state["parsed_content"],
             state["risk_analysis"],
             state["business_ops_analysis"],
             state["governance_analysis"],
-            research,
+            "",
             discussion_transcript,
         )
 
@@ -351,8 +309,6 @@ def create_workflow() -> StateGraph:
     workflow.add_node("run_risk",          risk_analysis_node)
     workflow.add_node("run_business_ops",  business_ops_analysis_node)
     workflow.add_node("run_governance",    governance_analysis_node)
-    workflow.add_node("run_research",      research_node)
-    workflow.add_node("execute_research",  execute_research_node)
     workflow.add_node("run_discussion",    discussion_node)
     workflow.add_node("run_consolidation", consolidation_node)
 
@@ -366,14 +322,10 @@ def create_workflow() -> StateGraph:
     workflow.add_edge("run_reference", "run_business_ops")
     workflow.add_edge("run_reference", "run_governance")
 
-    # All analyses feed into research planning
-    workflow.add_edge("run_risk",         "run_research")
-    workflow.add_edge("run_business_ops", "run_research")
-    workflow.add_edge("run_governance",   "run_research")
-
-    # Research planning → DDGS execution → discussion
-    workflow.add_edge("run_research",    "execute_research")
-    workflow.add_edge("execute_research", "run_discussion")
+    # All analyses feed directly into discussion
+    workflow.add_edge("run_risk",         "run_discussion")
+    workflow.add_edge("run_business_ops", "run_discussion")
+    workflow.add_edge("run_governance",   "run_discussion")
 
     workflow.add_conditional_edges(
         "run_discussion",

@@ -24,6 +24,7 @@ class BaseAgent(ABC):
         self.name = name
         self.color = color
         self.ollama_url = f"{OLLAMA_BASE_URL}/api/generate"
+        self.ollama_chat_url = f"{OLLAMA_BASE_URL}/api/chat"
         self.model = OLLAMA_MODEL
         self.last_reference_query = ""
         self.last_reference_context = ""
@@ -385,9 +386,14 @@ class BaseAgent(ABC):
         return walk(data)
 
     async def _generate_with_retry(self, prompt: str) -> str:
+        # Append a hard JSON-start signal so the model begins with `{`
+        json_prompt = prompt + "\n\nOUTPUT (valid JSON only, no markdown, no commentary):\n{"
         last_error: str | None = None
 
-        response = await self._call_ollama(prompt)
+        response = await self._call_ollama(json_prompt, temperature=0.1)
+        # Prepend the `{` we injected into the prompt
+        if not response.strip().startswith("{"):
+            response = "{" + response
         parsed, parse_error = self._try_parse_json(response)
         if parsed is not None:
             ok, validation_error = self._validate_json(parsed)
@@ -397,16 +403,18 @@ class BaseAgent(ABC):
         else:
             last_error = parse_error
 
-        # Retry once with stricter instructions
+        # Retry with explicit error feedback
         strict_prompt = (
             f"{prompt}\n\nSTRICT OUTPUT REQUIREMENT:\n"
             "Return ONLY a valid JSON object. Do NOT include markdown, code fences, "
-            "or commentary. Ensure all required fields are present and typed correctly."
+            f"or commentary. Ensure all required fields are present.\n"
+            f"Validation error to fix: {last_error}\n\n"
+            "OUTPUT (valid JSON only):\n{{"
         )
-        if last_error:
-            strict_prompt += f"\nValidation error to fix: {last_error}"
 
-        retry_response = await self._call_ollama(strict_prompt)
+        retry_response = await self._call_ollama(strict_prompt, temperature=0.1)
+        if not retry_response.strip().startswith("{"):
+            retry_response = "{" + retry_response
         parsed, parse_error = self._try_parse_json(retry_response)
         if parsed is not None:
             ok, validation_error = self._validate_json(parsed)
@@ -416,18 +424,18 @@ class BaseAgent(ABC):
         else:
             last_error = parse_error
 
-        # Final attempt with explicit evidence constraints
+        # Final attempt — drop reference context, just fill schema from report
         final_prompt = (
-            f"{prompt}\n\nFINAL ATTEMPT — STRICT EVIDENCE RULES:\n"
-            "Return ONLY a valid JSON object. Do NOT include markdown, code fences, or commentary.\n"
-            "If REFERENCE CONTEXT is provided, EVERY evidence field MUST be a verbatim quote from it "
-            "and include a [C#] citation. If you cannot find a supporting quote, REMOVE or REWRITE "
-            "the finding so the evidence is an exact quote from the REFERENCE CONTEXT.\n"
+            f"{prompt}\n\nFINAL ATTEMPT:\n"
+            "Return ONLY a valid JSON object filling the schema above.\n"
+            "Use only information from the REPORT CONTENT — ignore REFERENCE CONTEXT if it causes confusion.\n"
+            f"Validation error to fix: {last_error}\n\n"
+            "OUTPUT (valid JSON only):\n{{"
         )
-        if last_error:
-            final_prompt += f"\nValidation error to fix: {last_error}"
 
-        final_response = await self._call_ollama(final_prompt)
+        final_response = await self._call_ollama(final_prompt, temperature=0.05)
+        if not final_response.strip().startswith("{"):
+            final_response = "{" + final_response
         parsed, _ = self._try_parse_json(final_response)
         if parsed is None:
             fixed = self._fix_common_json_errors(final_response)
@@ -441,6 +449,8 @@ class BaseAgent(ABC):
             ok, _ = self._validate_json(repaired)
             if ok:
                 return json.dumps(repaired, ensure_ascii=False)
+            # Return best-effort parsed JSON even if validation fails
+            return json.dumps(parsed, ensure_ascii=False)
         return final_response
 
     async def generate(
@@ -502,14 +512,93 @@ class BaseAgent(ABC):
             return await self._generate_with_retry(prompt)
         return await self._call_ollama(prompt)
 
-    async def generate_discussion(self, context: str, discussion_prompt: str) -> str:
-        """Generate a discussion-specific response (avoids JSON rules)."""
-        prompt = self._build_prompt(context, discussion_prompt, mode="discussion")
-        return await self._call_ollama(prompt, temperature=0.8)
+    async def write_position_paper(self, analysis_json: str) -> str:
+        """
+        Distill the agent's JSON analysis into a concise war room opening position.
+        3 bullets — one sharp claim each, backed by a specific number or quote.
+        This is what all other agents see before debate opens.
+        """
+        prompt = f"""{self.system_prompt}
+
+{self.discussion_persona}
+
+Your deep analysis is complete. Here are your findings:
+---
+{analysis_json}
+---
+
+Write your WAR ROOM OPENING POSITION.
+- Exactly 3 bullet points
+- Each bullet = one sharp, specific claim you will defend in the debate
+- Lead with your strongest finding
+- Each bullet must cite one number, ratio, or direct quote from the report as evidence
+- Be direct and opinionated — this is your stake in the ground before debate opens
+
+No JSON. No preamble. Just the 3 bullets."""
+        return await self._call_ollama(prompt, temperature=0.7)
+
+    async def generate_discussion(
+        self,
+        position_papers: dict,
+        thread: list,
+        turn_instruction: str,
+        earnings_content: str = "",
+    ) -> str:
+        """
+        Generate a war room response using a proper multi-turn messages array.
+
+        Args:
+            position_papers:  {"Agent Name": "position paper text"} for all agents
+            thread:           full conversation so far [{"agent": ..., "content": ...}, ...]
+            turn_instruction: what this agent should do right now
+            earnings_content: the original parsed earnings report — agents MUST cite from this
+        """
+        anti_echo = (
+            "\n\nWAR ROOM RULES — STRICTLY ENFORCED:\n"
+            "- You MUST challenge or build on what was just said. Do NOT summarise prior turns.\n"
+            "- Every claim you make MUST cite a specific number, metric, or direct quote from the EARNINGS REPORT below.\n"
+            "- Do NOT invent figures. If a metric is not in the report, say it is missing — do not fabricate it.\n"
+            "- If another agent made your point already, do NOT repeat it — pivot to a different angle.\n"
+            "- Disagreement is expected and healthy. If you agree, say so briefly then add new substance.\n"
+            "- No bullet-point recaps of the full thread. Respond to the LATEST message directly."
+        )
+        messages = [
+            {"role": "system", "content": f"{self.system_prompt}\n\n{self.discussion_persona}{anti_echo}"},
+        ]
+
+        # Ground the discussion in the actual report — truncate to avoid context overflow
+        if earnings_content:
+            messages.append({
+                "role": "user",
+                "content": f"EARNINGS REPORT (primary source — cite figures from here):\n{earnings_content[:4000]}"
+            })
+
+        papers_text = "\n\n".join([
+            f"**{agent}**:\n{paper}"
+            for agent, paper in position_papers.items()
+        ])
+        messages.append({"role": "user", "content": f"OPENING POSITIONS:\n{papers_text}"})
+
+        # Full conversation thread — own messages as "assistant", others as "user"
+        for msg in thread:
+            role = "assistant" if msg["agent"] == self.name else "user"
+            messages.append({"role": role, "content": f"[{msg['agent']}]: {msg['content']}"})
+
+        messages.append({"role": "user", "content": turn_instruction})
+
+        return await self._call_ollama_messages(messages)
 
     def respond_to(self, other_agent_name: str, other_response: str) -> str:
         """Return the turn instruction for responding to another agent."""
-        return f"[{other_agent_name}] just said:\n---\n{other_response}\n---\nYour turn. Stay in character. Be concise."
+        return (
+            f"[{other_agent_name}] just said:\n---\n{other_response[:1200]}\n---\n\n"
+            "YOUR TURN — mandatory rules:\n"
+            "1. Identify ONE specific claim above you DISAGREE with or think is incomplete. Quote it directly.\n"
+            "2. Explain WHY you disagree, citing a specific number, ratio, or fact from the report.\n"
+            "3. Add ONE point the thread has NOT yet covered from your analytical domain.\n"
+            "4. DO NOT repeat or paraphrase points already made. If you agree with everything, find a nuance.\n"
+            "Be direct. 3-5 sentences max per point. No bullet-point summaries of prior turns."
+        )
 
     async def _call_ollama(self, prompt: str, temperature: float = 0.7) -> str:
         """Internal helper to call Ollama API."""
@@ -533,6 +622,32 @@ class BaseAgent(ABC):
                 data = resp.json()
             print(f"[{self.name}] Response received successfully")
             return data.get("response", "")
+        except Exception as e:
+            print(f"[{self.name}] ERROR: {str(e)}")
+            raise
+
+    async def _call_ollama_messages(self, messages: list, temperature: float = 0.9) -> str:
+        """Multi-turn chat completion via Ollama /api/chat — used for war room discussion."""
+        import httpx
+
+        payload = {
+            "model": self.model,
+            "messages": messages,
+            "stream": False,
+            "options": {
+                "temperature": temperature,
+                "top_p": 0.9,
+            }
+        }
+
+        try:
+            print(f"[{self.name}] War room turn — Ollama ({self.model})...")
+            async with httpx.AsyncClient(timeout=120.0) as client:
+                resp = await client.post(self.ollama_chat_url, json=payload)
+                resp.raise_for_status()
+                data = resp.json()
+            print(f"[{self.name}] Response received successfully")
+            return data.get("message", {}).get("content", "")
         except Exception as e:
             print(f"[{self.name}] ERROR: {str(e)}")
             raise

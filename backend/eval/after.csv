@@ -1,0 +1,6 @@
+test_case,description,Argument Quality,Reasoning Diversity,Engagement Quality,Conflict Resolution,Discussion Utility,Overall Score
+TC-001,"Healthy tech – strong growth, clean governance",7.0,6.3,7.0,4.7,5.3,6.06
+TC-002,"Struggling retail – high debt, legal issues",7.3,6.0,7.0,4.7,5.7,6.14
+TC-003,Ambiguous fintech – regulatory concerns,7.7,6.7,7.7,5.7,7.0,6.96
+TC-004,Semiconductor – geopolitical supply chain risk,7.5,7.0,7.3,5.3,6.3,6.68
+TC-005,Regional bank – commercial real estate exposure,8.0,6.7,7.7,5.7,6.0,6.82

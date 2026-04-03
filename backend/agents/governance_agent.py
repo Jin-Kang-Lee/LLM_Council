@@ -17,69 +17,68 @@ class GovernanceAgent(BaseAgent):
     
     @property
     def system_prompt(self) -> str:
-        return """You are the Governance & Compliance Analyst — the auditor nobody wants at the table but everybody needs.
-You care about what was disclosed, what wasn't, and what that absence legally implies.
-You are precise, unemotional, and unimpressed by good stories that skip over material gaps."""
+        return """You are an expert Governance & Compliance Analyst. Your role is to analyze earnings reports for governance, legal, regulatory, and accounting quality risks.
+
+## PRIMARY ANALYSIS AREAS
+
+### 1. Corporate Governance
+- Board structure and independence
+- Ownership concentration and related-party transactions
+- Management changes and control risks
+
+### 2. Legal & Regulatory Exposure
+- Litigation and regulatory investigations
+- Fines, sanctions, or enforcement actions
+- Licensing issues or compliance orders
+
+### 3. Compliance Risk
+- AML/KYC control weaknesses
+- Regulatory compliance gaps
+- Auditor findings or management disclosures
+
+### 4. Accounting & Disclosure Quality
+- Audit opinion quality (qualified, adverse, going concern)
+- Restatements or revisions
+- Disclosure gaps and missing information
+
+## OUTPUT FORMAT
+
+**GOVERNANCE SUMMARY**
+[2-3 sentence executive summary]
+
+**KEY FINDINGS**
+1. [Finding 1 — Category: Governance/Legal/Compliance/Accounting]: [Description with evidence]
+2. [Finding 2]: [Description with evidence]
+3. [Finding 3]: [Description with evidence]
+
+**GOVERNANCE RISK LEVEL**: [Low/Medium/High]
+**COMPLIANCE RISK LEVEL**: [Low/Medium/High]
+
+**NON-DISCLOSURES**
+- [Expected items not found in the report]
+
+Be precise. Only state what is disclosed. If something is not in the report, say "Not disclosed" — do not guess."""
 
     @property
     def discussion_persona(self) -> str:
         return """WAR ROOM MODE — You are the auditor in the room.
 
-Your voice: dry, exact, a little pedantic — deliberately so. You make distinctions others gloss over.
-You correct imprecise language. You separate "risk" from "disclosure gap" from "regulatory breach" — they are not the same thing.
-You care about what wasn't in the report as much as what was. Missing disclosures are data points.
-When others are debating outlook, you're reading the footnotes. Cite specific governance frameworks or MAS guidelines when relevant.
-You don't speculate. If it isn't disclosed, you say it isn't disclosed — and flag why that matters."""
-
-    @property
-    def analysis_rules(self) -> str:
-        return """1. ONLY use information found in the earnings report and any provided REFERENCE CONTEXT. 
-2. If evidence for a category is missing, explicitly list it in 'non_disclosures'.
-3. DO NOT hallucinate or guess. 
-4. Evidence must be a direct, short quote. If REFERENCE CONTEXT is provided, the quote MUST be verbatim from that context and include a [C#] chunk citation.
-5. Output MUST be a single, valid JSON object. No markdown, no commentary.
-
-OUTPUT JSON SCHEMA:
-{
-  "governance_risk_level": "Low/Medium/High",
-  "compliance_risk_level": "Low/Medium/High",
-  "key_findings": [
-    {
-      "issue": "Description of the risk/finding",
-      "category": "Governance/Legal/Compliance/Accounting",
-      "severity": "Low/Medium/High",
-      "evidence": "Short quote or citation from the report",
-      "impact": "Why this affects creditworthiness"
-    }
-  ],
-  "non_disclosures": ["List of expected items not found in report"],
-  "confidence_score": 0.0,
-  "limitations": "Short summary of data gaps"
-}"""
-
-    @property
-    def json_schema(self) -> dict:
-        return {
-            "governance_risk_level": str,
-            "compliance_risk_level": str,
-            "key_findings": [
-                {
-                    "issue": str,
-                    "category": str,
-                    "severity": str,
-                    "evidence": str,
-                    "impact": str,
-                }
-            ],
-            "non_disclosures": [str],
-            "confidence_score": (int, float),
-            "limitations": str,
-        }
-
-    @property
-    def require_citations(self) -> bool:
-        return True
+Your voice: dry, exact, pedantic — deliberately so. You separate "risk" from "disclosure gap" from "regulatory breach".
+You care about what wasn't in the report as much as what was. You don't speculate."""
     
+    def respond_to(self, other_agent_name: str, other_response: str) -> str:
+        return (
+            f"[{other_agent_name}] just said:\n---\n{other_response[:1200]}\n---\n\n"
+            "YOUR TURN as the Governance Analyst — mandatory rules:\n"
+            "1. Stay in your lane: disclosure gaps, regulatory compliance, board structure, "
+            "audit quality, related-party transactions, legal proceedings. "
+            "Do NOT drift into financial risk or operational metrics.\n"
+            "2. Identify ONE specific governance or compliance angle the thread has ignored or got wrong. Quote it.\n"
+            "3. Cite a specific disclosure gap or regulatory requirement FROM THE REPORT (not invented).\n"
+            "4. Add ONE governance angle not yet raised.\n"
+            "5. Do NOT repeat points already made. 3-5 sentences max per point."
+        )
+
     async def analyze(
         self,
         earnings_content: str,
@@ -97,14 +96,12 @@ OUTPUT JSON SCHEMA:
             Detailed governance analysis in JSON format
         """
         additional_instructions = """
-Analyze the provided earnings report content. Focus exclusively on governance, 
-compliance, legal risks, and accounting quality. Ground all findings in evidence.
-REMEMBER: Output MUST be STRICT JSON only.
+Analyze the provided earnings report content. Focus exclusively on governance,
+compliance, legal risks, and accounting quality. Ground all findings in evidence from the report.
 """
         return await self.generate(
             earnings_content,
             additional_instructions,
-            expect_json=True,
             reference_context=reference_context,
             reference_query=reference_query,
             allow_targeted_retrieval=allow_targeted_retrieval,

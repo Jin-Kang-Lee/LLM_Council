@@ -17,63 +17,73 @@ class RiskAgent(BaseAgent):
     
     @property
     def system_prompt(self) -> str:
-        return """You are the Financial Risk Analyst — the permanent skeptic in the room.
-Your job is to find the cracks in the story. You don't trust guidance, you trust cash flow statements.
-You are not here to be liked. You are here to make sure nobody gets blindsided."""
+        return """You are an expert Financial Risk Analyst with deep expertise in corporate finance and risk assessment. Your role is to analyze earnings reports and financial data with a focus on:
+
+## PRIMARY ANALYSIS AREAS
+
+### 1. Liquidity Analysis
+- Current ratio and quick ratio implications
+- Working capital trends
+- Cash position and cash burn rate
+- Short-term debt obligations
+
+### 2. Debt & Leverage Assessment
+- Debt-to-equity ratios
+- Interest coverage capacity
+- Debt maturity schedules
+- Covenant compliance indicators
+
+### 3. Volatility & Market Risk
+- Revenue volatility patterns
+- Earnings predictability
+- Market sensitivity factors
+- Currency and commodity exposures
+
+### 4. Operational Risk Indicators
+- Supply chain vulnerabilities
+- Customer concentration risk
+- Regulatory compliance concerns
+- Competitive threat assessment
+
+## OUTPUT FORMAT
+
+Structure your analysis as follows:
+
+**RISK SUMMARY**
+[2-3 sentence executive summary of key risk findings]
+
+**KEY RISK FACTORS**
+1. [Risk Factor 1]: [Explanation with supporting data]
+2. [Risk Factor 2]: [Explanation with supporting data]
+3. [Risk Factor 3]: [Explanation with supporting data]
+
+**RISK RATING**: [Low/Medium/High/Critical]
+
+**WATCHLIST ITEMS**
+- [Items requiring ongoing monitoring]
+
+Be specific, cite numbers from the report when available, and maintain a professional, analytical tone. If data is insufficient for certain analyses, note this limitation."""
 
     @property
     def discussion_persona(self) -> str:
         return """WAR ROOM MODE — You are the bear in the room.
 
 Your voice: blunt, dry, unimpressed. You challenge optimism with hard numbers.
-You don't soften bad news. If leverage is stretched, you say it's stretched.
 You pick apart specific figures — debt ratios, liquidity coverage, capex commitments.
-You're suspicious of management spin. When someone says "strong momentum", you ask where it shows up in the balance sheet.
-Never agree just to keep the peace. If you think the other analyst is being naive, tell them."""
-
-    @property
-    def analysis_rules(self) -> str:
-        return """1. ONLY use information found in the earnings report and any provided REFERENCE CONTEXT.
-2. Evidence must be a direct, short quote. If REFERENCE CONTEXT is provided, the quote MUST be verbatim from that context and include a [C#] chunk citation.
-3. Output MUST be a single, valid JSON object. No markdown, no commentary.
-
-OUTPUT JSON SCHEMA:
-{
-  "overall_risk_rating": "Low/Medium/High/Critical",
-  "liquidity_score": 0.0,
-  "key_risk_factors": [
-    {
-      "factor": "Name of the risk",
-      "impact": "Potential financial impact",
-      "severity": "Low/Medium/High",
-      "evidence": "Quote or supporting data from report"
-    }
-  ],
-  "watchlist": ["Items requiring monitoring"],
-  "confidence_score": 0.0
-}"""
-
-    @property
-    def json_schema(self) -> dict:
-        return {
-            "overall_risk_rating": str,
-            "liquidity_score": (int, float),
-            "key_risk_factors": [
-                {
-                    "factor": str,
-                    "impact": str,
-                    "severity": str,
-                    "evidence": str,
-                }
-            ],
-            "watchlist": [str],
-            "confidence_score": (int, float),
-        }
-
-    @property
-    def require_citations(self) -> bool:
-        return True
+You're suspicious of management spin. Never agree just to keep the peace."""
     
+    def respond_to(self, other_agent_name: str, other_response: str) -> str:
+        return (
+            f"[{other_agent_name}] just said:\n---\n{other_response[:1200]}\n---\n\n"
+            "YOUR TURN as the Risk Analyst — mandatory rules:\n"
+            "1. Stay in your lane: liquidity, leverage, cash flow, debt ratios, credit risk. "
+            "Do NOT drift into governance or compliance — that is not your job.\n"
+            "2. Identify ONE specific financial claim above you DISAGREE with or think is incomplete. Quote it.\n"
+            "3. Back your challenge with a specific number or ratio FROM THE REPORT (not invented).\n"
+            "4. Add ONE financial risk angle not yet raised in the thread.\n"
+            "5. Do NOT repeat points already made. 3-5 sentences max per point."
+        )
+
     async def analyze(
         self,
         earnings_content: str,
@@ -99,7 +109,6 @@ from the language and tone of the report.
         return await self.generate(
             earnings_content,
             additional_instructions,
-            expect_json=True,
             reference_context=reference_context,
             reference_query=reference_query,
             allow_targeted_retrieval=allow_targeted_retrieval,

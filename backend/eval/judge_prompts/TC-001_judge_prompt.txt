@@ -1,0 +1,186 @@
+=== WAR ROOM JUDGE PROMPT ===
+Test Case : TC-001
+Description: Healthy tech company with strong growth and clean governance
+Messages  : 9 across 3 rounds
+============================================================
+
+You are a rigorous evaluator of multi-agent financial analysis discussions.
+Your job is to score the OVERALL DISCUSSION — not individual agents.
+
+ANTI-BIAS RULES — read carefully before scoring:
+1. Do NOT reward verbosity. A concise, evidence-backed point scores higher than a long, vague one.
+2. Do NOT favour the first or last speaker. Ignore message order when scoring.
+3. Agent names have been anonymised (Agent A, B, C). Do not infer roles from content and use that to inflate or deflate scores.
+4. Do NOT assume any financial viewpoint (bullish/bearish/cautious) is inherently more credible. Score the quality of reasoning, not the conclusion.
+5. Score only what is present in the transcript. Do not reward potential.
+
+---
+
+Score the following War Room discussion transcript on five dimensions.
+Each dimension is scored 0-10 using the anchors provided.
+
+--- TRANSCRIPT ---
+Agent C [Round 1]:
+**Risk Analyst**: 
+
+Your strategic investment analysis misses a critical red flag in the company's cash flow statement: the difference between the new amortized cost basis and expected cash collections stands at $40 million as reported in C3 EY_ASC326.md, indicating potential liquidity issues not reflected in the management's optimistic outlook. This stark contrast between reported figures and actual cash flows challenges the narrative of a strong financial position presented by CFO David Park.
+
+Agent B [Round 1]:
+**Business & Ops Analyst**: The Risk Analyst's statement about the liquidity gap ($40 million difference) lacks depth when considering the specific operational margin sustainability mentioned by CFO David Park. While there is a stark contrast between reported figures and actual cash flows, this does not directly challenge the operational margins' stability but rather indicates potential mismanagement of funds.
+
+However, to provide an operational angle: **Strategic Investment Justification**, the CapEx expenditure of $50 million aligns with expected future revenue growth of 15%. Yet, there is no evidence regarding the company's ability to scale these investments due to external factors like foreign exchange or regulatory uncertainty. This omission could imply potential risks if external conditions worsen.
+
+For instance, if foreign exchange impacts negatively (as reported in C3 EY_ASC326.md), then scaling such investments might become more challenging without clear communication on how the company plans to mitigate these risks.
+
+Agent A [Round 1]:
+**Governance Analyst**: 
+
+The Risk Analyst's statement regarding the liquidity gap lacks specificity when citing metrics that aren't directly aligned with regulatory disclosure requirements. Specifically, the report fails to disclose:
+
+- **Regulatory Breach**: The report does not cite a specific regulatory requirement or framework that is missing from the company’s disclosures related to financial statements and cash flow management practices. For instance, if the company’s financial reporting must comply with GAAP or IFRS, there should be a reference to compliance status in the reports.
+
+- **Legal Risk**: The absence of legal risk disclosure implies a gap where critical information may be missing from regulatory filings or internal reports required by Sarbanes-Oxley Act provisions. This could include specific legal risks related to contracts, litigation pending cases, or any regulatory requirements that must be met but are not disclosed herein.
+
+- **Accounting Quality**: There is no evidence provided regarding the quality of accounting practices beyond what’s mentioned in SEC filings or other financial statements. Specifically, if there were any material misstatements detected during internal audits or external audits reported by the company's auditor Deloitte & Touche LLP, such findings should have been referenced here.
+
+**Specifically Claimed**: The exact claim I am pushing back on is that the report fails to disclose specific instances where compliance with GAAP and SEC reporting requirements might be lacking. For instance:
+
+- **GAAP Compliance**: The company must comply with GAAP standards for financial reporting, but the report does not detail whether GAAP-specific disclosures are fully met.
+  
+- **Sarbanes-Oxley Act Compliance**: As a public company required to comply with Sarbanes-Oxley Act provisions regarding internal controls and financial disclosure, the report does not provide evidence of compliance status.
+
+- **Material Disclosures**: The report does not specify any material misstatements or irregularities detected during recent audits that should be disclosed according to GAAP standards. This is particularly relevant when discussing accounting practices and ensuring the accuracy of reported figures such as cash flow differences ($40 million gap).
+
+Thus, the exact claim is that the company's governance framework is lacking in specific details required by regulatory requirements, specifically:
+
+- **GAAP Compliance**: Failing to disclose compliance status with GAAP standards.
+- **Sarbanes-Oxley Act Compliance**: Not providing evidence of compliance with Sarbanes-Oxley Act provisions regarding internal controls and financial reporting.
+- **Material Disclosures**: Lack of material disclosures regarding any identified accounting irregularities or misstatements detected during recent audits.
+
+The report lacks specific evidence on these aspects, which critically needs to be addressed for full disclosure compliance.
+
+Agent C [Round 2]:
+[Risk Analyst]: The Governance Analyst's statement regarding regulatory compliance misses the mark on liquidity specifically citing GAAP compliance metrics missing from disclosures. However, to focus on a financial risk angle not yet raised:
+
+**New Liquidity Risk**: The company’s debt securities write-downs stand at $40 million according to C3 EY_ASC326.md. This figure reflects an unfavorable position where expected cash collections are only covering part of the new amortized cost basis. This stark difference indicates a potential liquidity risk not aligned with management's optimistic outlook regarding future revenue growth reported as $50 million CapEx expenditure.
+
+The debt securities write-downs suggest that the company might be facing more severe financial pressures than what is currently reflected in their strategic investments narrative.
+
+Agent B [Round 2]:
+**Business & Ops Analyst**: The Risk Analyst's focus on liquidity risk through debt securities write-downs misses a critical operational angle: the company’s pricing power and customer concentration metrics.
+
+The report indicates that the company faces significant competition, with high customer concentration in key markets (reporting 90% of sales from top 3 customers). This high concentration increases reliance on these customers for revenue. However, the write-downs suggest a potential liquidity crunch could disproportionately affect revenue collection from these major clients.
+
+Thus, the operational angle not yet raised is that high customer concentration might amplify any financial pressures already highlighted through debt securities write-downs ($40 million).
+
+Agent A [Round 2]:
+[Governance Analyst]: **Governance Analyst**: The Risk Analyst's focus on liquidity risk through debt securities write-downs ($40 million) misses critical specifics required by GAAP compliance standards regarding financial reporting practices. Specifically:
+
+- **GAAP Compliance Requirement**: GAAP requires that companies disclose material information related to their financial condition and results of operations. The report does not provide specific evidence or references to GAAP requirements that detail the company's obligations to disclose such financial pressures clearly.
+
+**Specifically Cited Gap**: The report fails to cite any material disclosures regarding GAAP compliance specifically under ASC Topic 323-Debt—Specific Disclosures. This includes:
+
+- **Material Financial Condition Disclosure**: GAAP requires companies to disclose material conditions that affect their ability to realize its assets, especially those related to liquidity risk (e.g., debt securities write-downs).
+
+- **Regulatory Requirements**: The company must ensure compliance with SEC rules and regulations regarding financial statement disclosures, particularly in filings such as Forms 10-K. However, the report does not reference any specific regulatory requirement or compliance status that pertains to GAAP disclosure obligations related to debt write-downs.
+
+**Challenge**: The company's governance framework is lacking in addressing material financial conditions under GAAP requirements specifically regarding debt securities write-downs ($40 million). This omission directly affects their ability to provide full disclosure compliant with SEC and GAAP standards.
+
+Thus, the specific governance gap is that the report fails to address:
+
+- **GAAP 323-Debt Specific Disclosures**: The company’s failure to comply with ASC Topic 323 related disclosures specifically regarding debt securities write-downs ($40 million).
+
+The exact claim being pushed back on is that the company needs to disclose specific GAAP requirements regarding financial condition materiality, particularly under debt securities write-downs.
+
+Agent C [Round 3]:
+[Risk Analyst]: The governance analyst's focus on GAAP compliance requirements misses critical operational metrics related to liquidity risk specifically through debt securities write-downs ($40 million). This figure highlights a potential financial pressure that should be quantitatively addressed.
+
+The company’s debt securities write-down ratio of 10% (e.g., $40 million out of total assets) suggests potential liquidity challenges. However, the report fails to provide specific ratios or metrics comparing this against other key financial indicators like EBITDA or free cash flow to fully illustrate the extent of financial pressure.
+
+**New Financial Risk Angle**: The operational focus on high customer concentration does not address how these write-downs affect credit risk and collection from major clients. High reliance on top customers could amplify any liquidity issues if they are economically sensitive to market fluctuations.
+
+Thus, the report fails to provide specific ratios comparing debt write-downs against other financial metrics like EBITDA or free cash flow.
+
+Agent B [Round 3]:
+[Business & Ops Analyst]: The Risk Analyst's focus on debt write-downs and financial pressure lacks a specific operational metric comparing these write-downs to EBITDA or free cash flow. Instead, it should highlight how high customer concentration impacts credit risk.
+
+**Specific Disagreement**: The report fails to provide the ratio of debt securities write-downs ($40 million) in relation to EBITDA or free cash flow. This lack of comparison prevents understanding the financial pressure’s impact on operational metrics.
+
+**New Operational Angle**: High customer concentration (90% top 3 customers) could amplify liquidity risks if these major clients face economic downturns, affecting their payment patterns. The report does not address how this specific concentration increases credit risk exposure.
+
+Agent A [Round 3]:
+[Governance Analyst]: [Governance Analyst]: The Risk Analyst's focus on debt securities write-downs ($40 million) lacks specific quantitative comparisons to EBITDA or free cash flow metrics. This omission directly impacts the company’s ability to fully disclose material financial conditions under GAAP and SEC regulations.
+
+**Specific Compliance Requirement**: Under GAAP ASC Topic 323 and SEC Regulation S-K, companies must provide specific disclosures regarding liquidity risks. The report fails to cite any quantitative comparison of debt write-downs ($40 million) against EBITDA or free cash flow metrics as required by:
+
+- **GAAP 323 Disclosure Requirement**: GAAP requires detailed disclosures related to financial conditions that impact the company’s ability to meet its obligations. Specifically, companies must disclose material changes in their liquidity position using relevant metrics like EBITDA.
+
+**Regulatory Gap**: The report omits specific ratios comparing debt write-downs ($40 million) against EBITDA or free cash flow. This is a critical gap according to GAAP and SEC regulations:
+
+- **Materiality Principle**: Under GAAP’s materiality principle, disclosures must be sufficiently precise to reflect the company's financial position accurately. The report does not provide specific quantitative comparisons necessary to assess the extent of financial pressure.
+
+**Challenging the Argument**: The company should disclose the debt write-downs ($40 million) as a percentage of EBITDA or free cash flow. Without such disclosure, the report fails to meet GAAP and SEC compliance standards. For example:
+
+- **GAAP 323-Disclosures**: The company’s failure to provide specific ratios like Debt Write-Downs / EBITDA ratio ($40 million / X) or Debt Write-Downs / Free Cash Flow ratio misses the mark under GAAP requirements.
+
+**Citatum Quotidens**: "Under ASC Topic 323, companies must disclose material financial conditions that impact liquidity (e.g., debt write-downs). The report fails to provide such disclosure."
+
+Thus, the specific governance gap is that the company’s disclosures lack:
+
+- **Material Financial Ratios**: Specific ratios comparing debt securities write-downs ($40 million) against EBITDA or free cash flow metrics.
+
+This omission directly impacts material financial disclosures required under GAAP and SEC regulations.
+--- END TRANSCRIPT ---
+
+SCORING DIMENSIONS AND ANCHORS:
+
+1. argument_quality (0-10)
+   Are claims backed by specific data, figures, or quotes from the report?
+   0  = All claims are vague assertions with no supporting evidence.
+   5  = Some claims cite specific numbers; others are unsubstantiated.
+   10 = Every substantive claim is tied to a specific data point or direct quote.
+
+2. reasoning_diversity (0-10)
+   Do the agents surface genuinely different analytical perspectives?
+   0  = Agents repeat the same points; no unique viewpoints raised.
+   5  = Some differentiation, but significant overlap in findings.
+   10 = Each agent raises distinct, non-overlapping insights that collectively
+        cover risk, operations, and governance without redundancy.
+
+3. engagement_quality (0-10)
+   Do agents actually respond to each other's specific arguments?
+   0  = Each agent monologues; no direct responses to prior statements.
+   5  = Agents acknowledge prior points but do not challenge or build on them.
+   10 = Agents explicitly reference, challenge, or build on each other's
+        specific claims, creating a genuine back-and-forth.
+
+4. conflict_resolution (0-10)
+   When agents disagree, is the disagreement substantive and resolved?
+   0  = No disagreements surfaced despite differing evidence.
+   5  = Disagreements are named but left open with no reasoning.
+   10 = Key disagreements are clearly identified and resolved with explicit
+        reasoning that references evidence from the report.
+
+5. discussion_utility (0-10)
+   Does the discussion produce insights beyond the individual analyses?
+   0  = The discussion adds nothing beyond what the individual analyses said.
+   5  = One or two new synthesis points emerge from the debate.
+   10 = The discussion changes or meaningfully sharpens the analytical
+        conclusion in a way that individual analyses could not.
+
+Return ONLY this exact JSON — no explanation, no markdown fences:
+{
+  "argument_quality": <int 0-10>,
+  "argument_quality_rationale": "<max 2 sentences>",
+  "reasoning_diversity": <int 0-10>,
+  "reasoning_diversity_rationale": "<max 2 sentences>",
+  "engagement_quality": <int 0-10>,
+  "engagement_quality_rationale": "<max 2 sentences>",
+  "conflict_resolution": <int 0-10>,
+  "conflict_resolution_rationale": "<max 2 sentences>",
+  "discussion_utility": <int 0-10>,
+  "discussion_utility_rationale": "<max 2 sentences>",
+  "overall_score": <float, mean of the five scores rounded to 2 dp>,
+  "key_strength": "<one sentence>",
+  "key_weakness": "<one sentence>"
+}

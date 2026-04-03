@@ -5,7 +5,6 @@ import {
     FileText,
     MessageSquare,
     CheckCircle2,
-    Search
 } from 'lucide-react';
 import UploadZone from './components/UploadZone';
 import AgentCards from './components/AgentCards';
@@ -13,7 +12,6 @@ import DiscussionLog from './components/DiscussionLog';
 import FinalReport from './components/FinalReport';
 import Header from './components/Header';
 import PhaseIndicator from './components/PhaseIndicator';
-import DeepResearchSpace from './components/DeepResearchSpace';
 
 const API_BASE = 'http://localhost:8000';
 
@@ -26,18 +24,15 @@ function App() {
     const [riskAnalysis, setRiskAnalysis] = useState(null);
     const [businessOpsAnalysis, setBusinessOpsAnalysis] = useState(null);
     const [governanceAnalysis, setGovernanceAnalysis] = useState(null);
-    const [researchAnalysis, setResearchAnalysis] = useState(null);
     const [referenceContexts, setReferenceContexts] = useState({
         risk: null,
         business_ops: null,
         governance: null,
-        research: null
     });
     const [referenceQueries, setReferenceQueries] = useState({
         risk: null,
         business_ops: null,
         governance: null,
-        research: null
     });
     const [discussionMessages, setDiscussionMessages] = useState([]);
     const [finalReport, setFinalReport] = useState(null);
@@ -47,7 +42,6 @@ function App() {
         risk: 'idle',
         business_ops: 'idle',
         governance: 'idle',
-        research: 'idle',
         master: 'idle'
     });
 
@@ -63,13 +57,11 @@ function App() {
             risk: null,
             business_ops: null,
             governance: null,
-            research: null
         });
         setReferenceQueries({
             risk: null,
             business_ops: null,
             governance: null,
-            research: null
         });
         setDiscussionMessages([]);
         setFinalReport(null);
@@ -78,7 +70,6 @@ function App() {
             risk: 'idle',
             business_ops: 'idle',
             governance: 'idle',
-            research: 'idle',
             master: 'idle'
         });
     }, []);
@@ -171,20 +162,6 @@ function App() {
                     if (agentData.reference_query) {
                         setReferenceQueries(prev => ({ ...prev, governance: agentData.reference_query }));
                     }
-                } else if (agentData.agent === 'research') {
-                    setAgentStates(prev => ({
-                        ...prev,
-                        research: agentData.status === 'complete' ? 'complete' : 'thinking'
-                    }));
-                    if (agentData.content) {
-                        setResearchAnalysis(agentData.content);
-                    }
-                    if (agentData.reference_context) {
-                        setReferenceContexts(prev => ({ ...prev, research: agentData.reference_context }));
-                    }
-                    if (agentData.reference_query) {
-                        setReferenceQueries(prev => ({ ...prev, research: agentData.reference_query }));
-                    }
                 }
             });
 
@@ -226,7 +203,6 @@ function App() {
     const phases = [
         { id: 1, label: 'Parse', icon: FileText },
         { id: 2, label: 'Analyze', icon: Brain },
-        { id: 2.5, label: 'Research', icon: Search },
         { id: 3, label: 'Discuss', icon: MessageSquare },
         { id: 4, label: 'Report', icon: BarChart3 }
     ];
@@ -281,13 +257,6 @@ function App() {
                             governanceReferenceQuery={referenceQueries.governance}
                         />
                     </section>
-                )}
-
-                {currentPhase >= 2 && (agentStates.research !== 'idle') && (
-                    <DeepResearchSpace
-                        researchAnalysis={researchAnalysis}
-                        state={agentStates.research}
-                    />
                 )}
 
                 {currentPhase >= 3 && (

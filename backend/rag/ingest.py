@@ -8,16 +8,15 @@ import os
 from typing import List
 
 import chromadb
-from langchain.schema import Document
-from langchain.text_splitter import MarkdownHeaderTextSplitter
-from langchain_community.document_loaders import DirectoryLoader, TextLoader
-from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_community.vectorstores import Chroma
+from langchain_core.documents import Document
+from langchain_text_splitters import MarkdownHeaderTextSplitter
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_chroma import Chroma
 
-from config import REFERENCE_LIB_PATH, VECTOR_DB_PATH
+from config import REFERENCE_LIB_PATH, VECTOR_DB_PATH, RAG_EMBEDDING_MODEL
 
 COLLECTION_NAME = "council_reference"
-EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
+EMBEDDING_MODEL = RAG_EMBEDDING_MODEL
 
 
 def _derive_metadata(source_path: str) -> dict:
@@ -51,29 +50,33 @@ def _derive_metadata(source_path: str) -> dict:
     return meta
 
 
+def _read_file(path: str) -> str:
+    """Read a file, trying UTF-8 first then falling back to latin-1."""
+    for encoding in ("utf-8", "utf-8-sig", "latin-1"):
+        try:
+            with open(path, "r", encoding=encoding) as f:
+                return f.read()
+        except (UnicodeDecodeError, ValueError):
+            continue
+    return ""
+
+
 def load_documents() -> List[Document]:
-    loaders = [
-        DirectoryLoader(
-            REFERENCE_LIB_PATH,
-            glob="**/*.md",
-            loader_cls=TextLoader,
-            loader_kwargs={"autodetect_encoding": True},
-        ),
-        DirectoryLoader(
-            REFERENCE_LIB_PATH,
-            glob="**/*.txt",
-            loader_cls=TextLoader,
-            loader_kwargs={"autodetect_encoding": True},
-        ),
-    ]
-
     documents: List[Document] = []
-    for loader in loaders:
-        documents.extend(loader.load())
+    extensions = (".md", ".txt")
 
-    for doc in documents:
-        source = doc.metadata.get("source", "")
-        doc.metadata.update(_derive_metadata(source))
+    for root, _dirs, files in os.walk(REFERENCE_LIB_PATH):
+        for filename in files:
+            if not any(filename.lower().endswith(ext) for ext in extensions):
+                continue
+            filepath = os.path.join(root, filename)
+            content = _read_file(filepath)
+            if not content.strip():
+                print(f"Error loading file {filepath}")
+                continue
+            meta = {"source": filepath}
+            meta.update(_derive_metadata(filepath))
+            documents.append(Document(page_content=content, metadata=meta))
 
     return documents
 

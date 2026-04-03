@@ -1,0 +1,198 @@
+=== WAR ROOM JUDGE PROMPT ===
+Test Case : TC-002
+Description: Struggling retail chain with declining margins, high debt, and legal issues
+Messages  : 9 across 3 rounds
+============================================================
+
+You are a rigorous evaluator of multi-agent financial analysis discussions.
+Your job is to score the OVERALL DISCUSSION — not individual agents.
+
+ANTI-BIAS RULES — read carefully before scoring:
+1. Do NOT reward verbosity. A concise, evidence-backed point scores higher than a long, vague one.
+2. Do NOT favour the first or last speaker. Ignore message order when scoring.
+3. Agent names have been anonymised (Agent A, B, C). Do not infer roles from content and use that to inflate or deflate scores.
+4. Do NOT assume any financial viewpoint (bullish/bearish/cautious) is inherently more credible. Score the quality of reasoning, not the conclusion.
+5. Score only what is present in the transcript. Do not reward potential.
+
+---
+
+Score the following War Room discussion transcript on five dimensions.
+Each dimension is scored 0-10 using the anchors provided.
+
+--- TRANSCRIPT ---
+Agent A [Round 1]:
+**Risk Analyst**:
+- The debt-to-equity ratio of 3.24 represents an extremely high level of financial risk exposure, particularly given the company's recent credit rating downgrade to Ba3. This is evident in the Earnings Report where it states, "Total debt stands at $6.8 billion against total equity of $2.1 billion, resulting in a debt-to-equity ratio of 3.24." (Citation [E#])
+
+- The CFO's statement about active engagement with lenders does not imply immediate risk but signals potential future covenant breaches if EBITDA falls below $1.1 billion annually. The company’s recent credit rating down to Ba3 implies that even slight margin declines could trigger covenant breaches, especially when considering the reported debt level and liquidity position. (Citation [E#])
+
+Immediate action is needed to address this high-risk exposure, as any decline in EBITDA below $1.1 billion would trigger covenant breaching, potentially leading to restrictive covenants or even default if not renegotiated promptly.
+
+This immediate risk must be closely monitored and communicated transparently to stakeholders.
+
+Agent B [Round 1]:
+**Business & Ops Analyst**:
+The Risk Analyst's claim that high CapEx investment signals strategic overextension is incomplete. While the report mentions a $50M CapEx investment, it also notes that this investment was justified by recent market expansion and increased demand for new products. The citation states: "With increasing market demand for the company’s newest product lines, the CapEx spending aligns with growth strategies rather than mere operational necessity."
+
+Additionally, the high CapEx ratio can be seen in the context of revenue growth. Over the last fiscal year, the company’s revenue expanded by 25%, suggesting that the current level of CapEx is directly tied to growth opportunities rather than financial distress.
+
+This investment aligns with strategic growth objectives and thus presents more as an operational challenge related to scalability and pricing power rather than an immediate risk signal.
+
+Agent C [Round 1]:
+**Governance & Compliance Analyst**:
+- The Risk Analyst's claim that there is no evidence provided for governance practices, indicating a significant disclosure gap, is correct in terms of the report's silence but lacks specificity. Specifically, the Earnings Report states: "For financial disclosures regarding governance practices, the entity reports no specific references to ASC 326 guidelines or other regulatory frameworks.” This absence directly indicates a critical disclosure gap.
+
+- The Business & Ops Analyst’s point about the high CapEx investment being justified by recent market expansion and increased demand for new products is correct. However, this does not mitigate the significant operational and financial vulnerabilities highlighted elsewhere in the report:
+    - The report specifically states that "the entity must consistently apply ASC 326 for credit deterioration assessment," but there is no explicit reference to ensure consistency across all reporting periods.
+    - The EBITDA level at $1.1 billion is critical for covenant compliance, yet the company’s recent credit rating down to Ba3 implies a high risk of covenant breaches if margins decline further.
+
+- The Business & Ops Analyst's assertion that increased demand justifies CapEx spending does not directly address the underlying regulatory and governance frameworks:
+    - Specifically regarding ASC 326 application: "The entity reports no specific references to ASC 326 guidelines for credit deterioration assessment."
+    - Similarly, there is no explicit reference in the report stating that consistent application of ASC 326 should be monitored across all reporting periods.
+
+- The high debt-to-equity ratio and recent credit rating downgrade indicate significant financial distress signals:
+    - The Earnings Report states: "Total debt stands at $6.8 billion against total equity of $2.1 billion, resulting in a debt-to-equity ratio of 3.24," but there is no specific citation indicating regulatory expectations for covenant compliance.
+    
+- Thus, the governance and compliance frameworks are not being fully addressed. The report does not explicitly cite:
+    - Specific guidelines under ASC 326 regarding credit deterioration assessment.
+    - Expected regulatory expectations around consistent application of such frameworks.
+
+In conclusion, the missing disclosures and lack of explicit references to specific ASC 326 guidelines indicate significant governance and compliance gaps that need immediate attention and communication to stakeholders.
+
+Agent A [Round 2]:
+**Risk Analyst**: The Business & Ops Analyst's assertion that increased demand justifies CapEx spending does not directly address the underlying regulatory and governance frameworks is incomplete. Specifically, while the report mentions increasing market demand for new products justifying CapEx investments, it fails to provide metrics on EBITDA margins or liquidity coverage ratios. For instance, the company’s liquidity coverage ratio stands at only 1.2x against total debt of $6.8 billion, indicating potential shortfalls if any decline in revenue is not immediately addressed.
+
+This oversight does not provide a holistic view of financial risk exposure and leaves management's operational justification unchallenged with hard numbers.
+
+Agent B [Round 2]:
+**Business & Ops Analyst**: The Risk Analyst’s assertion that increased market demand justifies CapEx investments lacks a specific operational metric on EBITDA margins or liquidity coverage ratios. Instead, it should be grounded in concrete financial performance indicators. For instance, the report states that "the company’s revenue growth is driven by increasing market demand for new products," yet no explicit EBITDA margin percentages are cited to justify CapEx investments.
+
+Moreover, the supply chain's resilience during this period is crucial but not mentioned. Specifically, the company should detail how its supply chain handles potential disruptions and whether there are any specific measures in place to mitigate these risks.
+
+---
+**Note**: The response adheres to the rules by focusing on an operational angle—specifically EBITDA margins—and adds a new perspective—the supply chain's resilience—to the discussion.
+
+Agent C [Round 2]:
+[Governance Analyst]: **Governance & Compliance Analyst**:
+The Risk Analyst's assertion that increased market demand justifies CapEx investments lacks specific EBITDA margins or liquidity coverage ratios is factually incorrect and incomplete. The report specifically states: "The company’s revenue growth is driven by increasing market demand for new products." However, this claim does not address the critical governance and regulatory requirements:
+
+- **Citation**: The report notes that "the entity reports no specific references to MAS guidelines or other relevant regulatory frameworks for financial risk management."
+
+**Critical Governance & Compliance Gap**: The company's financial reporting lacks explicit references to regulatory expectations regarding EBITDA margins or liquidity coverage ratios. This missing information is legally and operationally problematic because:
+
+- **Regulatory Requirement**: According to ASC 326, companies must establish a process for evaluating credit risk and financial distress signals based on specific metrics such as EBITDA margins and liquidity coverage ratios.
+- **Governance Gap**: The company's report does not explicitly cite any of these critical governance frameworks:
+    - "For financial risk management practices, the entity reports no specific references to ASC 326 guidelines."
+    
+**Missing Metrics**: The report fails to disclose explicit EBITDA margin percentages or liquidity coverage ratios that would help in understanding the financial risk exposure associated with increased CapEx investments.
+
+Thus, the company’s failure to provide concrete EBITDA margins and liquidity coverage ratios indicates a significant governance and compliance gap. This omission could be legally problematic under ASC 326 requirements for comprehensive financial risk management.
+
+In summary, the missing disclosures on specific regulatory metrics such as EBITDA margins and liquidity coverage ratios indicate critical gaps in financial risk management practices. These are essential to ensure transparency and accountability according to applicable regulations.
+
+Agent A [Round 3]:
+**Risk Analyst**: The Business & Ops Analyst’s assertion that increased market demand justifies CapEx investments lacks specific EBITDA margins or liquidity coverage ratios is incomplete. Specifically, while the report mentions increasing market demand for new products driving revenue growth, it fails to provide concrete financial risk exposure metrics.
+
+The report states: "Total debt stands at $6.8 billion against total equity of $2.1 billion." The debt-to-equity ratio here is 3.2x, which does not provide a clear picture of financial distress signals or resilience measures needed for increased CapEx investments.
+
+**New Financial Risk Angle**: **Debt Service Coverage Ratio (DSCR)**: The report does not mention the DSCR, which measures the company’s ability to meet its debt obligations from its operating earnings. Without this ratio, we cannot assess the risk of financial distress accurately.
+
+Agent B [Round 3]:
+**Business & Ops Analyst**: The Risk Analyst’s claim that increased market demand justifies CapEx investments lacks specific EBITDA margins or liquidity coverage ratios is incomplete. While the report states that "total debt stands at $6.8 billion against total equity of $2.1 billion," it does not provide a DSCR to measure the company's ability to meet its debt obligations from operating earnings.
+
+**New Operational Angle**: **Supply Chain Resilience**: The report mentions increasing market demand for new products but does not detail how the supply chain handles potential disruptions or measures in place to mitigate these risks. Specifically, there is no information on supplier diversification or backup sourcing strategies.
+
+---
+
+In summary, the DSCR measurement and supply chain resilience are critical operational aspects missing from the report's analysis.
+
+Agent C [Round 3]:
+**Governance & Compliance Analyst**: The Risk Analyst’s assertion that increased market demand justifies CapEx investments lacks specific EBITDA margins, liquidity coverage ratios, and DSCR is factually incorrect and legally deficient. Specifically, the report's failure to provide these metrics is a significant governance gap:
+
+### Regulatory Requirement:
+- **Regulatory Requirement Citation**: According to ASC 326, companies must establish processes for evaluating credit risk and financial distress signals based on specific financial ratios such as EBITDA margins, liquidity coverage ratios, and DSCR. The report notably omits any of these critical metrics.
+
+### Compliance Gap:
+- **Critical Governance Gap**: The company's report fails to disclose explicit EBITDA margin percentages, liquidity coverage ratios, and DSCR measures that would help in understanding the financial risk exposure associated with increased CapEx investments.
+  
+**Specific Compliance Requirement Citation**:
+- **Citation**: According to ASC 326: "Entities must evaluate credit risk and determine if they need additional capital or liquidity through specific measures such as EBITDA margins, liquidity coverage ratios, and DSCR."
+
+### Missing Metrics:
+- The report only mentions total debt ($6.8 billion) against total equity ($2.1 billion), but it fails to provide concrete EBITDA margin percentages, liquidity coverage ratio details, and the DSCR.
+
+### Conclusion:
+The company’s failure to provide specific EBITDA margins, liquidity coverage ratios, and DSCR indicates a critical governance gap in financial risk management practices according to ASC 326. This omission is legally problematic because it does not allow stakeholders to assess the company's ability to meet its debt obligations from operating earnings and understand financial distress signals.
+
+**Specific Compliance Requirement Citation**: According to ASC 326, companies must evaluate credit risk through measures such as EBITDA margins, liquidity coverage ratios, and DSCR. The report fails to provide these critical metrics, making it legally and operationally problematic.
+
+---
+
+Additionally:
+
+- **Operational Angle**: The Business & Ops Analyst’s argument that the supply chain resilience is missing does highlight another important aspect:
+  - **Critical Operational Aspect**: The company's report does not detail measures of how its supply chain handles potential disruptions. Specifically, there is no information on supplier diversification or backup sourcing strategies.
+  
+### Regulatory Requirement for Supply Chain Resilience:
+- **Citation**: According to the MAS guidelines: "Entities must establish processes for assessing and managing supply chain resilience, including measures such as supplier diversification and backup sourcing strategies."
+
+### Conclusion:
+The company’s failure to provide specific EBITDA margins, liquidity coverage ratios, DSCR, and supply chain resilience measures indicates significant gaps in both financial risk management practices and operational resilience according to applicable regulations. These missing metrics make the company legally non-compliant and operationally risky.
+
+---
+
+Thus, challenging the lack of EBITDA margins, liquidity coverage ratios, and DSCR is critical under ASC 326, while also addressing the missing supply chain resilience measures per MAS guidelines makes these points clear and legally binding.
+--- END TRANSCRIPT ---
+
+SCORING DIMENSIONS AND ANCHORS:
+
+1. argument_quality (0-10)
+   Are claims backed by specific data, figures, or quotes from the report?
+   0  = All claims are vague assertions with no supporting evidence.
+   5  = Some claims cite specific numbers; others are unsubstantiated.
+   10 = Every substantive claim is tied to a specific data point or direct quote.
+
+2. reasoning_diversity (0-10)
+   Do the agents surface genuinely different analytical perspectives?
+   0  = Agents repeat the same points; no unique viewpoints raised.
+   5  = Some differentiation, but significant overlap in findings.
+   10 = Each agent raises distinct, non-overlapping insights that collectively
+        cover risk, operations, and governance without redundancy.
+
+3. engagement_quality (0-10)
+   Do agents actually respond to each other's specific arguments?
+   0  = Each agent monologues; no direct responses to prior statements.
+   5  = Agents acknowledge prior points but do not challenge or build on them.
+   10 = Agents explicitly reference, challenge, or build on each other's
+        specific claims, creating a genuine back-and-forth.
+
+4. conflict_resolution (0-10)
+   When agents disagree, is the disagreement substantive and resolved?
+   0  = No disagreements surfaced despite differing evidence.
+   5  = Disagreements are named but left open with no reasoning.
+   10 = Key disagreements are clearly identified and resolved with explicit
+        reasoning that references evidence from the report.
+
+5. discussion_utility (0-10)
+   Does the discussion produce insights beyond the individual analyses?
+   0  = The discussion adds nothing beyond what the individual analyses said.
+   5  = One or two new synthesis points emerge from the debate.
+   10 = The discussion changes or meaningfully sharpens the analytical
+        conclusion in a way that individual analyses could not.
+
+Return ONLY this exact JSON — no explanation, no markdown fences:
+{
+  "argument_quality": <int 0-10>,
+  "argument_quality_rationale": "<max 2 sentences>",
+  "reasoning_diversity": <int 0-10>,
+  "reasoning_diversity_rationale": "<max 2 sentences>",
+  "engagement_quality": <int 0-10>,
+  "engagement_quality_rationale": "<max 2 sentences>",
+  "conflict_resolution": <int 0-10>,
+  "conflict_resolution_rationale": "<max 2 sentences>",
+  "discussion_utility": <int 0-10>,
+  "discussion_utility_rationale": "<max 2 sentences>",
+  "overall_score": <float, mean of the five scores rounded to 2 dp>,
+  "key_strength": "<one sentence>",
+  "key_weakness": "<one sentence>"
+}

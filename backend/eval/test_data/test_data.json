@@ -53,46 +53,21 @@
                     1.0
                 ]
             },
-            "sentiment": {
-                "overall_sentiment_score": "Positive",
-                "executive_confidence": "High",
-                "forward_outlook": "Bullish",
-                "key_signals": [
+            "business_ops": {
+                "operational_risk_rating": "Low",
+                "confidence_score_range": [0.6, 1.0],
+                "key_business_risks": [
                     {
-                        "signal": "Raised full-year revenue guidance",
-                        "sentiment": "Positive",
-                        "keywords": [
-                            "raising",
-                            "guidance",
-                            "$9.2 billion"
-                        ]
+                        "risk_type": "Customer Concentration",
+                        "keywords": ["customer concentration", "top 10", "18%"]
                     },
                     {
-                        "signal": "Unprecedented AI demand",
-                        "sentiment": "Positive",
-                        "keywords": [
-                            "unprecedented demand",
-                            "AI Services",
-                            "accelerating"
-                        ]
+                        "risk_type": "AI Market Competition",
+                        "keywords": ["competition", "hyperscaler", "AI"]
                     },
                     {
-                        "signal": "Strong share buyback program",
-                        "sentiment": "Positive",
-                        "keywords": [
-                            "$1.5 billion",
-                            "buyback",
-                            "returning capital"
-                        ]
-                    },
-                    {
-                        "signal": "Aggressive R&D investment",
-                        "sentiment": "Positive",
-                        "keywords": [
-                            "investing aggressively",
-                            "R&D",
-                            "competitive edge"
-                        ]
+                        "risk_type": "Foreign Exchange",
+                        "keywords": ["foreign exchange", "currency", "35%"]
                     }
                 ]
             },
@@ -153,7 +128,7 @@
                 "expected_sections": [
                     "Executive Summary",
                     "Risk Assessment",
-                    "Sentiment",
+                    "Business & Operational Risk",
                     "Governance",
                     "Recommendation"
                 ],
@@ -247,44 +222,25 @@
                     1.0
                 ]
             },
-            "sentiment": {
-                "overall_sentiment_score": "Negative",
-                "executive_confidence": "Low",
-                "forward_outlook": "Bearish",
-                "key_signals": [
+            "business_ops": {
+                "operational_risk_rating": "Critical",
+                "confidence_score_range": [0.6, 1.0],
+                "key_business_risks": [
                     {
-                        "signal": "Guidance withdrawn",
-                        "sentiment": "Negative",
-                        "keywords": [
-                            "withdrawing",
-                            "guidance"
-                        ]
+                        "risk_type": "Negative Cash Flow",
+                        "keywords": ["negative", "operating cash flow", "210"]
                     },
                     {
-                        "signal": "Fourth consecutive revenue decline",
-                        "sentiment": "Negative",
-                        "keywords": [
-                            "fourth consecutive",
-                            "revenue contraction"
-                        ]
+                        "risk_type": "Debt Load",
+                        "keywords": ["debt-to-equity", "3.24", "6.8 billion"]
                     },
                     {
-                        "signal": "Hedging language from executives",
-                        "sentiment": "Negative",
-                        "keywords": [
-                            "challenging period",
-                            "painful",
-                            "navigating"
-                        ]
+                        "risk_type": "Revenue Decline",
+                        "keywords": ["same-store sales", "fourth consecutive", "revenue contraction"]
                     },
                     {
-                        "signal": "Liquidity described as merely adequate",
-                        "sentiment": "Negative",
-                        "keywords": [
-                            "adequate",
-                            "renegotiate",
-                            "covenant terms"
-                        ]
+                        "risk_type": "Restructuring Execution",
+                        "keywords": ["restructuring", "120", "8,000"]
                     }
                 ]
             },
@@ -403,7 +359,7 @@
                 "expected_sections": [
                     "Executive Summary",
                     "Risk Assessment",
-                    "Sentiment",
+                    "Business & Operational Risk",
                     "Governance",
                     "Recommendation"
                 ],
@@ -487,56 +443,25 @@
                     0.9
                 ]
             },
-            "sentiment": {
-                "overall_sentiment_score": "Neutral",
-                "executive_confidence": "Moderate",
-                "forward_outlook": "Neutral",
-                "key_signals": [
+            "business_ops": {
+                "operational_risk_rating": "Medium",
+                "confidence_score_range": [0.5, 0.9],
+                "key_business_risks": [
                     {
-                        "signal": "Revenue guidance maintained but not raised",
-                        "sentiment": "Neutral",
-                        "keywords": [
-                            "maintained",
-                            "guidance",
-                            "$3.4 billion"
-                        ]
+                        "risk_type": "Revenue Deceleration",
+                        "keywords": ["deceleration", "26%", "18%", "growth"]
                     },
                     {
-                        "signal": "CFO transparency about headwinds",
-                        "sentiment": "Negative",
-                        "keywords": [
-                            "transparent",
-                            "headwinds",
-                            "pressure",
-                            "revitalization"
-                        ]
+                        "risk_type": "Segment Concentration",
+                        "keywords": ["concentration", "54%", "Digital Payments"]
                     },
                     {
-                        "signal": "CEO confidence in navigating regulation",
-                        "sentiment": "Positive",
-                        "keywords": [
-                            "confident",
-                            "navigate",
-                            "regulatory environment"
-                        ]
+                        "risk_type": "Take Rate Compression",
+                        "keywords": ["take rate", "compressed", "basis points"]
                     },
                     {
-                        "signal": "Exploring strategic options for wealth management",
-                        "sentiment": "Negative",
-                        "keywords": [
-                            "exploring strategic options",
-                            "wealth management"
-                        ]
-                    },
-                    {
-                        "signal": "Strong Digital Payments momentum",
-                        "sentiment": "Positive",
-                        "keywords": [
-                            "momentum",
-                            "strong",
-                            "TPV",
-                            "28%"
-                        ]
+                        "risk_type": "Rising Delinquency",
+                        "keywords": ["delinquency", "3.2%", "credit losses"]
                     }
                 ]
             },
@@ -633,7 +558,7 @@
                 "expected_sections": [
                     "Executive Summary",
                     "Risk Assessment",
-                    "Sentiment",
+                    "Business & Operational Risk",
                     "Governance",
                     "Recommendation"
                 ],

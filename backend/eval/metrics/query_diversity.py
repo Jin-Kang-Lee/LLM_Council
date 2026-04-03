@@ -1,8 +1,8 @@
 """
 Query Diversity Test
 
-Evaluates how diverse and non-redundant the Deep Research Agent's
-search queries are, using word-overlap similarity.
+Evaluates how diverse and non-redundant agent search queries are,
+using word-overlap similarity.
 """
 
 import json
@@ -26,7 +26,7 @@ def _jaccard_similarity(a: str, b: str) -> float:
 
 def evaluate_query_diversity(agent_outputs: dict) -> dict:
     """
-    Evaluate the diversity of the Deep Research Agent's search queries.
+    Evaluate the diversity of agent search queries.
 
     Args:
         agent_outputs: dict containing 'research' key with raw JSON output

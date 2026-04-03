@@ -55,11 +55,11 @@ Generate a professional earnings analysis report with the following structure:
 - **Primary Risks**: [List]
 - **Risk Level**: [Low/Medium/High]
 
-## Sentiment & Outlook Overview  
-[Synthesized summary of sentiment findings]
-- **Management Confidence**: [Assessment]
-- **Market Outlook**: [Bearish/Neutral/Bullish]
-    
+## Business & Operational Risk Overview
+[Synthesized summary of business model, operational, and CapEx findings]
+- **CapEx Trend**: [Increasing/Stable/Decreasing/Not Found]
+- **Operational Risk**: [Low/Medium/High/Critical]
+
 ## Governance & Compliance Assessment
 [Synthesized summary of governance, legal, and compliance findings]
 - **Governance Risk**: [Low/Medium/High]
@@ -119,7 +119,7 @@ Maintain a professional, balanced tone. Prioritize clarity and actionability. Al
 
 ---
 
-## SENTIMENT ANALYST'S ASSESSMENT
+## BUSINESS & OPS ANALYST'S ASSESSMENT
 {sentiment_analysis}
 
 ---

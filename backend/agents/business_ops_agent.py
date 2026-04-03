@@ -17,69 +17,68 @@ class BusinessOpsRiskAgent(BaseAgent):
     
     @property
     def system_prompt(self) -> str:
-        return """You are the "Business, Industry and Operational Risk Analyst".
-Your mission is to identify business model vulnerabilities, operational risks, and industry-level threats from earnings reports.
-Tone: Analytical, thorough, and risk-aware."""
+        return """You are an expert Business, Industry and Operational Risk Analyst. Your role is to identify business model vulnerabilities, operational risks, and industry-level threats from earnings reports.
+
+## PRIMARY ANALYSIS AREAS
+
+### 1. Capital Expenditure (CapEx) Analysis
+- Locate CapEx figures in the Cash Flow Statement
+- Assess whether CapEx is sustainable or poses a cash flow risk
+- Determine if investment is growth-driven or maintenance-driven
+
+### 2. Customer & Revenue Concentration
+- Is revenue overly dependent on a few customers or segments?
+- Pricing power and margin sustainability
+
+### 3. Operational Vulnerabilities
+- Supply chain dependencies and single points of failure
+- Scalability constraints
+- Business continuity risks
+
+### 4. Industry & Competitive Position
+- Competitive threats and market dynamics
+- Industry headwinds or tailwinds
+
+## OUTPUT FORMAT
+
+**OPERATIONAL RISK SUMMARY**
+[2-3 sentence executive summary]
+
+**CAPEX ANALYSIS**
+[Assessment of capital expenditure trends and risk implications]
+
+**KEY BUSINESS RISKS**
+1. [Risk 1]: [Description with supporting data]
+2. [Risk 2]: [Description with supporting data]
+3. [Risk 3]: [Description with supporting data]
+
+**OPERATIONAL RISK RATING**: [Low/Medium/High/Critical]
+
+**WATCHLIST ITEMS**
+- [Items requiring monitoring]
+
+Be specific, cite numbers when available. Note any missing disclosures."""
 
     @property
-    def analysis_rules(self) -> str:
-        return """1. ONLY use information found in the earnings report and any provided REFERENCE CONTEXT. Do not use outside knowledge.
-2. DO NOT hallucinate or guess. If information is missing, say "Not Found" and list it under non_disclosures.
-3. Evidence must include a short direct quote. If REFERENCE CONTEXT is provided, the quote MUST be verbatim from that context and include a [C#] chunk citation.
-4. Output MUST be a single, valid JSON object. No markdown, no commentary.
-5. Pay special attention to the Cash Flow Statement to locate Capital Expenditure (CapEx) figures.
+    def discussion_persona(self) -> str:
+        return """WAR ROOM MODE — You are the operator in the room.
 
-OUTPUT JSON SCHEMA:
-{
-  "operational_risk_rating": "Low/Medium/High/Critical",
-  "industry_position": "Description of competitive stance and market position",
-  "capex_analysis": {
-    "capex_trend": "Increasing/Stable/Decreasing/Not Found",
-    "risk_assessment": "Assessment of whether CapEx level poses a risk to cash flow or signals necessary investment",
-    "evidence": "Supporting data or quote from the report"
-  },
-  "key_business_risks": [
-    {
-      "risk_type": "e.g. Customer Concentration / Pricing Power / Scalability / Single Point of Failure / Business Continuity",
-      "description": "Description of the risk",
-      "severity": "Low/Medium/High",
-      "evidence": "Quote or supporting data from report"
-    }
-  ],
-  "watchlist": ["Items requiring monitoring"],
-  "non_disclosures": ["Expected items not found in report"],
-  "confidence_score": 0.0,
-  "limitations": "Short summary of data gaps"
-}"""
-
-    @property
-    def json_schema(self) -> dict:
-        return {
-            "operational_risk_rating": str,
-            "industry_position": str,
-            "capex_analysis": {
-                "capex_trend": str,
-                "risk_assessment": str,
-                "evidence": str,
-            },
-            "key_business_risks": [
-                {
-                    "risk_type": str,
-                    "description": str,
-                    "severity": str,
-                    "evidence": str,
-                }
-            ],
-            "watchlist": [str],
-            "non_disclosures": [str],
-            "confidence_score": (int, float),
-            "limitations": str,
-        }
-
-    @property
-    def require_citations(self) -> bool:
-        return True
+Your voice: direct, pragmatic, commercially grounded. You see the business behind the numbers.
+You challenge both doom-sayers and optimists with operational reality.
+Never agree just to keep the peace."""
     
+    def respond_to(self, other_agent_name: str, other_response: str) -> str:
+        return (
+            f"[{other_agent_name}] just said:\n---\n{other_response[:1200]}\n---\n\n"
+            "YOUR TURN as the Business & Ops Analyst — mandatory rules:\n"
+            "1. Stay in your lane: CapEx, operational margins, customer concentration, "
+            "supply chain, scalability, pricing power. Do NOT drift into pure financial risk or governance.\n"
+            "2. Identify ONE specific operational claim above you DISAGREE with or think is incomplete. Quote it.\n"
+            "3. Back your challenge with a specific operational metric FROM THE REPORT (not invented).\n"
+            "4. Add ONE operational angle not yet raised in the thread.\n"
+            "5. Do NOT repeat points already made. 3-5 sentences max per point."
+        )
+
     async def analyze(
         self,
         earnings_content: str,
@@ -115,7 +114,6 @@ List any missing expected disclosures in non_disclosures and summarize data gaps
         return await self.generate(
             earnings_content,
             additional_instructions,
-            expect_json=True,
             reference_context=reference_context,
             reference_query=reference_query,
             allow_targeted_retrieval=allow_targeted_retrieval,

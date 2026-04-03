@@ -242,7 +242,7 @@ async def run_benchmark():
                         risk_analysis=json.dumps(case_data.get("analyst_risk", {}), indent=2),
                         sentiment_analysis=json.dumps(case_data.get("analyst_sentiment", {}), indent=2),
                         governance_analysis=json.dumps(case_data.get("analyst_governance", {}), indent=2),
-                        research_analysis=str(case_data.get("research_findings", "")),
+                        research_analysis="",
                         discussion_transcript=json.dumps(case_data.get("discussion_transcript", []), indent=2)
                     )
                 else:

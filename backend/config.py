@@ -27,3 +27,4 @@ RAG_MAX_DISTANCE = _rag_max_distance if _rag_max_distance > 0 else None
 RAG_RERANK_ENABLED = os.getenv("RAG_RERANK_ENABLED", "1") == "1"
 RAG_RERANK_MODEL = os.getenv("RAG_RERANK_MODEL", "cross-encoder/ms-marco-MiniLM-L-6-v2")
 RAG_RERANK_TOP_K = int(os.getenv("RAG_RERANK_TOP_K", "12"))
+RAG_EMBEDDING_MODEL = os.getenv("RAG_EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2")

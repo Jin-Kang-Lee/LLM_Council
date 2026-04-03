@@ -1,0 +1,237 @@
+=== WAR ROOM JUDGE PROMPT ===
+Test Case : TC-003
+Description: Ambiguous fintech with good revenue growth but regulatory concerns and mixed signals
+Messages  : 9 across 3 rounds
+============================================================
+
+You are a rigorous evaluator of multi-agent financial analysis discussions.
+Your job is to score the OVERALL DISCUSSION — not individual agents.
+
+ANTI-BIAS RULES — read carefully before scoring:
+1. Do NOT reward verbosity. A concise, evidence-backed point scores higher than a long, vague one.
+2. Do NOT favour the first or last speaker. Ignore message order when scoring.
+3. Agent names have been anonymised (Agent A, B, C). Do not infer roles from content and use that to inflate or deflate scores.
+4. Do NOT assume any financial viewpoint (bullish/bearish/cautious) is inherently more credible. Score the quality of reasoning, not the conclusion.
+5. Score only what is present in the transcript. Do not reward potential.
+
+---
+
+Score the following War Room discussion transcript on five dimensions.
+Each dimension is scored 0-10 using the anchors provided.
+
+--- TRANSCRIPT ---
+Agent C [Round 1]:
+**Debt Ratios:** The debt-to-equity ratio stands at 75%, not 85% as you stated, signaling significant leverage that could impair short-term solvency. This high leverage increases financial vulnerability and must be closely monitored.
+
+**Cited Metric:**
+- Debt-to-equity ratio: **75%** (Earnings Report)
+
+This is a critical metric given the high debt levels relative to equity. It's important to ensure this does not further degrade into a liquidity crisis.
+
+Agent B [Round 1]:
+**Debt Ratios:** The debt-to-equity ratio stands at 75%, signaling significant leverage that could impair short-term solvency. However, I disagree with the focus solely on this metric without considering the company’s **Pricing Power Index**, which stands at 92%. Historically, our ability to charge premium prices reflects a robust pricing position despite high debt levels.
+
+**Cited Metric:**
+- Pricing Power Index: **92%** (Earnings Report)
+
+This indicates that despite high leverage, there's a strong capability to pass on costs effectively. Thus, focusing solely on financial risk might overlook the company’s ability to maintain profitability through higher prices.
+
+Agent A [Round 1]:
+**Governance & Compliance Analyst:** 
+
+Your points bring up critical yet precise concerns regarding the focus areas highlighted by Risk and Business & Ops Analyses.
+
+Firstly, **Risk Analysis**:
+
+- The debt-to-equity ratio should be strictly at 75%, aligning with the correct metric from the Earnings Report.
+- The report omits disclosing that this initial estimate of expected credit losses under ASC 326 must be reviewed periodically. This omission violates MAS guidelines and suggests non-compliance.
+
+**Cited Metrics:**
+- Debt-to-equity ratio: **75%** (Earnings Report)
+- Initial estimate of expected credit losses should be disclosed to ensure periodic review processes are in place. (ASCI ASC 326 Guidance)
+
+**Business & Operations Analysis:**:
+
+- The focus solely on the debt ratios without considering the Pricing Power Index undermines a comprehensive risk assessment.
+- The operational model's reliance on single critical suppliers exposes substantial business continuity risks, which should be disclosed thoroughly.
+
+**Cited Metrics:**
+- Pricing Power Index: **92%** (Earnings Report)
+- Single critical supplier concentration ratio: **5% of total CapEx** towards supplier management. This highlights vulnerability if the supplier faces operational issues or discontinues.
+
+**Governance & Compliance Pushback Points:** 
+
+1. **Initial Estimate of Expected Credit Losses**: 
+   - The report omits disclosing that the initial estimate of expected credit losses under ASC 326 must be reviewed periodically. This omission suggests non-compliance with MAS guidelines and necessitates immediate correction.
+   
+2. **Periodic Review Process**: 
+   - The report fails to disclose the periodic review process for the initial estimate of expected credit losses, which is critical for ensuring ongoing compliance.
+
+3. **Business Continuity Risk Disclosure**:
+   - The operational model's reliance on a single critical supplier is not thoroughly disclosed in terms of its impact on revenue if the supplier faces issues.
+   
+4. **Pricing Power Consideration**:
+   - The focus solely on debt ratios overlooks the company’s strong historical and current pricing power indicated by a 92% Pricing Power Index, which must be considered to understand profitability margins.
+
+Specifically addressing these points ensures compliance with MAS guidelines while providing a balanced risk assessment:
+
+- **Initial Estimate of Expected Credit Losses**: 
+   - Ensure disclosure that the initial estimate is only an initial approximation and will need periodic review.
+   
+- **Periodic Review Process**: 
+   - Implement documentation for periodic review processes to ensure ongoing compliance.
+
+- **Business Continuity Risk**:
+   - Fully disclose the potential impact of supplier issues on revenue, highlighting the concentration risk percentage clearly.
+
+- **Pricing Power Consideration**:
+   - Acknowledge the Pricing Power Index by integrating it into the risk assessment framework to address profitability margins effectively.
+
+These specific claims ensure a robust and compliant governance approach while addressing the critical metrics identified by Risk and Business & Ops Analyses.
+
+Agent C [Round 2]:
+**Debt Ratios:** The debt-to-equity ratio stands at 75%, not 85% as you stated. This high leverage increases financial vulnerability and must be closely monitored. However, I disagree with focusing solely on the debt ratios without considering the company’s Pricing Power Index, which stands at 92%.
+
+**Cited Metric:** The initial estimate of expected credit losses should be disclosed to ensure periodic review processes are in place.
+
+**New Financial Risk Angle:** The high concentration of CapEx towards a single critical supplier (5% of total CapEx) highlights potential liquidity risks if the supplier faces operational issues or discontinues. This ratio should be analyzed alongside debt ratios and credit risk metrics.
+
+Agent B [Round 2]:
+**Disagreement:** The initial estimate of expected credit losses should be disclosed to ensure periodic review processes are in place.
+
+**New Operational Angle:** The single critical supplier concentration ratio (5% of total CapEx) towards a key supplier highlights potential liquidity risks if the supplier faces operational issues or discontinues. This ratio should be analyzed alongside debt ratios and credit risk metrics, but it’s crucial to also consider the supplier's market share percentage in total revenue.
+
+**Cited Metric:** Supplier market share percentage in total revenue: **4%** (Earnings Report)
+
+Agent A [Round 2]:
+[Governance Analyst]: **Specific Compliance Requirement:** 
+
+**Argument Challenge:** The single critical supplier concentration ratio (5% of total CapEx) towards a key supplier highlights potential liquidity risks if the supplier faces operational issues or discontinues.
+
+**Cited Metric:** Supplier market share percentage in total revenue: **4%** (Earnings Report)
+
+**Challenge:** While the high concentration of CapEx towards a single critical supplier indeed indicates potential liquidity risks, this argument misses a critical governance requirement under MAS guidelines regarding *disclosure of risk management practices*. Specifically:
+
+- **Disciplinary Gap:** The report omits disclosing the company's documented and implemented policies for managing and monitoring supplier risks. This lack of disclosure violates MAS guidelines on ensuring robust risk management practices are clearly articulated.
+
+**Cited Requirement:**
+- MAS Guidelines require companies to disclose their risk management policies, including practices for mitigating supplier concentration risks, to ensure transparency and compliance with regulatory requirements.
+
+**Specific Metric/Citation:** 
+- Documented policies for managing supplier risks must be disclosed under MAS guidelines. (Earnings Report - MAS Compliance Manual)
+
+**Addressing the Argument:**
+
+To address this gap:
+
+1. **Disclosure of Supplier Management Policies:** The company should disclose its documented policies and practices for managing supplier concentration risks.
+2. **Supplementary Metrics:** Additional metrics such as supplier risk assessments, mitigation strategies, and periodic review processes must be disclosed.
+
+**Specifically addressing the argument**, the focus on liquidity risks due to supplier concentration ratios alone is insufficient. The governance gap lies in the absence of documented policies and practices for managing these risks comprehensively.
+
+This specific compliance requirement ensures that the company’s risk management framework remains compliant and transparent, addressing the critical governance gap identified.
+
+Agent C [Round 3]:
+**Debt Ratios:** The initial estimate of expected credit losses should be disclosed to ensure periodic review processes are in place.
+
+**Cited Metric:** The debt-to-equity ratio is currently at 75%, indicating a high leverage situation that must be closely monitored. However, the focus on liquidity risks due to supplier concentration ratios alone is insufficient. Instead, we should analyze the company’s liquidity position by looking at its current financial health and cash flow metrics.
+
+**New Financial Risk Angle:** The current ratio (liquidity ratio) stands at 1:0.8, indicating that the company has only 0.8x of its total assets in liquid form to cover its short-term liabilities. This metric should be analyzed alongside debt ratios to provide a more comprehensive view of financial vulnerability.
+
+**Disagreement:** The argument focuses on supplier concentration risks but omits the liquidity position analysis.
+
+Agent B [Round 3]:
+**Disagreement:** The argument focuses on supplier concentration risks but omits the liquidity position analysis.
+
+**Cited Metric:** Current ratio stands at 1:0.8, indicating that the company has only 0.8x of its total assets in liquid form to cover short-term liabilities.
+
+**New Operational Angle:** Liquidity position must be analyzed alongside debt ratios and supplier concentration risks. However, we should also consider the company’s operational cash flow metrics, such as free cash flow (FCF), which is currently at **$5 million**, indicating the company's ability to generate cash from operations.
+
+**Specific Metric/Citation:** Free Cash Flow (FCF) stands at $5 million (Earnings Report).
+
+**Operational Angle:** The FCF metric provides a clearer picture of the company’s operational liquidity and its ability to fund its short-term liabilities. This should be analyzed alongside supplier concentration ratios, debt ratios, and other financial metrics like CapEx ratios.
+
+Agent A [Round 3]:
+[Governance Analyst]: **Argument Challenge:** The initial estimate of expected credit losses should be disclosed to ensure periodic review processes are in place.
+
+**Cited Metric:** The debt-to-equity ratio is currently at 75%, indicating a high leverage situation that must be closely monitored. However, the focus on liquidity risks due to supplier concentration ratios alone is insufficient. Instead, we should analyze the company’s liquidity position by looking at its current financial health and cash flow metrics.
+
+**Specific Compliance Requirement:** The Earnings Report under MAS guidelines requires comprehensive disclosure of risk management practices, including detailed analysis of both debt ratios and liquidity ratios (current ratio). The argument only partially addresses the debt ratios while ignoring critical aspects of liquidity.
+
+**Cited Requirement:**
+- MAS Guidelines require companies to disclose a thorough analysis of financial health metrics including debt ratios *and* liquidity ratios like current ratio. The omission of these metrics is a specific governance gap.
+
+**Cited Metric/Citation:** 
+- **Debt Ratio:** Debt-to-equity ratio stands at 75%.
+- **Current Ratio:** Current ratio stands at 1:0.8 (Earnings Report).
+
+**Challenge:** The argument focuses solely on the debt ratios but does not disclose critical liquidity position metrics such as the current ratio. This gap is significant because:
+
+- **Disciplinary Gap:** Disclosing only the debt-to-equity ratio without corresponding liquidity measures like the current ratio is insufficient under MAS guidelines, which require a comprehensive analysis of financial health and risk management.
+
+**New Analysis Required:**
+1. **Disclosure Requirement:** Ensure the report includes detailed analysis of both debt ratios *and* liquidity ratios.
+2. **Supplementary Metrics/Citations:** The company must disclose the current ratio (which stands at 0.8x) alongside other relevant metrics like FCF ($5 million).
+
+**Addressing the Argument:**
+
+To address this gap:
+
+1. **Disclosure:** Ensure compliance with MAS guidelines by disclosing both debt ratios and liquidity ratios.
+2. **Supplementary Metrics/Citations:** Include the current ratio metric (0.8x total assets in liquid form) alongside other financial metrics.
+
+This specific compliance requirement highlights that merely focusing on debt ratios without including relevant liquidity metrics such as the current ratio creates a significant governance gap, which must be addressed to ensure regulatory compliance and robust risk management practices.
+--- END TRANSCRIPT ---
+
+SCORING DIMENSIONS AND ANCHORS:
+
+1. argument_quality (0-10)
+   Are claims backed by specific data, figures, or quotes from the report?
+   0  = All claims are vague assertions with no supporting evidence.
+   5  = Some claims cite specific numbers; others are unsubstantiated.
+   10 = Every substantive claim is tied to a specific data point or direct quote.
+
+2. reasoning_diversity (0-10)
+   Do the agents surface genuinely different analytical perspectives?
+   0  = Agents repeat the same points; no unique viewpoints raised.
+   5  = Some differentiation, but significant overlap in findings.
+   10 = Each agent raises distinct, non-overlapping insights that collectively
+        cover risk, operations, and governance without redundancy.
+
+3. engagement_quality (0-10)
+   Do agents actually respond to each other's specific arguments?
+   0  = Each agent monologues; no direct responses to prior statements.
+   5  = Agents acknowledge prior points but do not challenge or build on them.
+   10 = Agents explicitly reference, challenge, or build on each other's
+        specific claims, creating a genuine back-and-forth.
+
+4. conflict_resolution (0-10)
+   When agents disagree, is the disagreement substantive and resolved?
+   0  = No disagreements surfaced despite differing evidence.
+   5  = Disagreements are named but left open with no reasoning.
+   10 = Key disagreements are clearly identified and resolved with explicit
+        reasoning that references evidence from the report.
+
+5. discussion_utility (0-10)
+   Does the discussion produce insights beyond the individual analyses?
+   0  = The discussion adds nothing beyond what the individual analyses said.
+   5  = One or two new synthesis points emerge from the debate.
+   10 = The discussion changes or meaningfully sharpens the analytical
+        conclusion in a way that individual analyses could not.
+
+Return ONLY this exact JSON — no explanation, no markdown fences:
+{
+  "argument_quality": <int 0-10>,
+  "argument_quality_rationale": "<max 2 sentences>",
+  "reasoning_diversity": <int 0-10>,
+  "reasoning_diversity_rationale": "<max 2 sentences>",
+  "engagement_quality": <int 0-10>,
+  "engagement_quality_rationale": "<max 2 sentences>",
+  "conflict_resolution": <int 0-10>,
+  "conflict_resolution_rationale": "<max 2 sentences>",
+  "discussion_utility": <int 0-10>,
+  "discussion_utility_rationale": "<max 2 sentences>",
+  "overall_score": <float, mean of the five scores rounded to 2 dp>,
+  "key_strength": "<one sentence>",
+  "key_weakness": "<one sentence>"
+}

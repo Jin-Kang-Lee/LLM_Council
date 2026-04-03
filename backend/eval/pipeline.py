@@ -11,7 +11,7 @@ import os
 from datetime import datetime
 from typing import Optional
 
-from agents import RiskAgent, BusinessOpsRiskAgent, GovernanceAgent, DeepResearchAgent, MasterAgent
+from agents import RiskAgent, BusinessOpsRiskAgent, GovernanceAgent, MasterAgent
 from document_parser import parse_earnings_content, format_for_agents
 from config import MAX_DISCUSSION_ROUNDS
 from eval.metrics.schema_integrity import evaluate_schema_integrity
@@ -154,7 +154,6 @@ class EvalPipeline:
         risk_agent = RiskAgent()
         business_ops_agent = BusinessOpsRiskAgent()
         governance_agent = GovernanceAgent()
-        research_agent = DeepResearchAgent()
         master_agent = MasterAgent()
 
         # Risk
@@ -217,25 +216,19 @@ class EvalPipeline:
             "targeted_context": getattr(governance_agent, "last_targeted_reference_context", ""),
         }
 
-        # Deep Research
-        print(f"   🔵 Deep Research Agent analyzing...")
-        research_output = await research_agent.analyze(
-            formatted,
-            reference_context=shared_reference_context,
-            reference_query=shared_reference_query,
-            allow_targeted_retrieval=True,
+        # ── Phase 2.5: Position Papers ──
+        print(f"\n  [Phase 2.5] Generating position papers...")
+        risk_position, business_ops_position, governance_position = await asyncio.gather(
+            risk_agent.write_position_paper(risk_output),
+            business_ops_agent.write_position_paper(business_ops_output),
+            governance_agent.write_position_paper(governance_output),
         )
-        print(f"   ✅ Deep Research Agent complete")
-        if self.verbose:
-            print(f"      Output preview: {research_output[:200]}...")
-        research_rag = {
-            "query": getattr(research_agent, "last_reference_query", ""),
-            "context": getattr(research_agent, "last_reference_context", ""),
-            "shared_query": getattr(research_agent, "last_shared_reference_query", ""),
-            "shared_context": getattr(research_agent, "last_shared_reference_context", ""),
-            "targeted_query": getattr(research_agent, "last_targeted_reference_query", ""),
-            "targeted_context": getattr(research_agent, "last_targeted_reference_context", ""),
+        position_papers = {
+            "Risk Analyst": risk_position,
+            "Business & Ops Analyst": business_ops_position,
+            "Governance Analyst": governance_position,
         }
+        print(f"   ✅ Position papers ready")
 
         # ── Phase 3: War Room Discussion ──
         print(f"\n  [Phase 3] Running War Room discussion ({MAX_DISCUSSION_ROUNDS} rounds)...")
@@ -244,14 +237,20 @@ class EvalPipeline:
         for round_num in range(1, MAX_DISCUSSION_ROUNDS + 1):
             print(f"   💬 Round {round_num}/{MAX_DISCUSSION_ROUNDS}...")
 
-            # Risk responds
+            # Risk opens round 1 with the sharpest disagreement
             if round_num == 1:
-                prompt = risk_agent.respond_to("Business & Ops Analyst", business_ops_output)
+                risk_turn = (
+                    "The war room is open. You go first — pick the sharpest disagreement "
+                    "between the three positions and make your opening move."
+                )
             else:
-                last_msg = discussion_messages[-1]["content"]
-                prompt = risk_agent.respond_to("Governance Analyst", last_msg)
+                last = discussion_messages[-1]
+                risk_turn = risk_agent.respond_to(last["agent"], last["content"])
 
-            risk_response = await risk_agent.generate_discussion(formatted, prompt)
+            risk_response = await risk_agent.generate_discussion(
+                position_papers, discussion_messages, risk_turn,
+                earnings_content=formatted
+            )
             discussion_messages.append({
                 "agent": "Risk Analyst",
                 "content": risk_response,
@@ -259,20 +258,31 @@ class EvalPipeline:
             })
 
             # Business & Ops responds to Risk
-            prompt = business_ops_agent.respond_to("Risk Analyst", risk_response)
-            business_ops_response = await business_ops_agent.generate_discussion(formatted, prompt)
+            business_ops_response = await business_ops_agent.generate_discussion(
+                position_papers,
+                discussion_messages,
+                business_ops_agent.respond_to("Risk Analyst", risk_response),
+                earnings_content=formatted
+            )
             discussion_messages.append({
                 "agent": "Business & Ops Analyst",
                 "content": business_ops_response,
                 "round": round_num,
             })
 
-            # Governance responds to both
-            prompt = governance_agent.respond_to(
-                "Risk and Business & Ops Analysts",
-                f"Risk says: {risk_response}\n\nBusiness & Ops says: {business_ops_response}",
+            # Governance weighs in on both in round 1; responds to last in subsequent rounds
+            if round_num == 1:
+                gov_turn = (
+                    "Risk and Business & Ops have both weighed in. "
+                    "What are they missing or getting wrong from a governance and compliance standpoint?"
+                )
+            else:
+                gov_turn = governance_agent.respond_to("Business & Ops Analyst", business_ops_response)
+
+            gov_response = await governance_agent.generate_discussion(
+                position_papers, discussion_messages, gov_turn,
+                earnings_content=formatted
             )
-            gov_response = await governance_agent.generate_discussion(formatted, prompt)
             discussion_messages.append({
                 "agent": "Governance Analyst",
                 "content": gov_response,
@@ -293,7 +303,7 @@ class EvalPipeline:
             risk_output,
             business_ops_output,
             governance_output,
-            research_output,
+            "",
             discussion_transcript,
         )
         print(f"   ✅ Final report generated")
@@ -309,12 +319,10 @@ class EvalPipeline:
                 "risk": risk_output,
                 "business_ops": business_ops_output,
                 "governance": governance_output,
-                "research": research_output,
                 "rag": {
                     "risk": risk_rag,
                     "business_ops": business_ops_rag,
                     "governance": governance_rag,
-                    "research": research_rag,
                 },
                 "discussion": discussion_messages,
                 "master": master_output,
@@ -407,7 +415,7 @@ class EvalPipeline:
         return evaluate_warroom_discussion(outputs, self.openai_key)
 
     def _eval_query_diversity(self, outputs: dict) -> dict:
-        """Test 5: Evaluate diversity of Deep Research queries."""
+        """Test 5: Evaluate diversity of agent queries."""
         return evaluate_query_diversity(outputs)
 
     def _eval_rag_retrieval(self, outputs: dict, ground_truth: dict) -> dict:

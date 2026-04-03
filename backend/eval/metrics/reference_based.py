@@ -118,20 +118,27 @@ def _eval_risk(parsed: dict, ground_truth: dict) -> dict:
     return result
 
 
-def _eval_sentiment(parsed: dict, ground_truth: dict) -> dict:
-    """Evaluate Sentiment Agent output against ground truth."""
+def _eval_business_ops(parsed: dict, ground_truth: dict) -> dict:
+    """Evaluate Business & Ops Agent output against ground truth."""
     result = {}
 
-    # Categorical matches
-    for field in ["overall_sentiment_score", "executive_confidence", "forward_outlook"]:
-        if field in parsed and field in ground_truth:
-            result[field] = _check_categorical(parsed[field], ground_truth[field])
+    # Categorical: operational_risk_rating
+    if "operational_risk_rating" in parsed and "operational_risk_rating" in ground_truth:
+        result["operational_risk_rating"] = _check_categorical(
+            parsed["operational_risk_rating"], ground_truth["operational_risk_rating"]
+        )
 
-    # Content recall: key_signals
-    if "key_signals" in ground_truth:
+    # Score range: confidence_score
+    if "confidence_score" in parsed and "confidence_score_range" in ground_truth:
+        result["confidence_score"] = _check_score_range(
+            parsed["confidence_score"], ground_truth["confidence_score_range"]
+        )
+
+    # Content recall: key_business_risks
+    if "key_business_risks" in ground_truth:
         raw_text = json.dumps(parsed)
-        result["key_signals_recall"] = _check_keyword_recall(
-            raw_text, ground_truth["key_signals"]
+        result["key_business_risks_recall"] = _check_keyword_recall(
+            raw_text, ground_truth["key_business_risks"]
         )
 
     return result
@@ -163,7 +170,7 @@ def _eval_governance(parsed: dict, ground_truth: dict) -> dict:
 
 
 def _eval_research(parsed: dict, ground_truth: dict) -> dict:
-    """Evaluate Deep Research Agent output against ground truth."""
+    """Evaluate research output against ground truth."""
     result = {}
 
     # Check minimum query count
@@ -194,7 +201,7 @@ def _eval_research(parsed: dict, ground_truth: dict) -> dict:
 
 AGENT_EVALUATORS = {
     "risk": _eval_risk,
-    "sentiment": _eval_sentiment,
+    "business_ops": _eval_business_ops,
     "governance": _eval_governance,
     "research": _eval_research,
 }

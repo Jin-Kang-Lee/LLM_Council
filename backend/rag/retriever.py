@@ -8,8 +8,8 @@ import os
 from typing import Iterable, List, Tuple
 
 import chromadb
-from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_community.vectorstores import Chroma
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_chroma import Chroma
 
 from config import (
     VECTOR_DB_PATH,
@@ -20,12 +20,13 @@ from config import (
     RAG_MAX_DISTANCE,
     RAG_MAX_QUERY_CHARS,
     RAG_MIN_QUERY_CHARS,
+    RAG_EMBEDDING_MODEL,
 )
 from rag.guardrails import is_low_quality_chunk, is_suspicious_chunk, normalize_whitespace, sanitize_query
 from rag.reranker import rerank
 
 COLLECTION_NAME = "council_reference"
-EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
+EMBEDDING_MODEL = RAG_EMBEDDING_MODEL
 
 # Module-level flag — checked once per process, not on every query
 _db_ready: bool = False

@@ -15,7 +15,7 @@ from pydantic import BaseModel
 from sse_starlette.sse import EventSourceResponse
 
 from document_parser import parse_earnings_content, format_for_agents
-from agents import RiskAgent, BusinessOpsRiskAgent, MasterAgent, GovernanceAgent, DeepResearchAgent
+from agents import RiskAgent, BusinessOpsRiskAgent, MasterAgent, GovernanceAgent
 from config import API_HOST, API_PORT, MAX_DISCUSSION_ROUNDS
 from rag.retriever import build_shared_reference_query, get_council_context, ensure_ingested
 
@@ -188,7 +188,6 @@ async def stream_analysis(session_id: str):
             risk_agent = RiskAgent()
             business_ops_agent = BusinessOpsRiskAgent()
             governance_agent = GovernanceAgent()
-            deep_research_agent = DeepResearchAgent()
             master_agent = MasterAgent()
             print("Agents initialized")
 
@@ -309,45 +308,6 @@ async def stream_analysis(session_id: str):
                 })
             }
 
-            # Run deep research
-            yield {
-                "event": "phase",
-                "data": json.dumps({
-                    "phase": 2.5,
-                    "status": "started",
-                    "message": "Analytic gaps identified. Initiating deep research..."
-                })
-            }
-
-            print("Deep Research Agent starting analysis...")
-            yield {
-                "event": "agent",
-                "data": json.dumps({
-                    "agent": "research",
-                    "status": "thinking",
-                    "message": "Deep Research Analyst is identifying gaps..."
-                })
-            }
-
-            research_analysis = await deep_research_agent.analyze(
-                parsed_content,
-                reference_context=shared_reference_context,
-                reference_query=shared_reference_query,
-                allow_targeted_retrieval=True,
-            )
-            print("Deep Research Agent analysis complete")
-
-            yield {
-                "event": "agent",
-                "data": json.dumps({
-                    "agent": "research",
-                    "status": "complete",
-                    "content": research_analysis,
-                    "reference_context": getattr(deep_research_agent, "last_reference_context", ""),
-                    "reference_query": getattr(deep_research_agent, "last_reference_query", "")
-                })
-            }
-
             yield {
                 "event": "phase",
                 "data": json.dumps({
@@ -357,13 +317,36 @@ async def stream_analysis(session_id: str):
                 })
             }
 
-            # Phase 3: Agent Discussion
+            # Phase 2.5: Position Papers — each agent stakes their ground before debate
+            print("Generating war room position papers...")
+            yield {
+                "event": "phase",
+                "data": json.dumps({
+                    "phase": 2.5,
+                    "status": "positions",
+                    "message": "Agents preparing opening positions..."
+                })
+            }
+
+            risk_position, business_ops_position, governance_position = await asyncio.gather(
+                risk_agent.write_position_paper(risk_analysis),
+                business_ops_agent.write_position_paper(business_ops_analysis),
+                governance_agent.write_position_paper(governance_analysis),
+            )
+
+            position_papers = {
+                "Risk Analyst":          risk_position,
+                "Business & Ops Analyst": business_ops_position,
+                "Governance Analyst":    governance_position,
+            }
+
+            # Phase 3: War Room Discussion
             yield {
                 "event": "phase",
                 "data": json.dumps({
                     "phase": 3,
                     "status": "started",
-                    "message": "Agents entering discussion phase..."
+                    "message": "Agents entering the war room..."
                 })
             }
 
@@ -379,31 +362,30 @@ async def stream_analysis(session_id: str):
                     })
                 }
 
-                # Risk agent responds
+                # Risk opens round 1 with the sharpest disagreement;
+                # subsequent rounds must challenge the previous speaker on a specific point
                 if round_num == 1:
-                    discussion_prompt = risk_agent.respond_to(
-                        "Business & Ops Analyst",
-                        business_ops_analysis,
-                        parsed_content
+                    risk_turn = (
+                        "The war room is open. You go first — pick the sharpest disagreement "
+                        "between the three positions and make your opening move. "
+                        "Lead with a specific number or metric from the report."
                     )
                 else:
-                    last_msg = discussion_messages[-1]["content"]
-                    discussion_prompt = risk_agent.respond_to(
-                        "Business & Ops Analyst",
-                        last_msg,
-                        parsed_content
+                    gov_msg = next((m for m in reversed(discussion_messages) if m["agent"] == "Governance Analyst"), None)
+                    risk_turn = risk_agent.respond_to(
+                        "Governance Analyst",
+                        gov_msg["content"] if gov_msg else discussion_messages[-1]["content"]
                     )
 
                 risk_response = await risk_agent.generate_discussion(
-                    parsed_content,
-                    discussion_prompt
+                    position_papers, discussion_messages, risk_turn,
+                    earnings_content=parsed_content
                 )
                 discussion_messages.append({
                     "agent": "Risk Analyst",
                     "content": risk_response,
                     "round": round_num
                 })
-
                 yield {
                     "event": "message",
                     "data": json.dumps({
@@ -414,23 +396,18 @@ async def stream_analysis(session_id: str):
                     })
                 }
 
-                # Business & Ops agent responds
-                discussion_prompt = business_ops_agent.respond_to(
-                    "Risk Analyst",
-                    risk_response,
-                    parsed_content
-                )
-
+                # Business & Ops challenges Risk directly
                 business_ops_response = await business_ops_agent.generate_discussion(
-                    parsed_content,
-                    discussion_prompt
+                    position_papers,
+                    discussion_messages,
+                    business_ops_agent.respond_to("Risk Analyst", risk_response),
+                    earnings_content=parsed_content
                 )
                 discussion_messages.append({
                     "agent": "Business & Ops Analyst",
                     "content": business_ops_response,
                     "round": round_num
                 })
-
                 yield {
                     "event": "message",
                     "data": json.dumps({
@@ -441,23 +418,31 @@ async def stream_analysis(session_id: str):
                     })
                 }
 
-                # Governance agent responds
-                discussion_prompt = governance_agent.respond_to(
-                    "Risk and Business & Ops Analysts",
-                    f"Risk says: {risk_response}\n\nBusiness & Ops says: {business_ops_response}",
-                    parsed_content
-                )
+                # Governance weighs in on both in round 1; in later rounds explicitly challenges
+                # whichever of Risk or Business & Ops made the weakest governance argument
+                if round_num == 1:
+                    gov_turn = (
+                        "Risk and Business & Ops have both weighed in. "
+                        "What are they missing or getting wrong from a governance and compliance standpoint? "
+                        "Be specific — name the exact claim you are pushing back on."
+                    )
+                else:
+                    gov_turn = (
+                        f"Risk just argued: '{risk_response[:400]}...'\n"
+                        f"Business & Ops countered: '{business_ops_response[:400]}...'\n\n"
+                        "Pick the argument you find most legally or regulatory problematic and challenge it. "
+                        "Cite a specific compliance requirement or governance gap they are ignoring."
+                    )
 
                 gov_response = await governance_agent.generate_discussion(
-                    parsed_content,
-                    discussion_prompt
+                    position_papers, discussion_messages, gov_turn,
+                    earnings_content=parsed_content
                 )
                 discussion_messages.append({
                     "agent": "Governance Analyst",
                     "content": gov_response,
                     "round": round_num
                 })
-
                 yield {
                     "event": "message",
                     "data": json.dumps({
@@ -506,7 +491,7 @@ async def stream_analysis(session_id: str):
                 risk_analysis,
                 business_ops_analysis,
                 governance_analysis,
-                research_analysis,
+                "",
                 discussion_transcript
             )
             print("Final report generated")
