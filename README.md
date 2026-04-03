@@ -19,7 +19,7 @@ An advanced financial analysis platform that leverages a **"council"** of specia
 
 ## Architecture & Workflow
 
-The analysis follows a strict **5-Phase Workflow** managed by LangGraph:
+The analysis follows a strict **Multi-Phase Workflow** managed by LangGraph:
 
 ```
 ┌─────────────┐     ┌──────────────────┐     ┌─────────────────────┐
@@ -196,6 +196,8 @@ LLM_Council/
 │   │   ├── master_agent_eval.py    # Master Agent benchmark (CoT/few-shot)
 │   │   ├── generate_barcharts.py   # Matplotlib bar chart visualisation
 │   │   ├── generate_heatmap.py     # Matplotlib heatmap visualisation
+│   │   ├── generate_judge_prompts.py # Generate judge prompt .txt files
+│   │   ├── warroom_judge_eval.ipynb # Jupyter notebook for judge eval
 │   │   ├── metrics/                # Evaluation metrics
 │   │   │   ├── schema_integrity.py
 │   │   │   ├── reference_based.py
@@ -205,7 +207,9 @@ LLM_Council/
 │   │   │   ├── rag_retrieval.py
 │   │   │   └── rag_faithfulness_llm.py
 │   │   ├── test_data/              # Test case JSON files
-│   │   └── judge_prompts/          # Judge prompt templates
+│   │   ├── judge_prompts/          # Generated judge prompt .txt files
+│   │   ├── war_room_results/       # Captured war room transcripts
+│   │   └── master_agent_eval/      # Master Agent eval data & results
 │   ├── data/
 │   │   └── reference_library/      # RAG source documents
 │   │       ├── PWC_ASC606.md       # Revenue recognition guidance
@@ -229,9 +233,11 @@ LLM_Council/
 │   │       ├── FinalReport.jsx     # Consolidated report display
 │   │       ├── Header.jsx          # App header
 │   │       └── DeepResearchSpace.jsx
+│   ├── index.html                  # HTML entry point
 │   ├── package.json
 │   ├── vite.config.js
-│   └── tailwind.config.js
+│   ├── tailwind.config.js
+│   └── postcss.config.js
 ├── data/
 │   └── mock_report.md              # Sample earnings report for testing
 ├── requirements.txt                # Root-level Python dependencies
@@ -301,7 +307,3 @@ Adjust backend settings in `backend/config.py`:
 | `GET` | `/sessions` | List active analysis sessions |
 
 ---
-
-## License
-
-This project is open-source and available under the MIT License.
