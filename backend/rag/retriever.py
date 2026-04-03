@@ -8,8 +8,8 @@ import os
 from typing import Iterable, List, Tuple
 
 import chromadb
-from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_chroma import Chroma
+from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_community.vectorstores import Chroma
 
 from config import (
     VECTOR_DB_PATH,

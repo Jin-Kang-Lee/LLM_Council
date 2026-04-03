@@ -9,9 +9,9 @@ from typing import List
 
 import chromadb
 from langchain_core.documents import Document
-from langchain_text_splitters import MarkdownHeaderTextSplitter
-from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_chroma import Chroma
+from langchain.text_splitter import MarkdownHeaderTextSplitter
+from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_community.vectorstores import Chroma
 
 from config import REFERENCE_LIB_PATH, VECTOR_DB_PATH, RAG_EMBEDDING_MODEL
 
