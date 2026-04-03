@@ -20,6 +20,7 @@ from eval.metrics.section_check import evaluate_section_completeness
 from eval.metrics.query_diversity import evaluate_query_diversity
 from eval.metrics.rag_retrieval import evaluate_rag_retrieval
 from eval.metrics.rag_faithfulness_llm import evaluate_rag_faithfulness_llm
+from eval.metrics.warroom_judge import evaluate_warroom_discussion
 from rag.retriever import build_shared_reference_query, get_council_context
 
 
@@ -245,10 +246,10 @@ class EvalPipeline:
 
             # Risk responds
             if round_num == 1:
-                prompt = risk_agent.respond_to("Business & Ops Analyst", business_ops_output, formatted)
+                prompt = risk_agent.respond_to("Business & Ops Analyst", business_ops_output)
             else:
                 last_msg = discussion_messages[-1]["content"]
-                prompt = risk_agent.respond_to("Governance Analyst", last_msg, formatted)
+                prompt = risk_agent.respond_to("Governance Analyst", last_msg)
 
             risk_response = await risk_agent.generate_discussion(formatted, prompt)
             discussion_messages.append({
@@ -258,7 +259,7 @@ class EvalPipeline:
             })
 
             # Business & Ops responds to Risk
-            prompt = business_ops_agent.respond_to("Risk Analyst", risk_response, formatted)
+            prompt = business_ops_agent.respond_to("Risk Analyst", risk_response)
             business_ops_response = await business_ops_agent.generate_discussion(formatted, prompt)
             discussion_messages.append({
                 "agent": "Business & Ops Analyst",
@@ -270,7 +271,6 @@ class EvalPipeline:
             prompt = governance_agent.respond_to(
                 "Risk and Business & Ops Analysts",
                 f"Risk says: {risk_response}\n\nBusiness & Ops says: {business_ops_response}",
-                formatted,
             )
             gov_response = await governance_agent.generate_discussion(formatted, prompt)
             discussion_messages.append({
@@ -357,7 +357,11 @@ class EvalPipeline:
             if "warroom" in self.tests or "all" in self.tests:
                 print(f"   🗣️  War Room (LLM-as-Judge)... ", end="")
                 case_evals["warroom"] = self._eval_warroom(outputs)
-                print("TODO")
+                wr = case_evals["warroom"]
+                if wr.get("skipped"):
+                    print(f"⚠️  Skipped — {wr.get('reason', '')}")
+                else:
+                    print(f"✅ Overall score: {wr.get('_summary', {}).get('overall_score', 'N/A')}/10")
 
             if "diversity" in self.tests or "all" in self.tests:
                 print(f"   🔍 Query Diversity... ", end="")
@@ -400,8 +404,7 @@ class EvalPipeline:
 
     def _eval_warroom(self, outputs: dict) -> dict:
         """Test 4: LLM-as-a-Judge evaluation of War Room discussion."""
-        # TODO: Implement in eval/metrics/llm_judge.py
-        return {"status": "not_implemented"}
+        return evaluate_warroom_discussion(outputs, self.openai_key)
 
     def _eval_query_diversity(self, outputs: dict) -> dict:
         """Test 5: Evaluate diversity of Deep Research queries."""

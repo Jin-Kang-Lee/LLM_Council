@@ -17,3 +17,6 @@ chromadb
 sentence-transformers
 packaging==23.2
 chardet
+duckduckgo-search
+ollama
+openai

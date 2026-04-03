@@ -513,7 +513,7 @@ class BaseAgent(ABC):
 
     async def _call_ollama(self, prompt: str, temperature: float = 0.7) -> str:
         """Internal helper to call Ollama API."""
-        import aiohttp
+        import httpx
 
         payload = {
             "model": self.model,
@@ -527,10 +527,10 @@ class BaseAgent(ABC):
 
         try:
             print(f"[{self.name}] Sending request to Ollama ({self.model})...")
-            async with aiohttp.ClientSession() as session:
-                async with session.post(self.ollama_url, json=payload) as resp:
-                    resp.raise_for_status()
-                    data = await resp.json()
+            async with httpx.AsyncClient(timeout=120.0) as client:
+                resp = await client.post(self.ollama_url, json=payload)
+                resp.raise_for_status()
+                data = resp.json()
             print(f"[{self.name}] Response received successfully")
             return data.get("response", "")
         except Exception as e:
