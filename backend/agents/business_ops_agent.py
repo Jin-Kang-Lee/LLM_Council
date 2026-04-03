@@ -4,6 +4,7 @@ Specializes in analyzing business model risks, operational vulnerabilities, and 
 """
 
 from .base_agent import BaseAgent
+from tools.finance_tools import COMPETITOR_BENCHMARKING_TOOL_DEFINITION
 
 
 class BusinessOpsRiskAgent(BaseAgent):
@@ -12,7 +13,8 @@ class BusinessOpsRiskAgent(BaseAgent):
     def __init__(self):
         super().__init__(
             name="Business & Ops Analyst",
-            color="yellow"
+            color="yellow",
+            tools=[COMPETITOR_BENCHMARKING_TOOL_DEFINITION]
         )
     
     @property

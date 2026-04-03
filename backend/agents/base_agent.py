@@ -8,21 +8,25 @@ from typing import Generator, Optional, Any
 import json
 
 from config import OLLAMA_BASE_URL, OLLAMA_MODEL
+from tools.finance_tools import TOOL_REGISTRY
+
 
 
 class BaseAgent(ABC):
     """Abstract base class for all agents."""
 
-    def __init__(self, name: str, color: str):
+    def __init__(self, name: str, color: str, tools: Optional[list[dict]] = None):
         """
         Initialize the base agent.
 
         Args:
             name: Display name of the agent
             color: Color identifier for UI differentiation
+            tools: Optional list of tool definitions for Ollama
         """
         self.name = name
         self.color = color
+        self.tools = tools or []
         self.ollama_url = f"{OLLAMA_BASE_URL}/api/generate"
         self.ollama_chat_url = f"{OLLAMA_BASE_URL}/api/chat"
         self.model = OLLAMA_MODEL
@@ -510,7 +514,14 @@ class BaseAgent(ABC):
         prompt = self._build_prompt(context, additional_instructions, mode="analysis")
         if expect_json:
             return await self._generate_with_retry(prompt)
+        
+        # If the agent has tools, we MUST use /api/chat instead of /api/generate
+        if self.tools:
+            messages = [{"role": "user", "content": prompt}]
+            return await self._call_ollama_messages(messages)
+            
         return await self._call_ollama(prompt)
+
 
     async def write_position_paper(self, analysis_json: str) -> str:
         """
@@ -616,7 +627,7 @@ No JSON. No preamble. Just the 3 bullets."""
 
         try:
             print(f"[{self.name}] Sending request to Ollama ({self.model})...")
-            async with httpx.AsyncClient(timeout=120.0) as client:
+            async with httpx.AsyncClient(timeout=None) as client:
                 resp = await client.post(self.ollama_url, json=payload)
                 resp.raise_for_status()
                 data = resp.json()
@@ -626,13 +637,13 @@ No JSON. No preamble. Just the 3 bullets."""
             print(f"[{self.name}] ERROR: {str(e)}")
             raise
 
-    async def _call_ollama_messages(self, messages: list, temperature: float = 0.9) -> str:
-        """Multi-turn chat completion via Ollama /api/chat — used for war room discussion."""
+    async def _call_ollama_messages(self, messages: list, temperature: float = 0.7) -> str:
+        """Multi-turn chat completion via Ollama /api/chat — supports tool calling."""
         import httpx
 
         payload = {
             "model": self.model,
-            "messages": messages,
+            "messages": [m for m in messages],  # Copy to avoid side effects
             "stream": False,
             "options": {
                 "temperature": temperature,
@@ -640,14 +651,54 @@ No JSON. No preamble. Just the 3 bullets."""
             }
         }
 
+        # Add tool definitions if this agent has them
+        if self.tools:
+            payload["tools"] = self.tools
+
         try:
-            print(f"[{self.name}] War room turn — Ollama ({self.model})...")
-            async with httpx.AsyncClient(timeout=120.0) as client:
+            print(f"[{self.name}] LLM turn (tools={bool(self.tools)}) — Ollama ({self.model})...")
+            async with httpx.AsyncClient(timeout=None) as client:
                 resp = await client.post(self.ollama_chat_url, json=payload)
                 resp.raise_for_status()
                 data = resp.json()
+
+            message = data.get("message", {})
+            content = message.get("content", "")
+            tool_calls = message.get("tool_calls", [])
+
+            # Handle tool calls if any
+            if tool_calls:
+                print(f"[{self.name}] LLM requested {len(tool_calls)} tool call(s)")
+                # Add assistant's message with tool calls to the thread
+                messages.append(message)
+
+                for call in tool_calls:
+                    func_name = call["function"]["name"]
+                    args = call["function"]["arguments"]
+
+                    if func_name in TOOL_REGISTRY:
+                        print(f"[{self.name}] Executing tool: {func_name} with args: {args}")
+                        try:
+                            # Execute the tool
+                            result = TOOL_REGISTRY[func_name](**args)
+                        except Exception as e:
+                            result = json.dumps({"error": f"Tool execution failed: {str(e)}"})
+
+                        # Add tool result to messages
+                        messages.append({
+                            "role": "tool",
+                            "name": func_name,
+                            "content": result
+                        })
+                    else:
+                        print(f"[{self.name}] ERROR: Tool {func_name} not found in registry")
+
+                # Recursive call to get the final response from the LLM based on tool outputs
+                return await self._call_ollama_messages(messages, temperature=temperature)
+
             print(f"[{self.name}] Response received successfully")
-            return data.get("message", {}).get("content", "")
+            return content
         except Exception as e:
-            print(f"[{self.name}] ERROR: {str(e)}")
+            print(f"[{self.name}] ERROR in chat completion: {str(e)}")
             raise
+

@@ -4,6 +4,7 @@ Specializes in analyzing liquidity, debt, and volatility factors.
 """
 
 from .base_agent import BaseAgent
+from tools.finance_tools import FINANCE_TOOL_DEFINITION
 
 
 class RiskAgent(BaseAgent):
@@ -13,6 +14,7 @@ class RiskAgent(BaseAgent):
         super().__init__(
             name="Risk Analyst",
             color="red",
+            tools=[FINANCE_TOOL_DEFINITION]
         )
     
     @property

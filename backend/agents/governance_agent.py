@@ -4,6 +4,7 @@ Specializes in analyzing governance, legal, and regulatory risks.
 """
 
 from .base_agent import BaseAgent
+from tools.finance_tools import INSIDER_TRADING_TOOL_DEFINITION
 
 
 class GovernanceAgent(BaseAgent):
@@ -13,6 +14,7 @@ class GovernanceAgent(BaseAgent):
         super().__init__(
             name="Governance Analyst",
             color="purple",
+            tools=[INSIDER_TRADING_TOOL_DEFINITION]
         )
     
     @property

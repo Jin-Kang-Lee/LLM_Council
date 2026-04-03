@@ -18,6 +18,8 @@ from document_parser import parse_earnings_content, format_for_agents
 from agents import RiskAgent, BusinessOpsRiskAgent, MasterAgent, GovernanceAgent
 from config import API_HOST, API_PORT, MAX_DISCUSSION_ROUNDS
 from rag.retriever import build_shared_reference_query, get_council_context, ensure_ingested
+from rag.preprocessor import preprocess_context
+
 
 
 # Lifespan context manager
@@ -125,9 +127,11 @@ async def analyze_text(request: TextAnalysisRequest):
     active_sessions[session_id] = {
         "raw_content": request.content,
         "parsed_content": formatted,
+        "parsed_data": parsed,
         "status": "initialized",
         "phase": 0
     }
+
     
     return {
         "session_id": session_id,
@@ -159,9 +163,11 @@ async def analyze_pdf(file: UploadFile = File(...)):
     active_sessions[session_id] = {
         "raw_content": parsed["raw_content"],
         "parsed_content": formatted,
+        "parsed_data": parsed,
         "status": "initialized",
         "phase": 0
     }
+
     
     return {
         "session_id": session_id,
@@ -191,8 +197,10 @@ async def stream_analysis(session_id: str):
             master_agent = MasterAgent()
             print("Agents initialized")
 
+            parsed_data = session["parsed_data"]
             parsed_content = session["parsed_content"]
             shared_reference_query = build_shared_reference_query(parsed_content)
+
             shared_reference_context = (
                 get_council_context(shared_reference_query) if shared_reference_query else ""
             )
@@ -208,6 +216,30 @@ async def stream_analysis(session_id: str):
             }
             await asyncio.sleep(0.5)
 
+            # Preprocessing: chunk ER, query RAG per chunk, merge into compact context
+            yield {
+                "event": "phase",
+                "data": json.dumps({
+                    "phase": 1.5,
+                    "status": "preprocessing",
+                    "message": "Preprocessing: chunking report and merging with accounting standards..."
+                })
+            }
+            print("Preprocessing context...")
+            compacted_content = await preprocess_context(parsed_data["cleaned_content"])
+            print(f"Preprocessing complete. Compacted to {len(compacted_content)} chars.")
+
+
+            yield {
+                "event": "phase",
+                "data": json.dumps({
+                    "phase": 1.5,
+                    "status": "preprocessing_complete",
+                    "message": f"Context compacted ({len(compacted_content)} chars). Starting analysis..."
+                })
+            }
+
+
             # Phase 2: Individual Analyses
             yield {
                 "event": "phase",
@@ -218,7 +250,7 @@ async def stream_analysis(session_id: str):
                 })
             }
 
-            # Run risk analysis
+            # Run risk analysis (uses compacted_content — no extra RAG retrieval needed)
             print("Risk Agent starting analysis...")
             yield {
                 "event": "agent",
@@ -230,12 +262,13 @@ async def stream_analysis(session_id: str):
             }
 
             risk_analysis = await risk_agent.analyze(
-                parsed_content,
-                reference_context=shared_reference_context,
-                reference_query=shared_reference_query,
-                allow_targeted_retrieval=True,
+                compacted_content,
+                reference_context=None,
+                reference_query=None,
+                allow_targeted_retrieval=False,
             )
             print("Risk Agent analysis complete")
+
 
             yield {
                 "event": "agent",
@@ -260,11 +293,12 @@ async def stream_analysis(session_id: str):
             }
 
             business_ops_analysis = await business_ops_agent.analyze(
-                parsed_content,
-                reference_context=shared_reference_context,
-                reference_query=shared_reference_query,
-                allow_targeted_retrieval=True,
+                compacted_content,
+                reference_context=None,
+                reference_query=None,
+                allow_targeted_retrieval=False,
             )
+
             print("Business & Ops Agent analysis complete")
 
             yield {
@@ -290,11 +324,12 @@ async def stream_analysis(session_id: str):
             }
 
             governance_analysis = await governance_agent.analyze(
-                parsed_content,
-                reference_context=shared_reference_context,
-                reference_query=shared_reference_query,
-                allow_targeted_retrieval=True,
+                compacted_content,
+                reference_context=None,
+                reference_query=None,
+                allow_targeted_retrieval=False,
             )
+
             print("Governance Agent analysis complete")
 
             yield {
@@ -379,8 +414,9 @@ async def stream_analysis(session_id: str):
 
                 risk_response = await risk_agent.generate_discussion(
                     position_papers, discussion_messages, risk_turn,
-                    earnings_content=parsed_content
+                    earnings_content=compacted_content
                 )
+
                 discussion_messages.append({
                     "agent": "Risk Analyst",
                     "content": risk_response,
@@ -401,8 +437,9 @@ async def stream_analysis(session_id: str):
                     position_papers,
                     discussion_messages,
                     business_ops_agent.respond_to("Risk Analyst", risk_response),
-                    earnings_content=parsed_content
+                    earnings_content=compacted_content
                 )
+
                 discussion_messages.append({
                     "agent": "Business & Ops Analyst",
                     "content": business_ops_response,
@@ -436,8 +473,9 @@ async def stream_analysis(session_id: str):
 
                 gov_response = await governance_agent.generate_discussion(
                     position_papers, discussion_messages, gov_turn,
-                    earnings_content=parsed_content
+                    earnings_content=compacted_content
                 )
+
                 discussion_messages.append({
                     "agent": "Governance Analyst",
                     "content": gov_response,
