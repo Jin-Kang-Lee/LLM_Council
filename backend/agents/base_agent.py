@@ -8,21 +8,24 @@ from typing import Generator, Optional, Any
 import json
 
 from config import OLLAMA_BASE_URL, OLLAMA_MODEL
+from tools.finance_tools import TOOL_REGISTRY
 
 
 class BaseAgent(ABC):
     """Abstract base class for all agents."""
 
-    def __init__(self, name: str, color: str):
+    def __init__(self, name: str, color: str, tools: Optional[list[dict]] = None):
         """
         Initialize the base agent.
 
         Args:
             name: Display name of the agent
             color: Color identifier for UI differentiation
+            tools: Optional list of tool definitions for Ollama tool calling
         """
         self.name = name
         self.color = color
+        self.tools = tools or []
         self.ollama_url = f"{OLLAMA_BASE_URL}/api/generate"
         self.ollama_chat_url = f"{OLLAMA_BASE_URL}/api/chat"
         self.model = OLLAMA_MODEL
@@ -53,6 +56,12 @@ class BaseAgent(ABC):
     def json_schema(self) -> dict | None:
         """Optional JSON schema (lightweight) for validation."""
         return None
+
+    @property
+    def domain_scope(self) -> str:
+        """Return a short description of what this agent extracts in Stage 1.
+        Override in subclasses to filter observations to the agent's domain."""
+        return ""
 
     @property
     def require_citations(self) -> bool:
@@ -510,7 +519,121 @@ class BaseAgent(ABC):
         prompt = self._build_prompt(context, additional_instructions, mode="analysis")
         if expect_json:
             return await self._generate_with_retry(prompt)
+        # If the agent has tools, use /api/chat so tool calling works
+        if self.tools:
+            messages = [{"role": "user", "content": prompt}]
+            return await self._call_ollama_messages(messages)
         return await self._call_ollama(prompt)
+
+    async def generate_staged(
+        self,
+        context: str,
+        additional_instructions: Optional[str] = None,
+        expect_json: bool = False,
+    ) -> str:
+        """
+        Multi-stage analysis pipeline:
+          Stage 1 — Extract raw observations from the report (no RAG).
+          Stage 2 — For each observation, query the reference library if relevant.
+          Stage 3 — Ground each observation against its RAG chunk.
+          Stage 4 — Synthesize grounded conclusions into the final structured output.
+        """
+        # ── Stage 1: Extract observations ────────────────────────────────────
+        print(f"[{self.name}] Stage 1: extracting observations from report...")
+        domain_filter = (
+            f"DOMAIN FILTER: Only extract observations relevant to — {self.domain_scope}\n"
+            "Ignore observations outside this domain entirely.\n\n"
+            if self.domain_scope else ""
+        )
+        s1_prompt = (
+            f"{self.system_prompt}\n\n"
+            "TASK — STAGE 1 (EXTRACTION ONLY):\n"
+            "Read the earnings report below and list every specific, factual observation "
+            "that is relevant to your analytical domain.\n"
+            f"{domain_filter}"
+            "Rules:\n"
+            "- One observation per line, numbered.\n"
+            "- Each observation must be a concrete fact or figure from the report.\n"
+            "- Do NOT analyse or draw conclusions yet — just extract facts.\n"
+            "- If a metric is missing from the report, note it as: 'MISSING: [metric name]'\n\n"
+            f"EARNINGS REPORT:\n{context}"
+        )
+        raw_observations = await self._call_ollama(s1_prompt, temperature=0.1)
+
+        # Parse observations into a list
+        observations = [
+            line.strip()
+            for line in raw_observations.splitlines()
+            if line.strip() and line.strip()[0].isdigit()
+        ]
+        if not observations:
+            # Fallback: split by newline if numbered list wasn't produced
+            observations = [l.strip() for l in raw_observations.splitlines() if l.strip()]
+
+        print(f"[{self.name}] Stage 1 complete — {len(observations)} observations extracted.")
+
+        # ── Stage 2 & 3: RAG fetch + ground each observation ─────────────────
+        print(f"[{self.name}] Stage 2-3: grounding observations against reference library...")
+        grounded_conclusions: list[str] = []
+
+        for i, obs in enumerate(observations):
+            # Skip MISSING items — nothing to ground
+            if obs.upper().startswith("MISSING"):
+                grounded_conclusions.append(obs)
+                continue
+
+            # Check if this observation has accounting/benchmark relevance
+            hints = self._extract_reference_hints(obs)
+            rag_chunk = ""
+            if hints:
+                try:
+                    rag_chunk = self.consult_reference_library(obs)
+                except Exception as e:
+                    print(f"[{self.name}] RAG lookup failed for obs {i+1}: {e}")
+
+            if rag_chunk:
+                # Stage 3: ground the observation against the RAG chunk
+                s3_prompt = (
+                    f"{self.system_prompt}\n\n"
+                    "TASK — STAGE 3 (GROUNDING):\n"
+                    f"OBSERVATION: {obs}\n\n"
+                    f"REFERENCE (accounting standard or benchmark — read-only):\n{rag_chunk}\n\n"
+                    "Based on this reference, explain in 2-3 sentences what this observation "
+                    "means for your analytical domain. Cite the reference inline. "
+                    "Be specific — do NOT generalise beyond what the observation states."
+                )
+                conclusion = await self._call_ollama(s3_prompt, temperature=0.1)
+                grounded_conclusions.append(f"[GROUNDED] {obs}\n→ {conclusion.strip()}")
+            else:
+                # No relevant reference — keep the raw observation
+                grounded_conclusions.append(f"[REPORT ONLY] {obs}")
+
+        grounded_text = "\n\n".join(grounded_conclusions)
+        print(f"[{self.name}] Stage 3 complete — {len(grounded_conclusions)} grounded conclusions.")
+        self.last_reference_context = ""  # no raw docs were injected into the model
+
+        # ── Stage 4: Synthesize into final structured output ─────────────────
+        print(f"[{self.name}] Stage 4: synthesizing final output...")
+        s4_prompt = (
+            f"{self.system_prompt}\n\n"
+            f"{self.analysis_rules}\n\n"
+            "TASK — STAGE 4 (SYNTHESIS):\n"
+            "The following grounded conclusions were derived from the earnings report "
+            "and verified against accounting standards where relevant.\n"
+            "Use ONLY these conclusions to fill in the JSON template above.\n"
+            "CRITICAL: Copy the field names from the template EXACTLY — do not rename, add, or remove any field.\n"
+            "Every evidence field must contain a specific figure or quote from the conclusions below.\n\n"
+            f"GROUNDED CONCLUSIONS:\n{grounded_text}"
+        )
+        if additional_instructions:
+            s4_prompt += f"\n\n{additional_instructions}"
+
+        if expect_json:
+            return await self._generate_with_retry(s4_prompt)
+        if self.tools:
+            messages = [{"role": "user", "content": s4_prompt}]
+            return await self._call_ollama_messages(messages)
+        return await self._call_ollama(s4_prompt, temperature=0.1)
 
     async def write_position_paper(self, analysis_json: str) -> str:
         """
@@ -626,13 +749,13 @@ No JSON. No preamble. Just the 3 bullets."""
             print(f"[{self.name}] ERROR: {str(e)}")
             raise
 
-    async def _call_ollama_messages(self, messages: list, temperature: float = 0.9) -> str:
-        """Multi-turn chat completion via Ollama /api/chat — used for war room discussion."""
+    async def _call_ollama_messages(self, messages: list, temperature: float = 0.7) -> str:
+        """Multi-turn chat completion via Ollama /api/chat — supports tool calling."""
         import httpx
 
         payload = {
             "model": self.model,
-            "messages": messages,
+            "messages": [m for m in messages],
             "stream": False,
             "options": {
                 "temperature": temperature,
@@ -640,14 +763,42 @@ No JSON. No preamble. Just the 3 bullets."""
             }
         }
 
+        if self.tools:
+            payload["tools"] = self.tools
+
         try:
-            print(f"[{self.name}] War room turn — Ollama ({self.model})...")
-            async with httpx.AsyncClient(timeout=120.0) as client:
+            print(f"[{self.name}] LLM turn (tools={bool(self.tools)}) — Ollama ({self.model})...")
+            async with httpx.AsyncClient(timeout=300.0) as client:
                 resp = await client.post(self.ollama_chat_url, json=payload)
                 resp.raise_for_status()
                 data = resp.json()
+
+            message = data.get("message", {})
+            content = message.get("content", "")
+            tool_calls = message.get("tool_calls", [])
+
+            if tool_calls:
+                print(f"[{self.name}] LLM requested {len(tool_calls)} tool call(s)")
+                messages.append(message)
+
+                for call in tool_calls:
+                    func_name = call["function"]["name"]
+                    args = call["function"]["arguments"]
+
+                    if func_name in TOOL_REGISTRY:
+                        print(f"[{self.name}] Executing tool: {func_name} with args: {args}")
+                        try:
+                            result = TOOL_REGISTRY[func_name](**args)
+                        except Exception as e:
+                            result = json.dumps({"error": f"Tool execution failed: {str(e)}"})
+                        messages.append({"role": "tool", "name": func_name, "content": result})
+                    else:
+                        print(f"[{self.name}] ERROR: Tool {func_name} not found in registry")
+
+                return await self._call_ollama_messages(messages, temperature=temperature)
+
             print(f"[{self.name}] Response received successfully")
-            return data.get("message", {}).get("content", "")
+            return content
         except Exception as e:
             print(f"[{self.name}] ERROR: {str(e)}")
             raise

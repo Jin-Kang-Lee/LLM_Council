@@ -1,6 +1,6 @@
 """
 Master Agent - Phase 4
-Consolidates all analyses into a unified earnings report.
+Consolidates all analyses into a unified earnings report (JSON).
 """
 
 from .base_agent import BaseAgent
@@ -14,134 +14,153 @@ class MasterAgent(BaseAgent):
             name="Master Analyst",
             color="blue",
         )
-    
+
     @property
     def system_prompt(self) -> str:
-        return """You are a Senior Investment Analyst and Chief Report Editor responsible for synthesizing multiple expert analyses into a cohesive, actionable earnings report. Your role is to:
+        return """You are the "Senior Investment Analyst" responsible for synthesizing multiple expert analyses into a single, cohesive investment report.
+Your role: resolve analyst disagreements with reasoned judgment, surface the most critical findings, and deliver clear, actionable conclusions.
+Tone: authoritative, balanced, evidence-driven."""
 
-## CORE RESPONSIBILITIES
+    @property
+    def analysis_rules(self) -> str:
+        return """OUTPUT RULES:
+1. Output MUST be a single valid JSON object. No markdown, no commentary, no code fences.
+2. Use ONLY information from the analyses and discussion provided — do NOT invent figures.
+3. If data is missing or unclear, use the best available evidence and note uncertainty.
+4. You MUST use exactly these field names — do not rename or add fields.
 
-### 1. Synthesis & Integration
-- Combine risk and sentiment analyses into unified insights
-- Identify where analysts agree vs. disagree
-- Resolve conflicting viewpoints with reasoned judgment
-- Highlight the most critical findings
+FILL IN THIS EXACT JSON TEMPLATE:
+{
+  "executive_summary": "<3-4 sentence summary of the key takeaway for decision-makers>",
+  "risk_assessment": {
+    "summary": "<synthesized summary of key risk findings>",
+    "primary_risks": ["<risk 1>", "<risk 2>", "<risk 3>"],
+    "risk_level": "<Low|Medium|High|Critical>"
+  },
+  "sentiment_outlook": {
+    "summary": "<synthesized sentiment and forward outlook>",
+    "management_confidence": "<Low|Medium|High>",
+    "market_outlook": "<Bearish|Neutral|Bullish>"
+  },
+  "governance_compliance": {
+    "summary": "<synthesized governance and compliance assessment>",
+    "governance_risk": "<Low|Medium|High>",
+    "compliance_status": "<description of compliance status>",
+    "confidence_score": <0.0-1.0>
+  },
+  "points_of_agreement": ["<agreed finding 1>", "<agreed finding 2>"],
+  "points_of_contentions": [
+    {
+      "issue": "<description of the contention>",
+      "resolution": "<how you resolve or weigh the disagreement>"
+    }
+  ],
+  "key_metrics": [
+    {
+      "metric": "<metric name>",
+      "finding": "<value or finding>",
+      "implication": "<what this means for investors>"
+    }
+  ],
+  "investment_considerations": {
+    "strengths": ["<strength 1>", "<strength 2>"],
+    "concerns": ["<concern 1>", "<concern 2>"]
+  },
+  "final_recommendation": {
+    "recommendation": "<Underperform|Neutral|Outperform>",
+    "confidence_level": "<Low|Medium|High>"
+  },
+  "discussion_summary": "<1-2 sentence summary of the key debate points and consensus reached>"
+}"""
 
-### 2. Quality Assurance
-- Ensure all claims are supported by evidence
-- Flag any gaps in the analysis
-- Maintain consistency in conclusions
-- Verify logical coherence
+    @property
+    def json_schema(self) -> dict:
+        return {
+            "executive_summary": str,
+            "risk_assessment": {
+                "summary": str,
+                "primary_risks": [str],
+                "risk_level": str,
+            },
+            "sentiment_outlook": {
+                "summary": str,
+                "management_confidence": str,
+                "market_outlook": str,
+            },
+            "governance_compliance": {
+                "summary": str,
+                "governance_risk": str,
+                "compliance_status": str,
+                "confidence_score": (int, float),
+            },
+            "points_of_agreement": [str],
+            "points_of_contentions": [
+                {
+                    "issue": str,
+                    "resolution": str,
+                }
+            ],
+            "key_metrics": [
+                {
+                    "metric": str,
+                    "finding": str,
+                    "implication": str,
+                }
+            ],
+            "investment_considerations": {
+                "strengths": [str],
+                "concerns": [str],
+            },
+            "final_recommendation": {
+                "recommendation": str,
+                "confidence_level": str,
+            },
+            "discussion_summary": str,
+        }
 
-### 3. Actionable Recommendations
-- Translate analysis into clear recommendations
-- Prioritize findings by importance
-- Provide concrete next steps
-- Consider multiple stakeholder perspectives
-
-## OUTPUT FORMAT
-
-Generate a professional earnings analysis report with the following structure:
-
----
-
-# 📊 EARNINGS ANALYSIS REPORT
-
-## Executive Summary
-[3-4 sentences providing the key takeaway for decision-makers]
-
-## Risk Assessment Overview
-[Synthesized summary of key risk findings]
-- **Primary Risks**: [List]
-- **Risk Level**: [Low/Medium/High]
-
-## Business & Operational Risk Overview
-[Synthesized summary of business model, operational, and CapEx findings]
-- **CapEx Trend**: [Increasing/Stable/Decreasing/Not Found]
-- **Operational Risk**: [Low/Medium/High/Critical]
-
-## Governance & Compliance Assessment
-[Synthesized summary of governance, legal, and compliance findings]
-- **Governance Risk**: [Low/Medium/High]
-- **Compliance Status**: [Assessment of MAS alignment]
-- **Confidence Score**: [0.0-1.0]
-
-## Points of Agreement
-[Where both analysts aligned in their findings]
-
-## Points of Contention
-[Where analysts disagreed and your resolution]
-
-## Key Metrics & Indicators
-| Metric | Finding | Implication |
-|--------|---------|-------------|
-| [Metric] | [Finding] | [Implication] |
-
-## Investment Considerations
-### Strengths
-- [Strength 1]
-- [Strength 2]
-
-### Concerns
-- [Concern 1]
-- [Concern 2]
-
-## Final Recommendation
-[Clear, actionable recommendation with confidence level]
-
-## Appendix: Analyst Discussion Summary
-[Brief summary of the key points from the agent discussion]
-
----
-
-Maintain a professional, balanced tone. Prioritize clarity and actionability. All conclusions must be traceable to the underlying analyses."""
-    
     async def consolidate(
-        self, 
+        self,
         original_content: str,
-        risk_analysis: str, 
-        sentiment_analysis: str, 
+        risk_analysis: str,
+        business_ops_analysis: str,
         governance_analysis: str,
         research_analysis: str,
-        discussion_transcript: str
+        discussion_transcript: str,
     ) -> str:
-        """
-        Generate the final consolidated report.
-        """
-        context = f"""
-## ORIGINAL EARNINGS CONTENT
+        """Generate the final consolidated report as JSON."""
+        context = f"""ORIGINAL EARNINGS CONTENT:
 {original_content}
 
 ---
 
-## RISK ANALYST'S ASSESSMENT
+RISK ANALYST'S ASSESSMENT:
 {risk_analysis}
 
 ---
 
-## BUSINESS & OPS ANALYST'S ASSESSMENT
-{sentiment_analysis}
+BUSINESS & OPS ANALYST'S ASSESSMENT:
+{business_ops_analysis}
 
 ---
 
-## GOVERNANCE & COMPLIANCE ASSESSMENT
+GOVERNANCE & COMPLIANCE ASSESSMENT:
 {governance_analysis}
 
 ---
 
-## EXTERNAL RESEARCH FINDINGS
-{research_analysis}
-
----
-
-## ANALYST DISCUSSION TRANSCRIPT
+ANALYST DISCUSSION TRANSCRIPT:
 {discussion_transcript}
 """
-        
-        additional_instructions = """
-Review all provided analyses and the discussion transcript. Create a comprehensive, 
-professional earnings report that synthesizes all findings. Resolve any disagreements
-between analysts with reasoned judgment. Ensure the final report is actionable and
-suitable for investment decision-making.
-"""
-        return await self.generate(context, additional_instructions)
+
+        prompt = (
+            f"{self.system_prompt}\n\n"
+            f"{self.analysis_rules}\n\n"
+            "TASK — SYNTHESIS:\n"
+            "Review all analyses and the discussion transcript above.\n"
+            "Synthesize findings into the JSON template. Resolve any disagreements with reasoned judgment.\n"
+            "CRITICAL: Copy the field names from the template EXACTLY — do not rename, add, or remove any field.\n"
+            "Every field must be grounded in the provided analyses — do not invent figures.\n\n"
+            f"{context}"
+        )
+
+        return await self._generate_with_retry(prompt)

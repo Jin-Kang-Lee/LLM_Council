@@ -4,6 +4,7 @@ Specializes in analyzing liquidity, debt, and volatility factors.
 """
 
 from .base_agent import BaseAgent
+from tools.finance_tools import FINANCE_TOOL_DEFINITION
 
 
 class RiskAgent(BaseAgent):
@@ -13,56 +14,61 @@ class RiskAgent(BaseAgent):
         super().__init__(
             name="Risk Analyst",
             color="red",
+            tools=[FINANCE_TOOL_DEFINITION],
         )
-    
+
+    @property
+    def domain_scope(self) -> str:
+        return (
+            "liquidity, debt levels, leverage ratios, cash flow, interest coverage, "
+            "credit risk, capital structure, financial covenants, net debt"
+        )
+
     @property
     def system_prompt(self) -> str:
-        return """You are an expert Financial Risk Analyst with deep expertise in corporate finance and risk assessment. Your role is to analyze earnings reports and financial data with a focus on:
+        return """You are the "Financial Risk Analyst".
+Your mission is to identify financial, operational, and market risks from earnings reports.
+Tone: Skeptical, analytical, and data-driven."""
 
-## PRIMARY ANALYSIS AREAS
+    @property
+    def analysis_rules(self) -> str:
+        return """OUTPUT RULES:
+1. Output MUST be a single valid JSON object. No markdown, no commentary, no code fences.
+2. Use ONLY information from the grounded conclusions provided — do NOT invent figures.
+3. You MUST use exactly these field names — do not rename or add fields.
 
-### 1. Liquidity Analysis
-- Current ratio and quick ratio implications
-- Working capital trends
-- Cash position and cash burn rate
-- Short-term debt obligations
+FILL IN THIS EXACT JSON TEMPLATE:
+{
+  "overall_risk_rating": "<Low|Medium|High|Critical>",
+  "liquidity_score": <0.0-1.0>,
+  "key_risk_factors": [
+    {
+      "factor": "<name of the risk>",
+      "impact": "<potential financial impact>",
+      "severity": "<Low|Medium|High>",
+      "evidence": "<specific quote or figure from the report>"
+    }
+  ],
+  "watchlist": ["<item requiring monitoring>"],
+  "confidence_score": <0.0-1.0>
+}"""
 
-### 2. Debt & Leverage Assessment
-- Debt-to-equity ratios
-- Interest coverage capacity
-- Debt maturity schedules
-- Covenant compliance indicators
-
-### 3. Volatility & Market Risk
-- Revenue volatility patterns
-- Earnings predictability
-- Market sensitivity factors
-- Currency and commodity exposures
-
-### 4. Operational Risk Indicators
-- Supply chain vulnerabilities
-- Customer concentration risk
-- Regulatory compliance concerns
-- Competitive threat assessment
-
-## OUTPUT FORMAT
-
-Structure your analysis as follows:
-
-**RISK SUMMARY**
-[2-3 sentence executive summary of key risk findings]
-
-**KEY RISK FACTORS**
-1. [Risk Factor 1]: [Explanation with supporting data]
-2. [Risk Factor 2]: [Explanation with supporting data]
-3. [Risk Factor 3]: [Explanation with supporting data]
-
-**RISK RATING**: [Low/Medium/High/Critical]
-
-**WATCHLIST ITEMS**
-- [Items requiring ongoing monitoring]
-
-Be specific, cite numbers from the report when available, and maintain a professional, analytical tone. If data is insufficient for certain analyses, note this limitation."""
+    @property
+    def json_schema(self) -> dict:
+        return {
+            "overall_risk_rating": str,
+            "liquidity_score": (int, float),
+            "key_risk_factors": [
+                {
+                    "factor": str,
+                    "impact": str,
+                    "severity": str,
+                    "evidence": str,
+                }
+            ],
+            "watchlist": [str],
+            "confidence_score": (int, float),
+        }
 
     @property
     def discussion_persona(self) -> str:
@@ -71,7 +77,7 @@ Be specific, cite numbers from the report when available, and maintain a profess
 Your voice: blunt, dry, unimpressed. You challenge optimism with hard numbers.
 You pick apart specific figures — debt ratios, liquidity coverage, capex commitments.
 You're suspicious of management spin. Never agree just to keep the peace."""
-    
+
     def respond_to(self, other_agent_name: str, other_response: str) -> str:
         return (
             f"[{other_agent_name}] just said:\n---\n{other_response[:1200]}\n---\n\n"
@@ -91,25 +97,12 @@ You're suspicious of management spin. Never agree just to keep the peace."""
         reference_query: str | None = None,
         allow_targeted_retrieval: bool = True,
     ) -> str:
-        """
-        Perform risk analysis on earnings content.
-        
-        Args:
-            earnings_content: Parsed earnings report content
-        
-        Returns:
-            Detailed risk analysis
-        """
         additional_instructions = """
-Analyze the provided earnings report content. Focus exclusively on risk factors, 
-financial vulnerabilities, and areas of concern. Be thorough but concise.
-If you cannot find specific financial metrics, analyze qualitative risk indicators
-from the language and tone of the report.
+Focus exclusively on risk factors, financial vulnerabilities, and areas of concern.
+If a metric is missing from the report, note it explicitly — do not invent figures.
 """
-        return await self.generate(
+        return await self.generate_staged(
             earnings_content,
             additional_instructions,
-            reference_context=reference_context,
-            reference_query=reference_query,
-            allow_targeted_retrieval=allow_targeted_retrieval,
+            expect_json=True,
         )

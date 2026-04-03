@@ -4,6 +4,7 @@ Specializes in analyzing governance, legal, and regulatory risks.
 """
 
 from .base_agent import BaseAgent
+from tools.finance_tools import INSIDER_TRADING_TOOL_DEFINITION
 
 
 class GovernanceAgent(BaseAgent):
@@ -13,51 +14,67 @@ class GovernanceAgent(BaseAgent):
         super().__init__(
             name="Governance Analyst",
             color="purple",
+            tools=[INSIDER_TRADING_TOOL_DEFINITION],
         )
-    
+
+    @property
+    def domain_scope(self) -> str:
+        return (
+            "board structure, executive compensation, audit quality, legal proceedings, "
+            "regulatory compliance, related-party transactions, insider trading, "
+            "disclosure gaps, accounting policy changes"
+        )
+
     @property
     def system_prompt(self) -> str:
-        return """You are an expert Governance & Compliance Analyst. Your role is to analyze earnings reports for governance, legal, regulatory, and accounting quality risks.
+        return """You are the "Governance & Compliance Analyst".
+Your mission is to identify governance, legal, and compliance risks that affect creditworthiness.
+Tone: Audit-friendly, objective, and highly risk-averse."""
 
-## PRIMARY ANALYSIS AREAS
+    @property
+    def analysis_rules(self) -> str:
+        return """OUTPUT RULES:
+1. Output MUST be a single valid JSON object. No markdown, no commentary, no code fences.
+2. Use ONLY information from the grounded conclusions provided — do NOT invent or guess.
+3. If something is not disclosed, write "Not disclosed" — do not leave fields empty.
+4. You MUST use exactly these field names — do not rename or add fields.
 
-### 1. Corporate Governance
-- Board structure and independence
-- Ownership concentration and related-party transactions
-- Management changes and control risks
+FILL IN THIS EXACT JSON TEMPLATE:
+{
+  "governance_risk_level": "<Low|Medium|High>",
+  "compliance_risk_level": "<Low|Medium|High>",
+  "key_findings": [
+    {
+      "issue": "<description of the risk or finding>",
+      "category": "<Governance|Legal|Compliance|Accounting>",
+      "severity": "<Low|Medium|High>",
+      "evidence": "<specific quote or figure from the report>",
+      "impact": "<why this affects creditworthiness>"
+    }
+  ],
+  "non_disclosures": ["<expected item not found in report>"],
+  "confidence_score": <0.0-1.0>,
+  "limitations": "<short summary of data gaps>"
+}"""
 
-### 2. Legal & Regulatory Exposure
-- Litigation and regulatory investigations
-- Fines, sanctions, or enforcement actions
-- Licensing issues or compliance orders
-
-### 3. Compliance Risk
-- AML/KYC control weaknesses
-- Regulatory compliance gaps
-- Auditor findings or management disclosures
-
-### 4. Accounting & Disclosure Quality
-- Audit opinion quality (qualified, adverse, going concern)
-- Restatements or revisions
-- Disclosure gaps and missing information
-
-## OUTPUT FORMAT
-
-**GOVERNANCE SUMMARY**
-[2-3 sentence executive summary]
-
-**KEY FINDINGS**
-1. [Finding 1 — Category: Governance/Legal/Compliance/Accounting]: [Description with evidence]
-2. [Finding 2]: [Description with evidence]
-3. [Finding 3]: [Description with evidence]
-
-**GOVERNANCE RISK LEVEL**: [Low/Medium/High]
-**COMPLIANCE RISK LEVEL**: [Low/Medium/High]
-
-**NON-DISCLOSURES**
-- [Expected items not found in the report]
-
-Be precise. Only state what is disclosed. If something is not in the report, say "Not disclosed" — do not guess."""
+    @property
+    def json_schema(self) -> dict:
+        return {
+            "governance_risk_level": str,
+            "compliance_risk_level": str,
+            "key_findings": [
+                {
+                    "issue": str,
+                    "category": str,
+                    "severity": str,
+                    "evidence": str,
+                    "impact": str,
+                }
+            ],
+            "non_disclosures": [str],
+            "confidence_score": (int, float),
+            "limitations": str,
+        }
 
     @property
     def discussion_persona(self) -> str:
@@ -65,7 +82,7 @@ Be precise. Only state what is disclosed. If something is not in the report, say
 
 Your voice: dry, exact, pedantic — deliberately so. You separate "risk" from "disclosure gap" from "regulatory breach".
 You care about what wasn't in the report as much as what was. You don't speculate."""
-    
+
     def respond_to(self, other_agent_name: str, other_response: str) -> str:
         return (
             f"[{other_agent_name}] just said:\n---\n{other_response[:1200]}\n---\n\n"
@@ -86,23 +103,12 @@ You care about what wasn't in the report as much as what was. You don't speculat
         reference_query: str | None = None,
         allow_targeted_retrieval: bool = True,
     ) -> str:
-        """
-        Perform governance and compliance analysis on earnings content.
-        
-        Args:
-            earnings_content: Parsed earnings report content
-        
-        Returns:
-            Detailed governance analysis in JSON format
-        """
         additional_instructions = """
-Analyze the provided earnings report content. Focus exclusively on governance,
-compliance, legal risks, and accounting quality. Ground all findings in evidence from the report.
+Focus exclusively on governance, compliance, legal risks, and accounting quality.
+Ground all findings in evidence from the report. If something is not disclosed, say so explicitly.
 """
-        return await self.generate(
+        return await self.generate_staged(
             earnings_content,
             additional_instructions,
-            reference_context=reference_context,
-            reference_query=reference_query,
-            allow_targeted_retrieval=allow_targeted_retrieval,
+            expect_json=True,
         )

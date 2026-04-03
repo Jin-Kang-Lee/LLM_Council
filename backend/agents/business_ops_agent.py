@@ -4,60 +4,87 @@ Specializes in analyzing business model risks, operational vulnerabilities, and 
 """
 
 from .base_agent import BaseAgent
+from tools.finance_tools import COMPETITOR_BENCHMARKING_TOOL_DEFINITION
 
 
 class BusinessOpsRiskAgent(BaseAgent):
     """Agent focused on business, industry, and operational risk analysis."""
-    
+
     def __init__(self):
         super().__init__(
             name="Business & Ops Analyst",
-            color="yellow"
+            color="yellow",
+            tools=[COMPETITOR_BENCHMARKING_TOOL_DEFINITION],
         )
-    
+
+    @property
+    def domain_scope(self) -> str:
+        return (
+            "CapEx, operational margins, customer concentration, supply chain, "
+            "pricing power, scalability, market position, competitive dynamics, "
+            "industry headwinds, business model risks"
+        )
+
     @property
     def system_prompt(self) -> str:
-        return """You are an expert Business, Industry and Operational Risk Analyst. Your role is to identify business model vulnerabilities, operational risks, and industry-level threats from earnings reports.
+        return """You are the "Business, Industry and Operational Risk Analyst".
+Your mission is to identify business model vulnerabilities, operational risks, and industry-level threats from earnings reports.
+Tone: Analytical, thorough, and risk-aware."""
 
-## PRIMARY ANALYSIS AREAS
+    @property
+    def analysis_rules(self) -> str:
+        return """OUTPUT RULES:
+1. Output MUST be a single valid JSON object. No markdown, no commentary, no code fences.
+2. Use ONLY information from the grounded conclusions provided — do NOT invent figures.
+3. If data is missing, write "Not Found" in the relevant field.
+4. You MUST use exactly these field names — do not rename or add fields.
 
-### 1. Capital Expenditure (CapEx) Analysis
-- Locate CapEx figures in the Cash Flow Statement
-- Assess whether CapEx is sustainable or poses a cash flow risk
-- Determine if investment is growth-driven or maintenance-driven
+FILL IN THIS EXACT JSON TEMPLATE:
+{
+  "operational_risk_rating": "<Low|Medium|High|Critical>",
+  "industry_position": "<description of competitive stance and market position>",
+  "capex_analysis": {
+    "capex_trend": "<Increasing|Stable|Decreasing|Not Found>",
+    "risk_assessment": "<whether CapEx poses a risk to cash flow or signals necessary investment>",
+    "evidence": "<specific figure or quote from the report>"
+  },
+  "key_business_risks": [
+    {
+      "risk_type": "<e.g. Customer Concentration|Pricing Power|Scalability|Single Point of Failure>",
+      "description": "<description of the risk>",
+      "severity": "<Low|Medium|High>",
+      "evidence": "<specific quote or figure from the report>"
+    }
+  ],
+  "watchlist": ["<item requiring monitoring>"],
+  "non_disclosures": ["<expected item not found in report>"],
+  "confidence_score": <0.0-1.0>,
+  "limitations": "<short summary of data gaps>"
+}"""
 
-### 2. Customer & Revenue Concentration
-- Is revenue overly dependent on a few customers or segments?
-- Pricing power and margin sustainability
-
-### 3. Operational Vulnerabilities
-- Supply chain dependencies and single points of failure
-- Scalability constraints
-- Business continuity risks
-
-### 4. Industry & Competitive Position
-- Competitive threats and market dynamics
-- Industry headwinds or tailwinds
-
-## OUTPUT FORMAT
-
-**OPERATIONAL RISK SUMMARY**
-[2-3 sentence executive summary]
-
-**CAPEX ANALYSIS**
-[Assessment of capital expenditure trends and risk implications]
-
-**KEY BUSINESS RISKS**
-1. [Risk 1]: [Description with supporting data]
-2. [Risk 2]: [Description with supporting data]
-3. [Risk 3]: [Description with supporting data]
-
-**OPERATIONAL RISK RATING**: [Low/Medium/High/Critical]
-
-**WATCHLIST ITEMS**
-- [Items requiring monitoring]
-
-Be specific, cite numbers when available. Note any missing disclosures."""
+    @property
+    def json_schema(self) -> dict:
+        return {
+            "operational_risk_rating": str,
+            "industry_position": str,
+            "capex_analysis": {
+                "capex_trend": str,
+                "risk_assessment": str,
+                "evidence": str,
+            },
+            "key_business_risks": [
+                {
+                    "risk_type": str,
+                    "description": str,
+                    "severity": str,
+                    "evidence": str,
+                }
+            ],
+            "watchlist": [str],
+            "non_disclosures": [str],
+            "confidence_score": (int, float),
+            "limitations": str,
+        }
 
     @property
     def discussion_persona(self) -> str:
@@ -66,7 +93,7 @@ Be specific, cite numbers when available. Note any missing disclosures."""
 Your voice: direct, pragmatic, commercially grounded. You see the business behind the numbers.
 You challenge both doom-sayers and optimists with operational reality.
 Never agree just to keep the peace."""
-    
+
     def respond_to(self, other_agent_name: str, other_response: str) -> str:
         return (
             f"[{other_agent_name}] just said:\n---\n{other_response[:1200]}\n---\n\n"
@@ -86,35 +113,13 @@ Never agree just to keep the peace."""
         reference_query: str | None = None,
         allow_targeted_retrieval: bool = True,
     ) -> str:
-        """
-        Perform business, industry, and operational risk analysis on earnings content.
-        
-        Args:
-            earnings_content: Parsed earnings report content
-        
-        Returns:
-            Detailed business and operational risk analysis in JSON format
-        """
         additional_instructions = """
-Analyze the provided earnings report content. Focus on business model risks,
-operational vulnerabilities, and industry-level threats.
-
-Specifically:
-1. Locate the Cash Flow Statement data and extract Capital Expenditure (CapEx) figures.
-   Assess whether the CapEx level is sustainable, poses a risk to working capital,
-   or represents necessary growth/maintenance investment.
-2. Evaluate customer concentration risk - is revenue overly dependent on few customers?
-3. Assess pricing power - can the company maintain or increase margins?
-4. Identify single points of failure in operations or supply chain.
-5. Evaluate business continuity risks and scalability constraints.
-
-Be thorough but concise. If specific CapEx data is not found, note it explicitly.
-List any missing expected disclosures in non_disclosures and summarize data gaps in limitations.
+Focus on business model risks, operational vulnerabilities, and industry-level threats.
+Pay special attention to CapEx figures, customer concentration, pricing power, and supply chain risks.
+If specific data is not found in the report, note it explicitly — do not invent figures.
 """
-        return await self.generate(
+        return await self.generate_staged(
             earnings_content,
             additional_instructions,
-            reference_context=reference_context,
-            reference_query=reference_query,
-            allow_targeted_retrieval=allow_targeted_retrieval,
+            expect_json=True,
         )
