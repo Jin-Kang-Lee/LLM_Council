@@ -35,8 +35,9 @@ You're not doom-and-gloom, but you're not easily charmed either. Earnings calls 
 
     @property
     def analysis_rules(self) -> str:
-        return """1. ONLY use quotes and information found in the earnings report.
-2. Output MUST be a single, valid JSON object. No markdown, no commentary.
+        return """1. ONLY use quotes and information found in the earnings report and any provided REFERENCE CONTEXT.
+2. Evidence must be a direct, short quote. If REFERENCE CONTEXT is provided, the quote MUST be verbatim from that context and include a [C#] chunk citation.
+3. Output MUST be a single, valid JSON object. No markdown, no commentary.
 
 OUTPUT JSON SCHEMA:
 {
@@ -54,8 +55,36 @@ OUTPUT JSON SCHEMA:
   "language_patterns": ["Repetitive patterns in speech"],
   "transparency_score": 0.0
 }"""
+
+    @property
+    def json_schema(self) -> dict:
+        return {
+            "overall_sentiment_score": str,
+            "executive_confidence": str,
+            "forward_outlook": str,
+            "key_signals": [
+                {
+                    "signal": str,
+                    "sentiment": str,
+                    "evidence": str,
+                    "explanation": str,
+                }
+            ],
+            "language_patterns": [str],
+            "transparency_score": (int, float),
+        }
+
+    @property
+    def require_citations(self) -> bool:
+        return True
     
-    async def analyze(self, earnings_content: str) -> str:
+    async def analyze(
+        self,
+        earnings_content: str,
+        reference_context: str | None = None,
+        reference_query: str | None = None,
+        allow_targeted_retrieval: bool = True,
+    ) -> str:
         """
         Perform sentiment analysis on earnings content.
         
@@ -70,4 +99,11 @@ Analyze the provided earnings report content. Focus on sentiment, tone, and outl
 indicators. Extract specific quotes and language patterns that reveal management's
 true confidence level and market positioning. Be thorough but concise.
 """
-        return await self.generate(earnings_content, additional_instructions)
+        return await self.generate(
+            earnings_content,
+            additional_instructions,
+            expect_json=True,
+            reference_context=reference_context,
+            reference_query=reference_query,
+            allow_targeted_retrieval=allow_targeted_retrieval,
+        )

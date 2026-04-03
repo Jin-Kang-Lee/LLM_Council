@@ -1,14 +1,14 @@
-import React, { useEffect, useRef } from 'react';
-import { ShieldAlert, Heart, MessageCircle, Gavel } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { ShieldAlert, Heart, MessageCircle, Gavel, TrendingUp } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 
-function MessageBubble({ message }) {
+function MessageBubble({ message, referenceContexts, referenceQueries }) {
     const getAgentStyles = () => {
         switch (message.agent) {
             case 'risk':
                 return { color: 'bg-red-600', text: 'text-red-400', border: 'border-red-900/30', icon: ShieldAlert };
-            case 'sentiment':
-                return { color: 'bg-emerald-600', text: 'text-emerald-400', border: 'border-emerald-900/30', icon: Heart };
+            case 'business_ops':
+                return { color: 'bg-yellow-600', text: 'text-yellow-400', border: 'border-yellow-900/30', icon: TrendingUp };
             case 'governance':
                 return { color: 'bg-purple-600', text: 'text-purple-400', border: 'border-purple-900/30', icon: Gavel };
             default:
@@ -18,6 +18,9 @@ function MessageBubble({ message }) {
 
     const styles = getAgentStyles();
     const isPrimary = message.agent === 'risk'; // Left-aligned
+    const [showReference, setShowReference] = useState(false);
+    const referenceContext = referenceContexts?.[message.agent];
+    const referenceQuery = referenceQueries?.[message.agent];
 
     return (
         <div className={`flex gap-3 ${isPrimary ? '' : 'flex-row-reverse'}`}>
@@ -37,16 +40,35 @@ function MessageBubble({ message }) {
                         {message.agentName}
                     </span>
                     <span className="text-xs text-zinc-600">Round {message.round}</span>
+                    {referenceContext && (
+                        <button
+                            type="button"
+                            onClick={() => setShowReference(prev => !prev)}
+                            className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-indigo-600/20 text-indigo-300 border border-indigo-500/30 hover:bg-indigo-500/30 transition-colors"
+                        >
+                            {showReference ? 'Hide RAG' : 'Show RAG'}
+                        </button>
+                    )}
                 </div>
                 <div className="prose-custom text-sm">
                     <ReactMarkdown>{message.content}</ReactMarkdown>
                 </div>
+                {referenceContext && showReference && (
+                    <div className="mt-3 text-xs text-zinc-300 bg-zinc-950/60 border border-zinc-800 rounded p-3 max-h-48 overflow-y-auto whitespace-pre-wrap">
+                        {referenceQuery && (
+                            <div className="text-zinc-500 mb-2">
+                                <span className="font-semibold">Query:</span> {referenceQuery}
+                            </div>
+                        )}
+                        <pre className="whitespace-pre-wrap font-sans">{referenceContext}</pre>
+                    </div>
+                )}
             </div>
         </div>
     );
 }
 
-function DiscussionLog({ messages, isActive }) {
+function DiscussionLog({ messages, isActive, referenceContexts, referenceQueries }) {
     const scrollRef = useRef(null);
 
     useEffect(() => {
@@ -82,7 +104,12 @@ function DiscussionLog({ messages, isActive }) {
                     </div>
                 )}
                 {messages.map((message, index) => (
-                    <MessageBubble key={index} message={message} />
+                    <MessageBubble
+                        key={index}
+                        message={message}
+                        referenceContexts={referenceContexts}
+                        referenceQueries={referenceQueries}
+                    />
                 ))}
             </div>
 

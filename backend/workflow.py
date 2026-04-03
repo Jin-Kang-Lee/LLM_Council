@@ -7,7 +7,8 @@ from typing import TypedDict, Annotated, Sequence, Literal
 from langgraph.graph import StateGraph, END
 import operator
 
-from agents import RiskAgent, SentimentAgent, MasterAgent, GovernanceAgent, DeepResearchAgent
+from agents import RiskAgent, BusinessOpsRiskAgent, MasterAgent, GovernanceAgent, DeepResearchAgent
+from rag.retriever import build_shared_reference_query, get_council_context
 from config import MAX_DISCUSSION_ROUNDS
 
 
@@ -24,16 +25,20 @@ class AnalysisState(TypedDict):
     raw_content: str
     parsed_content: str
 
-    # Phase 2: Individual Analyses (full JSON)
+    # Shared RAG context
+    reference_query: str
+    reference_context: str
+
+    # Phase 2: Individual Analyses
     risk_analysis: str
-    sentiment_analysis: str
+    business_ops_analysis: str
     governance_analysis: str
     research_analysis: str      # LLM-planned queries (pending JSON)
     research_results: str       # Enriched JSON after DDGS execution
 
     # Phase 2 → 3 bridge: Position papers (plain-language stances, not JSON)
     risk_position: str
-    sentiment_position: str
+    business_ops_position: str
     governance_position: str
 
     # Phase 3: Discussion
@@ -51,7 +56,7 @@ class AnalysisState(TypedDict):
 
 # Initialize agents
 risk_agent = RiskAgent()
-sentiment_agent = SentimentAgent()
+business_ops_agent = BusinessOpsRiskAgent()
 governance_agent = GovernanceAgent()
 deep_research_agent = DeepResearchAgent()
 master_agent = MasterAgent()
@@ -65,59 +70,85 @@ async def parse_node(state: AnalysisState) -> dict:
     }
 
 
-async def risk_analysis_node(state: AnalysisState) -> dict:
-    """Phase 2a: Risk Agent analyses the report, then writes its position paper."""
+async def reference_node(state: AnalysisState) -> dict:
+    """Phase 1.5: Shared reference lookup for hybrid RAG."""
     try:
-        analysis = await risk_agent.analyze(state["parsed_content"])
-        position = await risk_agent.write_position_paper(analysis)
+        query = build_shared_reference_query(state["parsed_content"])
+        context = get_council_context(query) if query else ""
+        return {
+            "reference_query": query,
+            "reference_context": context,
+            "current_phase": 1,
+            "status": "reference_context_ready",
+        }
+    except Exception as e:
+        return {
+            "reference_query": "",
+            "reference_context": "",
+            "error": str(e),
+            "status": "reference_context_error",
+        }
+
+
+async def risk_analysis_node(state: AnalysisState) -> dict:
+    """Phase 2a: Risk Agent analyses the report."""
+    try:
+        analysis = await risk_agent.analyze(
+            state["parsed_content"],
+            reference_context=state.get("reference_context", ""),
+            reference_query=state.get("reference_query", ""),
+            allow_targeted_retrieval=True,
+        )
         return {
             "risk_analysis": analysis,
-            "risk_position": position,
             "current_phase": 2,
             "status": "risk_analysis_complete"
         }
     except Exception as e:
         return {
             "risk_analysis": f"Error in risk analysis: {str(e)}",
-            "risk_position": "",
             "error": str(e)
         }
 
 
-async def sentiment_analysis_node(state: AnalysisState) -> dict:
-    """Phase 2b: Sentiment Agent analyses the report, then writes its position paper."""
+async def business_ops_analysis_node(state: AnalysisState) -> dict:
+    """Phase 2b: Business & Ops Risk Agent analysis."""
     try:
-        analysis = await sentiment_agent.analyze(state["parsed_content"])
-        position = await sentiment_agent.write_position_paper(analysis)
+        analysis = await business_ops_agent.analyze(
+            state["parsed_content"],
+            reference_context=state.get("reference_context", ""),
+            reference_query=state.get("reference_query", ""),
+            allow_targeted_retrieval=True,
+        )
         return {
-            "sentiment_analysis": analysis,
-            "sentiment_position": position,
+            "business_ops_analysis": analysis,
             "current_phase": 2,
-            "status": "sentiment_analysis_complete"
+            "status": "business_ops_analysis_complete"
         }
     except Exception as e:
         return {
-            "sentiment_analysis": f"Error in sentiment analysis: {str(e)}",
-            "sentiment_position": "",
+            "business_ops_analysis": f"Error in business ops analysis: {str(e)}",
             "error": str(e)
         }
 
 
 async def governance_analysis_node(state: AnalysisState) -> dict:
-    """Phase 2c: Governance Agent analyses the report, then writes its position paper."""
+    """Phase 2c: Governance Agent analyses the report."""
     try:
-        analysis = await governance_agent.analyze(state["parsed_content"])
-        position = await governance_agent.write_position_paper(analysis)
+        analysis = await governance_agent.analyze(
+            state["parsed_content"],
+            reference_context=state.get("reference_context", ""),
+            reference_query=state.get("reference_query", ""),
+            allow_targeted_retrieval=True,
+        )
         return {
             "governance_analysis": analysis,
-            "governance_position": position,
             "current_phase": 2,
             "status": "governance_analysis_complete"
         }
     except Exception as e:
         return {
             "governance_analysis": f"Error in governance analysis: {str(e)}",
-            "governance_position": "",
             "error": str(e)
         }
 
@@ -125,7 +156,12 @@ async def governance_analysis_node(state: AnalysisState) -> dict:
 async def research_node(state: AnalysisState) -> dict:
     """Phase 2.5a: Deep Research Agent plans the search queries."""
     try:
-        analysis = await deep_research_agent.analyze(state["parsed_content"])
+        analysis = await deep_research_agent.analyze(
+            state["parsed_content"],
+            reference_context=state.get("reference_context", ""),
+            reference_query=state.get("reference_query", ""),
+            allow_targeted_retrieval=True,
+        )
         return {
             "research_analysis": analysis,
             "current_phase": 2,
@@ -158,85 +194,101 @@ async def discussion_node(state: AnalysisState) -> dict:
     """
     Phase 3: War room debate.
 
-    Each agent gets:
-      - system:  their persona (not the report)
-      - user:    DDGS research findings (if any)
-      - user:    all 3 position papers
-      - user/assistant: full conversation thread so far
-      - user:    their specific turn instruction
-
-    The full report is NOT re-sent here — agents already extracted
-    what matters into their JSON analyses and position papers.
+    Each agent responds to the previous agent's output, building a threaded discussion.
     """
     current_round = state.get("discussion_round", 0) + 1
     thread = list(state.get("discussion_messages", []))
 
-    position_papers = {
-        "Risk Analyst":       state.get("risk_position", ""),
-        "Sentiment Analyst":  state.get("sentiment_position", ""),
-        "Governance Analyst": state.get("governance_position", ""),
-    }
-    research = state.get("research_results", "")
-
     try:
         if current_round == 1:
-            # Risk opens — no prior thread, picks the sharpest disagreement between positions
+            # Risk opens by responding to business ops analysis
+            discussion_prompt = risk_agent.respond_to(
+                "Business & Ops Analyst",
+                state.get("business_ops_analysis", ""),
+            )
             risk_response = await risk_agent.generate_discussion(
-                position_papers,
-                [],
-                "The war room is open. You go first — pick the sharpest disagreement "
-                "between the three positions and make your opening move.",
-                research,
+                state["parsed_content"],
+                discussion_prompt
             )
-            thread.append({"agent": "Risk Analyst", "content": risk_response, "round": current_round})
+            thread.append({
+                "agent": "Risk Analyst",
+                "content": risk_response,
+                "round": current_round
+            })
 
-            # Sentiment responds to Risk's opening
-            sentiment_response = await sentiment_agent.generate_discussion(
-                position_papers,
-                thread,
-                risk_agent.respond_to("Risk Analyst", risk_response),
-                research,
+            # Business & Ops responds to Risk
+            discussion_prompt = business_ops_agent.respond_to(
+                "Risk Analyst",
+                risk_response,
             )
-            thread.append({"agent": "Sentiment Analyst", "content": sentiment_response, "round": current_round})
+            business_ops_response = await business_ops_agent.generate_discussion(
+                state["parsed_content"],
+                discussion_prompt
+            )
+            thread.append({
+                "agent": "Business & Ops Analyst",
+                "content": business_ops_response,
+                "round": current_round
+            })
 
-            # Governance weighs in on both
+            # Governance responds to both
+            discussion_prompt = governance_agent.respond_to(
+                "Risk and Business & Ops Analysts",
+                f"Risk says: {risk_response}\n\nBusiness & Ops says: {business_ops_response}",
+            )
             governance_response = await governance_agent.generate_discussion(
-                position_papers,
-                thread,
-                "Risk and Sentiment have both weighed in. What are they missing or getting "
-                "wrong from a governance and compliance standpoint?",
-                research,
+                state["parsed_content"],
+                discussion_prompt
             )
-            thread.append({"agent": "Governance Analyst", "content": governance_response, "round": current_round})
+            thread.append({
+                "agent": "Governance Analyst",
+                "content": governance_response,
+                "round": current_round
+            })
 
         else:
-            # Subsequent rounds — full thread is in messages, each agent builds on it
-            last_msg    = thread[-1]["content"]
-            last_agent  = thread[-1]["agent"]
+            # Subsequent rounds — each agent builds on the previous
+            last_msg = thread[-1]["content"]
+            last_agent = thread[-1]["agent"]
 
+            # Risk responds to whoever went last
+            discussion_prompt = risk_agent.respond_to(last_agent, last_msg)
             risk_response = await risk_agent.generate_discussion(
-                position_papers,
-                thread,
-                risk_agent.respond_to(last_agent, last_msg),
-                research,
+                state["parsed_content"],
+                discussion_prompt
             )
-            thread.append({"agent": "Risk Analyst", "content": risk_response, "round": current_round})
+            thread.append({
+                "agent": "Risk Analyst",
+                "content": risk_response,
+                "round": current_round
+            })
 
-            sentiment_response = await sentiment_agent.generate_discussion(
-                position_papers,
-                thread,
-                sentiment_agent.respond_to("Risk Analyst", risk_response),
-                research,
+            # Business & Ops responds to Risk
+            discussion_prompt = business_ops_agent.respond_to("Risk Analyst", risk_response)
+            business_ops_response = await business_ops_agent.generate_discussion(
+                state["parsed_content"],
+                discussion_prompt
             )
-            thread.append({"agent": "Sentiment Analyst", "content": sentiment_response, "round": current_round})
+            thread.append({
+                "agent": "Business & Ops Analyst",
+                "content": business_ops_response,
+                "round": current_round
+            })
 
+            # Governance responds to Business & Ops
+            discussion_prompt = governance_agent.respond_to(
+                "Business & Ops Analyst",
+                business_ops_response,
+            )
             governance_response = await governance_agent.generate_discussion(
-                position_papers,
-                thread,
-                governance_agent.respond_to("Sentiment Analyst", sentiment_response),
-                research,
+                state["parsed_content"],
+                discussion_prompt
             )
-            thread.append({"agent": "Governance Analyst", "content": governance_response, "round": current_round})
+            thread.append({
+                "agent": "Governance Analyst",
+                "content": governance_response,
+                "round": current_round
+            })
 
         return {
             "discussion_messages": thread,
@@ -271,7 +323,7 @@ async def consolidation_node(state: AnalysisState) -> dict:
         final_report = await master_agent.consolidate(
             state["parsed_content"],
             state["risk_analysis"],
-            state["sentiment_analysis"],
+            state["business_ops_analysis"],
             state["governance_analysis"],
             research,
             discussion_transcript,
@@ -293,29 +345,34 @@ def create_workflow() -> StateGraph:
     """Create and compile the LangGraph workflow."""
     workflow = StateGraph(AnalysisState)
 
-    workflow.add_node("parse",              parse_node)
-    workflow.add_node("run_risk",           risk_analysis_node)
-    workflow.add_node("run_sentiment",      sentiment_analysis_node)
-    workflow.add_node("run_governance",     governance_analysis_node)
-    workflow.add_node("run_research",       research_node)
-    workflow.add_node("execute_research",   execute_research_node)
-    workflow.add_node("run_discussion",     discussion_node)
-    workflow.add_node("run_consolidation",  consolidation_node)
+    # Add nodes
+    workflow.add_node("parse",             parse_node)
+    workflow.add_node("run_reference",     reference_node)
+    workflow.add_node("run_risk",          risk_analysis_node)
+    workflow.add_node("run_business_ops",  business_ops_analysis_node)
+    workflow.add_node("run_governance",    governance_analysis_node)
+    workflow.add_node("run_research",      research_node)
+    workflow.add_node("execute_research",  execute_research_node)
+    workflow.add_node("run_discussion",    discussion_node)
+    workflow.add_node("run_consolidation", consolidation_node)
 
     workflow.set_entry_point("parse")
 
-    # Parallel analyses after parse
-    workflow.add_edge("parse", "run_risk")
-    workflow.add_edge("parse", "run_sentiment")
-    workflow.add_edge("parse", "run_governance")
+    # After parsing, run shared reference lookup
+    workflow.add_edge("parse", "run_reference")
+
+    # After reference lookup, run all analyses in parallel
+    workflow.add_edge("run_reference", "run_risk")
+    workflow.add_edge("run_reference", "run_business_ops")
+    workflow.add_edge("run_reference", "run_governance")
 
     # All analyses feed into research planning
-    workflow.add_edge("run_risk",       "run_research")
-    workflow.add_edge("run_sentiment",  "run_research")
-    workflow.add_edge("run_governance", "run_research")
+    workflow.add_edge("run_risk",         "run_research")
+    workflow.add_edge("run_business_ops", "run_research")
+    workflow.add_edge("run_governance",   "run_research")
 
     # Research planning → DDGS execution → discussion
-    workflow.add_edge("run_research",     "execute_research")
+    workflow.add_edge("run_research",    "execute_research")
     workflow.add_edge("execute_research", "run_discussion")
 
     workflow.add_conditional_edges(

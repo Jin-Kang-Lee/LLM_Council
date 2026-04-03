@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
     ShieldAlert,
     Heart,
@@ -6,7 +6,8 @@ import {
     Loader2,
     CheckCircle2,
     AlertTriangle,
-    Gavel
+    Gavel,
+    TrendingUp
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 
@@ -28,10 +29,13 @@ function AgentCard({
     icon: Icon,
     accentColor,
     state,
-    content
+    content,
+    referenceContext,
+    referenceQuery
 }) {
     const isThinking = state === 'thinking';
     const isComplete = state === 'complete';
+    const [showReference, setShowReference] = useState(false);
 
     const colorClasses = {
         red: {
@@ -46,6 +50,12 @@ function AgentCard({
             text: 'text-emerald-400',
             tag: 'bg-emerald-900/30 text-emerald-400'
         },
+        yellow: {
+            bg: 'bg-yellow-600',
+            border: 'border-yellow-600/50',
+            text: 'text-yellow-400',
+            tag: 'bg-yellow-900/30 text-yellow-400'
+        },
         purple: {
             bg: 'bg-purple-600',
             border: 'border-purple-600/50',
@@ -56,14 +66,43 @@ function AgentCard({
 
     const colors = colorClasses[accentColor] || colorClasses.purple;
 
+    // Utility: strip residual [C#...] citation markers from any string
+    const stripCitations = (text) => {
+        if (typeof text !== 'string') return text;
+        return text.replace(/\[C#[^\]]*\]/g, '').trim();
+    };
+
+    // Recursively strip citations from all string values in an object
+    const cleanData = (obj) => {
+        if (typeof obj === 'string') return stripCitations(obj);
+        if (Array.isArray(obj)) return obj.map(cleanData);
+        if (obj && typeof obj === 'object') {
+            return Object.fromEntries(
+                Object.entries(obj).map(([k, v]) => [k, cleanData(v)])
+            );
+        }
+        return obj;
+    };
+
+    // Severity badge component for consistent styling
+    const SeverityBadge = ({ level, variant = 'default' }) => {
+        const isHigh = level === 'High' || level === 'Critical';
+        const baseClasses = 'text-[10px] px-2 py-0.5 rounded-md uppercase font-bold tracking-wider';
+        const colorClasses = isHigh
+            ? 'bg-red-900/50 text-red-300'
+            : variant === 'yellow'
+                ? 'bg-yellow-900/40 text-yellow-400'
+                : 'bg-zinc-800 text-zinc-400';
+        return <span className={`${baseClasses} ${colorClasses}`}>{level}</span>;
+    };
+
     // Helper to render structured JSON content
     const renderContent = () => {
         if (!content) return null;
 
         try {
-            // Check if content is JSON
             if (content.trim().startsWith('{')) {
-                const data = JSON.parse(content);
+                const data = cleanData(JSON.parse(content));
 
                 // 1. RISK AGENT RENDERING
                 if (data.overall_risk_rating) {
@@ -72,13 +111,11 @@ function AgentCard({
                             <div className="flex flex-col gap-2 p-3 bg-zinc-800/50 rounded-lg border border-red-900/30">
                                 <div className="flex justify-between items-center">
                                     <span className="text-zinc-400 text-xs uppercase tracking-wider">Overall Risk</span>
-                                    <span className={`text-xs font-bold px-2 py-0.5 rounded ${data.overall_risk_rating === 'High' || data.overall_risk_rating === 'Critical' ? 'bg-red-600 text-white' : 'bg-zinc-700 text-zinc-300'}`}>
-                                        {data.overall_risk_rating}
-                                    </span>
+                                    <SeverityBadge level={data.overall_risk_rating} />
                                 </div>
                                 <div className="w-full bg-zinc-700 h-1.5 rounded-full mt-1">
                                     <div
-                                        className="bg-red-500 h-1.5 rounded-full"
+                                        className="bg-red-500 h-1.5 rounded-full transition-all duration-500"
                                         style={{ width: `${(data.liquidity_score || 0.5) * 100}%` }}
                                     />
                                 </div>
@@ -86,20 +123,22 @@ function AgentCard({
 
                             <div className="space-y-3">
                                 {data.key_risk_factors?.map((rf, idx) => (
-                                    <div key={idx} className="border-l-2 border-red-500 pl-3 py-1">
-                                        <h4 className="text-zinc-200 font-medium text-xs mb-1">{rf.factor}</h4>
-                                        <p className="text-zinc-400 text-[11px] mb-1">{rf.impact}</p>
-                                        <p className="text-zinc-500 text-[10px] italic">"{rf.evidence}"</p>
+                                    <div key={idx} className="border-l-2 border-red-500/60 pl-3 py-1.5">
+                                        <h4 className="text-sm font-medium text-zinc-200 mb-1">{rf.factor}</h4>
+                                        <p className="text-xs text-zinc-400 leading-relaxed mb-1.5">{rf.impact}</p>
+                                        {rf.evidence && (
+                                            <p className="text-[11px] text-zinc-500 italic leading-relaxed">"{rf.evidence}"</p>
+                                        )}
                                     </div>
                                 ))}
                             </div>
 
                             {data.watchlist?.length > 0 && (
-                                <div className="pt-2 border-t border-zinc-800">
-                                    <h4 className="text-red-400/70 text-[10px] uppercase font-bold mb-2 tracking-tighter">Watchlist Indicators</h4>
-                                    <div className="flex flex-wrap gap-1">
+                                <div className="pt-3 border-t border-zinc-800">
+                                    <h4 className="text-zinc-500 text-[10px] uppercase font-bold mb-2 tracking-wider">Watchlist</h4>
+                                    <div className="flex flex-wrap gap-1.5">
                                         {data.watchlist.map((item, idx) => (
-                                            <span key={idx} className="px-1.5 py-0.5 bg-zinc-800 text-zinc-400 text-[10px] rounded border border-zinc-700">
+                                            <span key={idx} className="px-2 py-0.5 bg-zinc-800 text-zinc-400 text-[11px] rounded-md border border-zinc-700">
                                                 {item}
                                             </span>
                                         ))}
@@ -110,40 +149,59 @@ function AgentCard({
                     );
                 }
 
-                // 2. SENTIMENT AGENT RENDERING
-                if (data.overall_sentiment_score) {
+                // 2. BUSINESS OPS AGENT RENDERING
+                if (data.capex_analysis) {
                     return (
                         <div className="space-y-4">
-                            <div className="grid grid-cols-2 gap-2">
-                                <div className="p-2 bg-zinc-800/50 rounded border border-emerald-900/20 text-center">
-                                    <p className="text-[10px] text-zinc-500 uppercase">Confidence</p>
-                                    <p className="text-xs font-bold text-emerald-400">{data.executive_confidence}</p>
-                                </div>
-                                <div className="p-2 bg-zinc-800/50 rounded border border-emerald-900/20 text-center">
-                                    <p className="text-[10px] text-zinc-500 uppercase">Outlook</p>
-                                    <p className="text-xs font-bold text-emerald-400">{data.forward_outlook}</p>
+                            <div className="flex flex-col gap-2 p-3 bg-zinc-800/50 rounded-lg border border-yellow-900/30">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-zinc-400 text-xs uppercase tracking-wider">Ops Risk Rating</span>
+                                    <SeverityBadge level={data.operational_risk_rating} variant="yellow" />
                                 </div>
                             </div>
 
                             <div className="space-y-3">
-                                {data.key_signals?.map((sig, idx) => (
-                                    <div key={idx} className="bg-zinc-800/30 p-2 rounded border border-zinc-700/50">
-                                        <div className="flex items-center justify-between mb-1">
-                                            <h4 className="text-zinc-200 font-medium text-xs">{sig.signal}</h4>
-                                            <span className={`text-[9px] px-1 rounded ${sig.sentiment === 'Positive' ? 'text-emerald-400' : 'text-red-400'}`}>
-                                                {sig.sentiment}
-                                            </span>
+                                {data.capex_analysis && (
+                                    <div className="border-l-2 border-yellow-500/60 pl-3 py-1.5">
+                                        <h4 className="text-sm font-medium text-zinc-200 mb-1">
+                                            CapEx Trend
+                                            {data.capex_analysis.capex_trend && (
+                                                <span className="text-zinc-500 font-normal text-xs ml-1">({data.capex_analysis.capex_trend})</span>
+                                            )}
+                                        </h4>
+                                        <p className="text-xs text-zinc-400 leading-relaxed mb-1.5">{data.capex_analysis.risk_assessment}</p>
+                                        {data.capex_analysis.evidence && (
+                                            <p className="text-[11px] text-zinc-500 italic leading-relaxed">"{data.capex_analysis.evidence}"</p>
+                                        )}
+                                    </div>
+                                )}
+
+                                {data.key_business_risks?.map((risk, idx) => (
+                                    <div key={idx} className="border-l-2 border-yellow-500/40 pl-3 py-1.5">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <SeverityBadge level={risk.severity} variant="yellow" />
+                                            <h4 className="text-sm font-medium text-zinc-200">{risk.risk_type}</h4>
                                         </div>
-                                        <p className="text-zinc-400 text-[11px] font-light leading-snug">"{sig.evidence}"</p>
+                                        <p className="text-xs text-zinc-400 leading-relaxed mb-1.5">{risk.description}</p>
+                                        {risk.evidence && (
+                                            <p className="text-[11px] text-zinc-500 italic leading-relaxed">"{risk.evidence}"</p>
+                                        )}
                                     </div>
                                 ))}
                             </div>
 
-                            <div className="pt-2">
-                                <p className="text-center text-xs font-medium text-emerald-400 py-1 bg-emerald-500/10 rounded-full border border-emerald-500/20">
-                                    Score: {data.overall_sentiment_score}
-                                </p>
-                            </div>
+                            {data.watchlist?.length > 0 && (
+                                <div className="pt-3 border-t border-zinc-800">
+                                    <h4 className="text-zinc-500 text-[10px] uppercase font-bold mb-2 tracking-wider">Watchlist</h4>
+                                    <div className="flex flex-wrap gap-1.5">
+                                        {data.watchlist.map((item, idx) => (
+                                            <span key={idx} className="px-2 py-0.5 bg-zinc-800 text-zinc-400 text-[11px] rounded-md border border-zinc-700">
+                                                {item}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     );
                 }
@@ -152,46 +210,92 @@ function AgentCard({
                 if (data.governance_risk_level) {
                     return (
                         <div className="space-y-4">
-                            <div className="flex flex-col gap-2 p-3 bg-zinc-800/50 rounded-lg border border-zinc-700">
+                            <div className="flex flex-col gap-2 p-3 bg-zinc-800/50 rounded-lg border border-purple-900/30">
                                 <div className="flex justify-between items-center">
-                                    <span className="text-zinc-400 text-xs uppercase tracking-wider">Gov Risk</span>
-                                    <span className={`text-xs font-bold px-2 py-0.5 rounded ${data.governance_risk_level === 'High' ? 'bg-red-600 text-white' : 'bg-zinc-700 text-zinc-300'}`}>
-                                        {data.governance_risk_level}
-                                    </span>
+                                    <span className="text-zinc-400 text-xs uppercase tracking-wider">Governance Risk</span>
+                                    <SeverityBadge level={data.governance_risk_level} />
                                 </div>
                                 <div className="flex justify-between items-center">
-                                    <span className="text-zinc-400 text-xs uppercase tracking-wider">Comp Risk</span>
-                                    <span className={`text-xs font-bold px-2 py-0.5 rounded ${data.compliance_risk_level === 'High' ? 'bg-red-600 text-white' : 'bg-zinc-700 text-zinc-300'}`}>
-                                        {data.compliance_risk_level}
-                                    </span>
+                                    <span className="text-zinc-400 text-xs uppercase tracking-wider">Compliance Risk</span>
+                                    <SeverityBadge level={data.compliance_risk_level} />
                                 </div>
                             </div>
 
                             <div className="space-y-3">
                                 {data.key_findings?.map((finding, idx) => (
-                                    <div key={idx} className="border-l-2 border-indigo-500 pl-3 py-1">
+                                    <div key={idx} className="border-l-2 border-purple-500/60 pl-3 py-1.5">
                                         <div className="flex items-center gap-2 mb-1">
-                                            <span className={`text-[10px] px-1.5 py-0.5 rounded uppercase font-bold ${finding.severity === 'High' ? 'bg-red-900/50 text-red-300' : 'bg-zinc-800 text-zinc-400'}`}>
-                                                {finding.category}
-                                            </span>
-                                            <h4 className="text-zinc-200 font-medium text-xs">{finding.issue}</h4>
+                                            <SeverityBadge level={finding.severity} />
+                                            <h4 className="text-sm font-medium text-zinc-200">{finding.issue}</h4>
                                         </div>
-                                        <p className="text-zinc-400 text-[11px] italic mb-1">"{finding.evidence}"</p>
-                                        <p className="text-zinc-300 text-[11px] leading-relaxed">{finding.impact}</p>
+                                        <p className="text-xs text-zinc-400 leading-relaxed mb-1.5">{finding.impact}</p>
+                                        {finding.evidence && (
+                                            <p className="text-[11px] text-zinc-500 italic leading-relaxed">"{finding.evidence}"</p>
+                                        )}
                                     </div>
                                 ))}
                             </div>
 
                             {data.non_disclosures?.length > 0 && (
-                                <div className="pt-2 border-t border-zinc-800">
-                                    <h4 className="text-zinc-500 text-[10px] uppercase font-bold mb-2">Non-Disclosures</h4>
-                                    <ul className="list-disc list-inside text-[11px] text-zinc-400 space-y-1">
-                                        {data.non_disclosures.slice(0, 3).map((item, idx) => (
-                                            <li key={idx}>{item}</li>
+                                <div className="pt-3 border-t border-zinc-800">
+                                    <h4 className="text-zinc-500 text-[10px] uppercase font-bold mb-2 tracking-wider">Non-Disclosures</h4>
+                                    <ul className="space-y-1">
+                                        {data.non_disclosures.map((item, idx) => (
+                                            <li key={idx} className="text-xs text-zinc-400 flex items-start gap-1.5">
+                                                <span className="text-zinc-600 mt-0.5">•</span>
+                                                <span>{item}</span>
+                                            </li>
                                         ))}
                                     </ul>
                                 </div>
                             )}
+
+                            {data.limitations && (
+                                <div className="pt-3 border-t border-zinc-800">
+                                    <h4 className="text-zinc-500 text-[10px] uppercase font-bold mb-1 tracking-wider">Limitations</h4>
+                                    <p className="text-xs text-zinc-400 leading-relaxed">{data.limitations}</p>
+                                </div>
+                            )}
+                        </div>
+                    );
+                }
+
+                // Generic findings fallback
+                if (data.findings && typeof data.findings === 'object') {
+                    const entries = Object.entries(data.findings);
+                    const formatLabel = (value) => value
+                        .replace(/[_-]+/g, ' ')
+                        .replace(/\b\w/g, (char) => char.toUpperCase());
+
+                    return (
+                        <div className="space-y-3">
+                            {entries.map(([key, value], idx) => {
+                                const status = value?.status || 'Unknown';
+                                const changes = Array.isArray(value?.changes)
+                                    ? value.changes
+                                    : (value?.changes ? [value.changes] : []);
+
+                                return (
+                                    <div key={idx} className="border-l-2 border-indigo-500/60 pl-3 py-1.5">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <span className="text-[10px] px-2 py-0.5 rounded-md uppercase font-bold tracking-wider bg-indigo-900/50 text-indigo-300">
+                                                {formatLabel(key)}
+                                            </span>
+                                            <span className="text-xs text-zinc-300">{status}</span>
+                                        </div>
+                                        {changes.length > 0 && (
+                                            <ul className="space-y-1">
+                                                {changes.slice(0, 3).map((item, changeIdx) => (
+                                                    <li key={changeIdx} className="text-xs text-zinc-400 flex items-start gap-1.5">
+                                                        <span className="text-zinc-600 mt-0.5">•</span>
+                                                        <span>{item}</span>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        )}
+                                    </div>
+                                );
+                            })}
                         </div>
                     );
                 }
@@ -200,7 +304,7 @@ function AgentCard({
             // Fall back to markdown
         }
 
-        return <ReactMarkdown>{content}</ReactMarkdown>;
+        return <ReactMarkdown>{stripCitations(content)}</ReactMarkdown>;
     };
 
     return (
@@ -248,6 +352,27 @@ function AgentCard({
                 {isComplete && content && (
                     <div className="prose-custom text-sm">
                         {renderContent()}
+                        {referenceContext && (
+                            <div className="mt-4 pt-3 border-t border-zinc-800">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowReference(prev => !prev)}
+                                    className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
+                                >
+                                    {showReference ? 'Hide' : 'Show'} Reference Context
+                                </button>
+                                {showReference && (
+                                    <div className="mt-2 text-xs text-zinc-300 bg-zinc-950/60 border border-zinc-800 rounded p-3 max-h-48 overflow-y-auto whitespace-pre-wrap">
+                                        {referenceQuery && (
+                                            <div className="text-zinc-500 mb-2">
+                                                <span className="font-semibold">Query:</span> {referenceQuery}
+                                            </div>
+                                        )}
+                                        <pre className="whitespace-pre-wrap font-sans">{referenceContext}</pre>
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
                 )}
             </div>
@@ -332,13 +457,19 @@ function ParserCard({ state, parsedContent }) {
 
 function AgentCards({
     riskAnalysis,
-    sentimentAnalysis,
+    businessOpsAnalysis,
     governanceAnalysis,
     riskState,
-    sentimentState,
+    businessOpsState,
     governanceState,
     parserState,
-    parsedContent
+    parsedContent,
+    riskReferenceContext,
+    businessOpsReferenceContext,
+    governanceReferenceContext,
+    riskReferenceQuery,
+    businessOpsReferenceQuery,
+    governanceReferenceQuery
 }) {
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -350,14 +481,18 @@ function AgentCards({
                 accentColor="red"
                 state={riskState}
                 content={riskAnalysis}
+                referenceContext={riskReferenceContext}
+                referenceQuery={riskReferenceQuery}
             />
 
             <AgentCard
-                title="Sentiment Analyst"
-                icon={Heart}
-                accentColor="green"
-                state={sentimentState}
-                content={sentimentAnalysis}
+                title="Business & Ops Analyst"
+                icon={TrendingUp}
+                accentColor="yellow"
+                state={businessOpsState}
+                content={businessOpsAnalysis}
+                referenceContext={businessOpsReferenceContext}
+                referenceQuery={businessOpsReferenceQuery}
             />
 
             <AgentCard
@@ -366,6 +501,8 @@ function AgentCards({
                 accentColor="purple"
                 state={governanceState}
                 content={governanceAnalysis}
+                referenceContext={governanceReferenceContext}
+                referenceQuery={governanceReferenceQuery}
             />
         </div>
     );

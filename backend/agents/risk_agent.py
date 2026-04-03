@@ -4,7 +4,6 @@ Specializes in analyzing liquidity, debt, and volatility factors.
 """
 
 from .base_agent import BaseAgent
-from config import GROQ_API_KEY_1, GROQ_MODEL_1
 
 
 class RiskAgent(BaseAgent):
@@ -14,8 +13,6 @@ class RiskAgent(BaseAgent):
         super().__init__(
             name="Risk Analyst",
             color="red",
-            api_key=GROQ_API_KEY_1,
-            model=GROQ_MODEL_1,
         )
     
     @property
@@ -36,8 +33,9 @@ Never agree just to keep the peace. If you think the other analyst is being naiv
 
     @property
     def analysis_rules(self) -> str:
-        return """1. ONLY use information found in the earnings report.
-2. Output MUST be a single, valid JSON object. No markdown, no commentary.
+        return """1. ONLY use information found in the earnings report and any provided REFERENCE CONTEXT.
+2. Evidence must be a direct, short quote. If REFERENCE CONTEXT is provided, the quote MUST be verbatim from that context and include a [C#] chunk citation.
+3. Output MUST be a single, valid JSON object. No markdown, no commentary.
 
 OUTPUT JSON SCHEMA:
 {
@@ -54,8 +52,35 @@ OUTPUT JSON SCHEMA:
   "watchlist": ["Items requiring monitoring"],
   "confidence_score": 0.0
 }"""
+
+    @property
+    def json_schema(self) -> dict:
+        return {
+            "overall_risk_rating": str,
+            "liquidity_score": (int, float),
+            "key_risk_factors": [
+                {
+                    "factor": str,
+                    "impact": str,
+                    "severity": str,
+                    "evidence": str,
+                }
+            ],
+            "watchlist": [str],
+            "confidence_score": (int, float),
+        }
+
+    @property
+    def require_citations(self) -> bool:
+        return True
     
-    async def analyze(self, earnings_content: str) -> str:
+    async def analyze(
+        self,
+        earnings_content: str,
+        reference_context: str | None = None,
+        reference_query: str | None = None,
+        allow_targeted_retrieval: bool = True,
+    ) -> str:
         """
         Perform risk analysis on earnings content.
         
@@ -71,4 +96,11 @@ financial vulnerabilities, and areas of concern. Be thorough but concise.
 If you cannot find specific financial metrics, analyze qualitative risk indicators
 from the language and tone of the report.
 """
-        return await self.generate(earnings_content, additional_instructions)
+        return await self.generate(
+            earnings_content,
+            additional_instructions,
+            expect_json=True,
+            reference_context=reference_context,
+            reference_query=reference_query,
+            allow_targeted_retrieval=allow_targeted_retrieval,
+        )

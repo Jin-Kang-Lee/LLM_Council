@@ -11,13 +11,16 @@ import os
 from datetime import datetime
 from typing import Optional
 
-from agents import RiskAgent, SentimentAgent, GovernanceAgent, DeepResearchAgent, MasterAgent
+from agents import RiskAgent, BusinessOpsRiskAgent, GovernanceAgent, DeepResearchAgent, MasterAgent
 from document_parser import parse_earnings_content, format_for_agents
 from config import MAX_DISCUSSION_ROUNDS
 from eval.metrics.schema_integrity import evaluate_schema_integrity
 from eval.metrics.reference_based import evaluate_reference_based
 from eval.metrics.section_check import evaluate_section_completeness
 from eval.metrics.query_diversity import evaluate_query_diversity
+from eval.metrics.rag_retrieval import evaluate_rag_retrieval
+from eval.metrics.rag_faithfulness_llm import evaluate_rag_faithfulness_llm
+from rag.retriever import build_shared_reference_query, get_council_context
 
 
 class EvalPipeline:
@@ -33,7 +36,7 @@ class EvalPipeline:
         asyncio.run(pipeline.run())
     """
 
-    VALID_TESTS = ["schema", "reference", "section", "warroom", "diversity", "variance"]
+    VALID_TESTS = ["schema", "reference", "section", "warroom", "diversity", "variance", "rag", "rag_faithfulness"]
 
     def __init__(
         self,
@@ -138,44 +141,100 @@ class EvalPipeline:
         print(f"\n  [Phase 1] Parsing earnings report...")
         parsed = await parse_earnings_content(report_text)
         formatted = format_for_agents(parsed)
+        shared_reference_query = build_shared_reference_query(formatted)
+        shared_reference_context = (
+            get_council_context(shared_reference_query) if shared_reference_query else ""
+        )
         print(f"   ✅ Parsed — {parsed['word_count']} words, topics: {parsed['sections_identified']}")
 
         # ── Phase 2: Individual agent analyses ──
         print(f"\n  [Phase 2] Running individual agent analyses...")
 
         risk_agent = RiskAgent()
-        sentiment_agent = SentimentAgent()
+        business_ops_agent = BusinessOpsRiskAgent()
         governance_agent = GovernanceAgent()
         research_agent = DeepResearchAgent()
         master_agent = MasterAgent()
 
         # Risk
         print(f"   🔴 Risk Agent analyzing...")
-        risk_output = await risk_agent.analyze(formatted)
+        risk_output = await risk_agent.analyze(
+            formatted,
+            reference_context=shared_reference_context,
+            reference_query=shared_reference_query,
+            allow_targeted_retrieval=True,
+        )
         print(f"   ✅ Risk Agent complete")
         if self.verbose:
             print(f"      Output preview: {risk_output[:200]}...")
+        risk_rag = {
+            "query": getattr(risk_agent, "last_reference_query", ""),
+            "context": getattr(risk_agent, "last_reference_context", ""),
+            "shared_query": getattr(risk_agent, "last_shared_reference_query", ""),
+            "shared_context": getattr(risk_agent, "last_shared_reference_context", ""),
+            "targeted_query": getattr(risk_agent, "last_targeted_reference_query", ""),
+            "targeted_context": getattr(risk_agent, "last_targeted_reference_context", ""),
+        }
 
-        # Sentiment
-        print(f"   🟢 Sentiment Agent analyzing...")
-        sentiment_output = await sentiment_agent.analyze(formatted)
-        print(f"   ✅ Sentiment Agent complete")
+        # Business & Ops
+        print(f"   🟡 Business & Ops Agent analyzing...")
+        business_ops_output = await business_ops_agent.analyze(
+            formatted,
+            reference_context=shared_reference_context,
+            reference_query=shared_reference_query,
+            allow_targeted_retrieval=True,
+        )
+        print(f"   ✅ Business & Ops Agent complete")
         if self.verbose:
-            print(f"      Output preview: {sentiment_output[:200]}...")
+            print(f"      Output preview: {business_ops_output[:200]}...")
+        business_ops_rag = {
+            "query": getattr(business_ops_agent, "last_reference_query", ""),
+            "context": getattr(business_ops_agent, "last_reference_context", ""),
+            "shared_query": getattr(business_ops_agent, "last_shared_reference_query", ""),
+            "shared_context": getattr(business_ops_agent, "last_shared_reference_context", ""),
+            "targeted_query": getattr(business_ops_agent, "last_targeted_reference_query", ""),
+            "targeted_context": getattr(business_ops_agent, "last_targeted_reference_context", ""),
+        }
 
         # Governance
         print(f"   🟣 Governance Agent analyzing...")
-        governance_output = await governance_agent.analyze(formatted)
+        governance_output = await governance_agent.analyze(
+            formatted,
+            reference_context=shared_reference_context,
+            reference_query=shared_reference_query,
+            allow_targeted_retrieval=True,
+        )
         print(f"   ✅ Governance Agent complete")
         if self.verbose:
             print(f"      Output preview: {governance_output[:200]}...")
+        governance_rag = {
+            "query": getattr(governance_agent, "last_reference_query", ""),
+            "context": getattr(governance_agent, "last_reference_context", ""),
+            "shared_query": getattr(governance_agent, "last_shared_reference_query", ""),
+            "shared_context": getattr(governance_agent, "last_shared_reference_context", ""),
+            "targeted_query": getattr(governance_agent, "last_targeted_reference_query", ""),
+            "targeted_context": getattr(governance_agent, "last_targeted_reference_context", ""),
+        }
 
         # Deep Research
         print(f"   🔵 Deep Research Agent analyzing...")
-        research_output = await research_agent.analyze(formatted)
+        research_output = await research_agent.analyze(
+            formatted,
+            reference_context=shared_reference_context,
+            reference_query=shared_reference_query,
+            allow_targeted_retrieval=True,
+        )
         print(f"   ✅ Deep Research Agent complete")
         if self.verbose:
             print(f"      Output preview: {research_output[:200]}...")
+        research_rag = {
+            "query": getattr(research_agent, "last_reference_query", ""),
+            "context": getattr(research_agent, "last_reference_context", ""),
+            "shared_query": getattr(research_agent, "last_shared_reference_query", ""),
+            "shared_context": getattr(research_agent, "last_shared_reference_context", ""),
+            "targeted_query": getattr(research_agent, "last_targeted_reference_query", ""),
+            "targeted_context": getattr(research_agent, "last_targeted_reference_context", ""),
+        }
 
         # ── Phase 3: War Room Discussion ──
         print(f"\n  [Phase 3] Running War Room discussion ({MAX_DISCUSSION_ROUNDS} rounds)...")
@@ -186,34 +245,34 @@ class EvalPipeline:
 
             # Risk responds
             if round_num == 1:
-                prompt = risk_agent.respond_to("Sentiment Analyst", sentiment_output, formatted)
+                prompt = risk_agent.respond_to("Business & Ops Analyst", business_ops_output, formatted)
             else:
                 last_msg = discussion_messages[-1]["content"]
                 prompt = risk_agent.respond_to("Governance Analyst", last_msg, formatted)
 
-            risk_response = await risk_agent.generate(formatted, prompt)
+            risk_response = await risk_agent.generate_discussion(formatted, prompt)
             discussion_messages.append({
                 "agent": "Risk Analyst",
                 "content": risk_response,
                 "round": round_num,
             })
 
-            # Sentiment responds to Risk
-            prompt = sentiment_agent.respond_to("Risk Analyst", risk_response, formatted)
-            sentiment_response = await sentiment_agent.generate(formatted, prompt)
+            # Business & Ops responds to Risk
+            prompt = business_ops_agent.respond_to("Risk Analyst", risk_response, formatted)
+            business_ops_response = await business_ops_agent.generate_discussion(formatted, prompt)
             discussion_messages.append({
-                "agent": "Sentiment Analyst",
-                "content": sentiment_response,
+                "agent": "Business & Ops Analyst",
+                "content": business_ops_response,
                 "round": round_num,
             })
 
             # Governance responds to both
             prompt = governance_agent.respond_to(
-                "Risk and Sentiment Analysts",
-                f"Risk says: {risk_response}\n\nSentiment says: {sentiment_response}",
+                "Risk and Business & Ops Analysts",
+                f"Risk says: {risk_response}\n\nBusiness & Ops says: {business_ops_response}",
                 formatted,
             )
-            gov_response = await governance_agent.generate(formatted, prompt)
+            gov_response = await governance_agent.generate_discussion(formatted, prompt)
             discussion_messages.append({
                 "agent": "Governance Analyst",
                 "content": gov_response,
@@ -232,7 +291,7 @@ class EvalPipeline:
         master_output = await master_agent.consolidate(
             formatted,
             risk_output,
-            sentiment_output,
+            business_ops_output,
             governance_output,
             research_output,
             discussion_transcript,
@@ -248,9 +307,15 @@ class EvalPipeline:
             "ground_truth": test_case["ground_truth"],
             "agent_outputs": {
                 "risk": risk_output,
-                "sentiment": sentiment_output,
+                "business_ops": business_ops_output,
                 "governance": governance_output,
                 "research": research_output,
+                "rag": {
+                    "risk": risk_rag,
+                    "business_ops": business_ops_rag,
+                    "governance": governance_rag,
+                    "research": research_rag,
+                },
                 "discussion": discussion_messages,
                 "master": master_output,
             },
@@ -299,6 +364,17 @@ class EvalPipeline:
                 case_evals["query_diversity"] = self._eval_query_diversity(outputs)
                 qd = case_evals["query_diversity"]
                 print(f"✅ Diversity score: {qd.get('diversity_score', 'N/A')}")
+            if "rag" in self.tests or "all" in self.tests:
+                print("   RAG Retrieval... ", end="")
+                case_evals["rag_retrieval"] = self._eval_rag_retrieval(outputs, ground_truth)
+                summary = case_evals["rag_retrieval"].get("_summary", {})
+                print(f"OK {summary.get('passed', 0)}/{summary.get('total_checks', 0)} checks passed")
+
+            if "rag_faithfulness" in self.tests or "all" in self.tests:
+                print("   RAG Faithfulness (LLM Judge)... ", end="")
+                case_evals["rag_faithfulness"] = self._eval_rag_faithfulness(outputs, ground_truth)
+                summary = case_evals["rag_faithfulness"].get("_summary", {})
+                print(f"OK {summary.get('passed', 0)}/{summary.get('evaluated', 0)} passed")
 
             if "variance" in self.tests or "all" in self.tests:
                 print(f"   🎲 Variance... ", end="")
@@ -331,8 +407,16 @@ class EvalPipeline:
         """Test 5: Evaluate diversity of Deep Research queries."""
         return evaluate_query_diversity(outputs)
 
+    def _eval_rag_retrieval(self, outputs: dict, ground_truth: dict) -> dict:
+        """Test 6: Evaluate RAG retrieval quality against expected sources."""
+        return evaluate_rag_retrieval(outputs, ground_truth)
+
+    def _eval_rag_faithfulness(self, outputs: dict, ground_truth: dict) -> dict:
+        """Test 7: LLM-judged faithfulness of answers to retrieved context."""
+        return evaluate_rag_faithfulness_llm(outputs, ground_truth)
+
     def _eval_variance(self, outputs: dict) -> dict:
-        """Test 6: Variance across multiple runs (optional)."""
+        """Test 8: Variance across multiple runs (optional)."""
         # TODO: Implement in eval/metrics/variance.py
         return {"status": "not_implemented"}
 
@@ -348,3 +432,6 @@ class EvalPipeline:
             json.dump(self.results, f, indent=2, ensure_ascii=False)
 
         print(f"\n📄 Results saved to: {output_path}")
+
+
+

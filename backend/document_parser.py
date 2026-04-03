@@ -18,8 +18,16 @@ try:
 except ImportError:
     pass
 
-from llama_cloud.client import AsyncLlamaCloud
+try:
+    from llama_cloud.client import AsyncLlamaCloud
+except Exception:
+    AsyncLlamaCloud = None
 import md_postprocess
+
+try:
+    from PyPDF2 import PdfReader
+except Exception:
+    PdfReader = None
 
 # Load environment variables
 load_dotenv()
@@ -55,48 +63,66 @@ async def pdf_to_markdown(
             temp_file.close()
             target_path = temp_file.name
 
-        # 3. Parse with AsyncLlamaCloud
+        # 3. Parse with AsyncLlamaCloud (fallback to local PDF text extraction)
         api_key = os.getenv("LLAMA_CLOUD_API_KEY")
-        if not api_key:
-            raise ValueError("LLAMA_CLOUD_API_KEY environment variable is not set.")
+        if api_key and AsyncLlamaCloud is not None:
+            try:
+                client = AsyncLlamaCloud(token=api_key)
 
-        client = AsyncLlamaCloud(token=api_key)
-        
-        # Step A: Upload the file
-        print(f"Uploading file: {target_path}...")
+                # Step A: Upload the file
+                print(f"Uploading file: {target_path}...")
+                with open(target_path, "rb") as f:
+                    file_obj = await client.files.upload_file(upload_file=f)
+
+                # Step B: Parse the file with expansion to get content
+                print(f"Parsing file (ID: {file_obj.id})...")
+                result = await client.parsing.parse(
+                    file_id=file_obj.id,
+                    tier="agentic",
+                    version="latest",
+                    expand=["markdown"]
+                )
+
+                # Extract markdown content from expanded result
+                md = ""
+                pages_list = []
+                if hasattr(result, "markdown") and result.markdown and hasattr(result.markdown, "pages"):
+                    pages_list = [p.markdown for p in result.markdown.pages if p.markdown]
+                    md = "\n\n".join(pages_list)
+
+                if md:
+                    # 4. Post-processing
+                    cleaned_pages = md_postprocess.remove_repeated_headers_footers(pages_list)
+                    md = "\n\n".join(cleaned_pages)
+                    md = md_postprocess.dehyphenate(md)
+                    md = md_postprocess.fix_hard_wraps(md)
+                    md = md_postprocess.wrap_uncertain_tables(md)
+                    return md
+
+                print("[WARNING] No markdown content found in expanded results. Falling back to local parser.")
+            except Exception as e:
+                print(f"[WARNING] LlamaCloud parse failed: {e}. Falling back to local parser.")
+        else:
+            if api_key and AsyncLlamaCloud is None:
+                print("[WARNING] llama_cloud not installed. Falling back to local parser.")
+            else:
+                print("[INFO] LLAMA_CLOUD_API_KEY not set. Falling back to local parser.")
+
+        if PdfReader is None:
+            raise ValueError("PyPDF2 is not installed. Install it to enable local PDF parsing.")
+
+        # Local PDF text extraction fallback
+        text_pages = []
+
         with open(target_path, "rb") as f:
-            file_obj = await client.files.create(file=f, purpose="parse")
-        
-        # Step B: Parse the file with expansion to get content
-        print(f"Parsing file (ID: {file_obj.id})...")
-        result = await client.parsing.parse(
-            file_id=file_obj.id,
-            tier="agentic",
-            version="latest",
-            expand=["markdown"]
-        )
-        
-        # Extract markdown content from expanded result
-        md = ""
-        pages_list = []
-        if hasattr(result, "markdown") and result.markdown and hasattr(result.markdown, "pages"):
-            pages_list = [p.markdown for p in result.markdown.pages if p.markdown]
-            md = "\n\n".join(pages_list)
-        
-        if not md:
-            print("[WARNING] No markdown content found in expanded results.")
-            return ""
+            reader = PdfReader(f)
+            for page in reader.pages:
+                page_text = page.extract_text() or ""
+                text_pages.append(page_text)
 
-        # 4. Post-processing
-        # Remove repeated headers/footers
-        cleaned_pages = md_postprocess.remove_repeated_headers_footers(pages_list)
-        md = "\n\n".join(cleaned_pages)
-        
-        # Global cleaning
+        md = "\n\n".join(text_pages)
         md = md_postprocess.dehyphenate(md)
         md = md_postprocess.fix_hard_wraps(md)
-        md = md_postprocess.wrap_uncertain_tables(md)
-        
         return md
 
     finally:

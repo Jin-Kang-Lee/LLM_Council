@@ -10,7 +10,6 @@ from typing import Optional
 from duckduckgo_search import DDGS
 
 from .base_agent import BaseAgent
-from config import GROQ_API_KEY_1, GROQ_MODEL_1
 
 
 class DeepResearchAgent(BaseAgent):
@@ -20,8 +19,6 @@ class DeepResearchAgent(BaseAgent):
         super().__init__(
             name="Deep Research Analyst",
             color="blue",
-            api_key=GROQ_API_KEY_1,
-            model=GROQ_MODEL_1,
         )
 
     @property
@@ -60,10 +57,39 @@ OUTPUT JSON SCHEMA:
     def analysis_rules(self) -> str:
         return "Return ONLY the JSON object. Do not perform actual searches yet; just plan them."
 
-    async def analyze(self, earnings_content: str) -> str:
+    @property
+    def json_schema(self) -> dict:
+        return {
+            "thinking_trace": str,
+            "search_queries": [
+                {
+                    "topic": str,
+                    "query": str,
+                    "rationale": str,
+                    "status": str,
+                    "result": (str, type(None)),
+                }
+            ],
+            "confidence_gap": str,
+        }
+
+    async def analyze(
+        self,
+        earnings_content: str,
+        reference_context: str | None = None,
+        reference_query: str | None = None,
+        allow_targeted_retrieval: bool = True,
+    ) -> str:
         """Analyze content to generate a research plan (JSON with pending queries)."""
         additional_instructions = "Analyze the report and identify exactly what is missing or needs external checking. Create a research plan in the required JSON format."
-        return await self.generate(earnings_content, additional_instructions)
+        return await self.generate(
+            earnings_content,
+            additional_instructions,
+            expect_json=True,
+            reference_context=reference_context,
+            reference_query=reference_query,
+            allow_targeted_retrieval=allow_targeted_retrieval,
+        )
 
     async def execute_searches(self, research_plan_json: str, max_results_per_query: int = 3) -> str:
         """

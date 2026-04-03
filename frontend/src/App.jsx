@@ -24,16 +24,28 @@ function App() {
 
     const [parsedContent, setParsedContent] = useState(null);
     const [riskAnalysis, setRiskAnalysis] = useState(null);
-    const [sentimentAnalysis, setSentimentAnalysis] = useState(null);
+    const [businessOpsAnalysis, setBusinessOpsAnalysis] = useState(null);
     const [governanceAnalysis, setGovernanceAnalysis] = useState(null);
     const [researchAnalysis, setResearchAnalysis] = useState(null);
+    const [referenceContexts, setReferenceContexts] = useState({
+        risk: null,
+        business_ops: null,
+        governance: null,
+        research: null
+    });
+    const [referenceQueries, setReferenceQueries] = useState({
+        risk: null,
+        business_ops: null,
+        governance: null,
+        research: null
+    });
     const [discussionMessages, setDiscussionMessages] = useState([]);
     const [finalReport, setFinalReport] = useState(null);
 
     const [agentStates, setAgentStates] = useState({
         parser: 'idle',
         risk: 'idle',
-        sentiment: 'idle',
+        business_ops: 'idle',
         governance: 'idle',
         research: 'idle',
         master: 'idle'
@@ -45,14 +57,26 @@ function App() {
         setError(null);
         setParsedContent(null);
         setRiskAnalysis(null);
-        setSentimentAnalysis(null);
+        setBusinessOpsAnalysis(null);
         setGovernanceAnalysis(null);
+        setReferenceContexts({
+            risk: null,
+            business_ops: null,
+            governance: null,
+            research: null
+        });
+        setReferenceQueries({
+            risk: null,
+            business_ops: null,
+            governance: null,
+            research: null
+        });
         setDiscussionMessages([]);
         setFinalReport(null);
         setAgentStates({
             parser: 'idle',
             risk: 'idle',
-            sentiment: 'idle',
+            business_ops: 'idle',
             governance: 'idle',
             research: 'idle',
             master: 'idle'
@@ -113,13 +137,25 @@ function App() {
                     if (agentData.content) {
                         setRiskAnalysis(agentData.content);
                     }
-                } else if (agentData.agent === 'sentiment') {
+                    if (agentData.reference_context) {
+                        setReferenceContexts(prev => ({ ...prev, risk: agentData.reference_context }));
+                    }
+                    if (agentData.reference_query) {
+                        setReferenceQueries(prev => ({ ...prev, risk: agentData.reference_query }));
+                    }
+                } else if (agentData.agent === 'business_ops') {
                     setAgentStates(prev => ({
                         ...prev,
-                        sentiment: agentData.status === 'complete' ? 'complete' : 'thinking'
+                        business_ops: agentData.status === 'complete' ? 'complete' : 'thinking'
                     }));
                     if (agentData.content) {
-                        setSentimentAnalysis(agentData.content);
+                        setBusinessOpsAnalysis(agentData.content);
+                    }
+                    if (agentData.reference_context) {
+                        setReferenceContexts(prev => ({ ...prev, business_ops: agentData.reference_context }));
+                    }
+                    if (agentData.reference_query) {
+                        setReferenceQueries(prev => ({ ...prev, business_ops: agentData.reference_query }));
                     }
                 } else if (agentData.agent === 'governance') {
                     setAgentStates(prev => ({
@@ -129,6 +165,12 @@ function App() {
                     if (agentData.content) {
                         setGovernanceAnalysis(agentData.content);
                     }
+                    if (agentData.reference_context) {
+                        setReferenceContexts(prev => ({ ...prev, governance: agentData.reference_context }));
+                    }
+                    if (agentData.reference_query) {
+                        setReferenceQueries(prev => ({ ...prev, governance: agentData.reference_query }));
+                    }
                 } else if (agentData.agent === 'research') {
                     setAgentStates(prev => ({
                         ...prev,
@@ -136,6 +178,12 @@ function App() {
                     }));
                     if (agentData.content) {
                         setResearchAnalysis(agentData.content);
+                    }
+                    if (agentData.reference_context) {
+                        setReferenceContexts(prev => ({ ...prev, research: agentData.reference_context }));
+                    }
+                    if (agentData.reference_query) {
+                        setReferenceQueries(prev => ({ ...prev, research: agentData.reference_query }));
                     }
                 }
             });
@@ -218,13 +266,19 @@ function App() {
                         </h2>
                         <AgentCards
                             riskAnalysis={riskAnalysis}
-                            sentimentAnalysis={sentimentAnalysis}
+                            businessOpsAnalysis={businessOpsAnalysis}
                             governanceAnalysis={governanceAnalysis}
                             riskState={agentStates.risk}
-                            sentimentState={agentStates.sentiment}
+                            businessOpsState={agentStates.business_ops}
                             governanceState={agentStates.governance}
                             parserState={agentStates.parser}
                             parsedContent={parsedContent}
+                            riskReferenceContext={referenceContexts.risk}
+                            businessOpsReferenceContext={referenceContexts.business_ops}
+                            governanceReferenceContext={referenceContexts.governance}
+                            riskReferenceQuery={referenceQueries.risk}
+                            businessOpsReferenceQuery={referenceQueries.business_ops}
+                            governanceReferenceQuery={referenceQueries.governance}
                         />
                     </section>
                 )}
@@ -245,6 +299,8 @@ function App() {
                         <DiscussionLog
                             messages={discussionMessages}
                             isActive={currentPhase === 3 && isProcessing}
+                            referenceContexts={referenceContexts}
+                            referenceQueries={referenceQueries}
                         />
                     </section>
                 )}
