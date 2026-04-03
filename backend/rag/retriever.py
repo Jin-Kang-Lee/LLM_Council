@@ -27,6 +27,36 @@ from rag.reranker import rerank
 COLLECTION_NAME = "council_reference"
 EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 
+# Module-level flag — checked once per process, not on every query
+_db_ready: bool = False
+
+
+def ensure_ingested() -> None:
+    """
+    Check whether the vector DB has been populated. If the collection is
+    missing or empty, run ingest() automatically.
+
+    Safe to call multiple times — skips the check after the first success.
+    """
+    global _db_ready
+    if _db_ready:
+        return
+
+    try:
+        client = chromadb.PersistentClient(path=VECTOR_DB_PATH)
+        collection = client.get_or_create_collection(COLLECTION_NAME)
+        count = collection.count()
+        if count == 0:
+            print("[RAG] Vector DB is empty — running auto-ingest...")
+            from rag.ingest import ingest
+            ingest(reset=False)
+            print("[RAG] Auto-ingest complete.")
+        else:
+            print(f"[RAG] Vector DB ready ({count} chunks).")
+        _db_ready = True
+    except Exception as e:
+        print(f"[RAG] Auto-ingest failed: {e}. Retrieval may return empty context.")
+
 
 def build_shared_reference_query(content: str) -> str:
     if not content:
@@ -144,6 +174,8 @@ def _iter_chunks(results: Iterable[Tuple[object, float]]) -> list[str]:
 
 
 def get_council_context(query: str, k: int = 4) -> str:
+    ensure_ingested()
+
     cleaned_query = sanitize_query(query, RAG_MAX_QUERY_CHARS, RAG_MIN_QUERY_CHARS)
     if not cleaned_query:
         return ""
