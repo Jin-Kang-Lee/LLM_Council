@@ -1,19 +1,44 @@
-fastapi
-uvicorn[standard]
-python-multipart
-langchain
-langchain-core
-langchain-community
-langgraph
+# ── Core API Framework ──────────────────────────────────────────────────
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+python-multipart==0.0.6
 pydantic
-httpx
-groq
-duckduckgo-search
+sse-starlette==1.8.2
+
+# ── LLM Orchestration ──────────────────────────────────────────────────
+langchain==0.1.0
+langchain-core==0.1.10
+langchain-community==0.0.12
+langgraph==0.0.20
+
+# ── RAG Pipeline ───────────────────────────────────────────────────────
+chromadb
+langchain-chroma
+langchain-huggingface
+langchain-text-splitters
+sentence-transformers
+
+# ── PDF Parsing & Document Processing ──────────────────────────────────
+PyPDF2==3.0.1
 llama-cloud
 llama-index-core
 llama-index
-python-dotenv
-sse-starlette
+chardet
+
+# ── Agent Tools (Live Financial Data) ──────────────────────────────────
+yfinance
+httpx==0.26.0
 requests
-sentence-transformers
-chromadb
+
+# ── LLM Providers ─────────────────────────────────────────────────────
+ollama
+openai
+
+# ── Environment & Utilities ────────────────────────────────────────────
+python-dotenv==1.0.0
+packaging==23.2
+
+# ── Evaluation / Visualisation (optional — for eval scripts) ───────────
+pandas
+matplotlib
+numpy
